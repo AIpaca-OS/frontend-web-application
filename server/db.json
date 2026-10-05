@@ -1,0 +1,104 @@
+{
+  "notifications": [
+    {
+      "id": 1,
+      "type": "warning",
+      "priority": "regular",
+      "title": "Retraso reportado",
+      "message": "La Ruta de la mañana presenta aproximadamente 8 minutos de retraso por tráfico.",
+      "time": "08:08",
+      "date": "2026-10-04",
+      "read": false,
+      "routeId": 1,
+      "studentId": null
+    },
+    {
+      "id": 2,
+      "type": "success",
+      "priority": "regular",
+      "title": "Recojo confirmado",
+      "message": "Mateo González fue recogido correctamente.",
+      "time": "07:55",
+      "date": "2026-10-04",
+      "read": true,
+      "routeId": 1,
+      "studentId": 15
+    },
+    {
+      "id": 3,
+      "type": "info",
+      "priority": "regular",
+      "title": "Ruta preparada",
+      "message": "La Ruta de la mañana está programada para las 07:40.",
+      "time": "07:30",
+      "date": "2026-10-04",
+      "read": true,
+      "routeId": 1,
+      "studentId": null
+    },
+    {
+      "id": 4,
+      "type": "error",
+      "priority": "critical",
+      "title": "Incidencia en la ruta",
+      "message": "La movilidad se encuentra detenida debido a una avería del vehículo.",
+      "time": "07:42",
+      "date": "2026-10-04",
+      "read": false,
+      "routeId": 1,
+      "studentId": null
+    },
+    {
+      "id": 5,
+      "type": "warning",
+      "priority": "critical",
+      "title": "Estudiante no localizado",
+      "message": "No fue posible realizar el recojo de Valeria Torres en el punto establecido.",
+      "time": "07:48",
+      "date": "2026-10-04",
+      "read": false,
+      "routeId": 1,
+      "studentId": 18
+    },
+    {
+      "id": 6,
+      "type": "success",
+      "priority": "regular",
+      "title": "Llegada al colegio",
+      "message": "La movilidad llegó al colegio y los estudiantes fueron entregados correctamente.",
+      "time": "08:35",
+      "date": "2026-10-04",
+      "read": true,
+      "routeId": 1,
+      "studentId": null
+    },
+    {
+      "id": 7,
+      "type": "info",
+      "priority": "regular",
+      "title": "Nueva ruta programada",
+      "message": "La Ruta de la tarde ha sido programada para las 15:30.",
+      "time": "18:20",
+      "date": "2026-10-03",
+      "read": true,
+      "routeId": 2,
+      "studentId": null
+    },
+    {
+      "id": 8,
+      "type": "error",
+      "priority": "critical",
+      "title": "Cambio de ruta",
+      "message": "La Ruta de la tarde ha sido modificada debido al cierre temporal de una vía.",
+      "time": "14:50",
+      "date": "2026-10-04",
+      "read": false,
+      "routeId": 2,
+      "studentId": null
+    }
+  ],
+  "notificationSettings": {
+    "nonCriticalEnabled": true,
+    "criticalEnabled": true
+  }
+}
