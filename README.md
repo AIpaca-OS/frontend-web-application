@@ -1,35 +1,59 @@
-# Rumbo — Frontend Web Application
+# RumboFrontend
 
-Frontend Web Application del producto **Rumbo**, desarrollado para el curso **1ASI0729 Desarrollo de Aplicaciones Open Source** (NRC 7760, ciclo 2026-20).
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.10.
 
-## Alcance actual
+## Development server
 
-En **AV1** la implementación obligatoria se concentra en la primera versión desplegada del Landing Page. Este repositorio queda reservado para el Frontend Web Application que se desarrollará progresivamente en los siguientes Sprints, de acuerdo con el Product Backlog y los artefactos de diseño del Project Report.
+To start a local development server, run:
 
-## Tecnologías exigidas por el curso
+```bash
+ng serve
+```
 
-- Angular Framework
-- TypeScript
-- HTML5
-- CSS3
-- Angular Material
-- Material Design
-- Responsive Web Design
-- Internationalization con `en_US` y `es_419`
-- Accessibility con atributos ARIA cuando corresponda
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-El idioma por defecto de la interfaz será inglés.
+## Code scaffolding
 
-## Arquitectura
+Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
 
-La organización interna del proyecto se definirá a partir de los bounded contexts validados mediante EventStorming y Domain-Driven Design. No se crearán carpetas o capas ficticias antes de que el diseño quede aprobado por el equipo.
+```bash
+ng generate component component-name
+```
 
-## Control de versiones
+For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
-Se utilizará GitFlow con `main`, `develop` y ramas `feature/...` creadas para funcionalidades reales. Los commits seguirán Conventional Commits y las versiones publicadas seguirán Semantic Versioning.
+```bash
+ng generate --help
+```
 
-## Repositorios relacionados
+## Building
 
-- Project Report: https://github.com/AIpaca-OS/project-report
-- Landing Page: https://github.com/AIpaca-OS/landing-page
-- Web Services: https://github.com/AIpaca-OS/web-services
+To build the project run:
+
+```bash
+ng build
+```
+
+This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Running unit tests
+
+To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+
+```bash
+ng test
+```
+
+## Running end-to-end tests
+
+For end-to-end (e2e) testing, run:
+
+```bash
+ng e2e
+```
+
+Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Additional Resources
+
+For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
