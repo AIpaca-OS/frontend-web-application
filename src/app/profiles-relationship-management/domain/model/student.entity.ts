@@ -36,6 +36,7 @@ export class Student extends Person {
    * @param props.firstName - Student's first name.
    * @param props.lastName - Student's last name.
    * @param props.birthDate - Student's date of birth in `YYYY-MM-DD` format.
+   * @param props.schoolName - Student's school name.
    * @param props.status - Current student status.
    * If omitted, it defaults to {@link StudentStatus.ACTIVE}.
    */
