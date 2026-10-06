@@ -113,7 +113,6 @@ export class Student extends Person {
  * within the Profiles & Relationship Management bounded context.
  */
 export enum StudentStatus {
-
   /**
    * Indicates that the student is currently active
    * and can participate in the service.

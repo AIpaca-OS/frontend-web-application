@@ -10,7 +10,6 @@ import { Person } from './person';
  * together with an optional phone number.
  */
 export class Tutor extends Person {
-
   /**
    * Identifier of the account associated with the tutor.
    *

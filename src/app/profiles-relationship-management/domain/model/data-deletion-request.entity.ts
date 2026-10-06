@@ -13,7 +13,6 @@ import { BaseEntity } from '../../../shared/domain/model/base-entity';
  * the system to keep track of the request and its resolution.
  */
 export class DataDeletionRequest implements BaseEntity {
-
   /**
    * Unique identifier of the deletion request.
    */
@@ -162,7 +161,6 @@ export class DataDeletionRequest implements BaseEntity {
  * Represents the possible states of a student data deletion request.
  */
 export enum DeletionRequestStatus {
-
   /**
    * The request has been created but has not yet been resolved.
    */

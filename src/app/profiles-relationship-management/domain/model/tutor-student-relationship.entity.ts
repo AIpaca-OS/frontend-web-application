@@ -162,7 +162,6 @@ export class TutorStudentRelationship implements BaseEntity {
  * between a tutor and a student.
  */
 export enum RelationshipType {
-
   /**
    * The tutor is the student's mother.
    */
@@ -189,7 +188,6 @@ export enum RelationshipType {
  * of a tutor-student relationship.
  */
 export enum AuthorizationStatus {
-
   /**
    * The tutor is currently authorized to access
    * the student's information.

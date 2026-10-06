@@ -11,7 +11,6 @@ import { BaseEntity } from '../../../shared/domain/model/base-entity';
  * students, tutors, and drivers.
  */
 export abstract class Person implements BaseEntity {
-
   /**
    * The unique identifier of the person.
    */
