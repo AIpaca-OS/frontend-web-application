@@ -1,33 +1,45 @@
 import {BaseEntity} from '../../../shared/domain/model/base-entity';
 
 export class Notification implements BaseEntity {
-
   #id: number;
   #type: string;
   #priority: string;
   #title: string;
   #message: string;
-  #time: string;
-  #date: string;
+  #createdAt: string;
+  #readAt: string;
   #read: boolean;
   #routeId: number;
   #studentId: number | null;
 
-  constructor(notification: { id: number; type: string; priority: string; title: string; message: string; time: string; date: string; read: boolean; routeId: number; studentId: number | null }) {
-
+  constructor(notification: {
+    id: number;
+    type: string;
+    priority: string;
+    title: string;
+    message: string;
+    createdAt: string;
+    readAt: string;
+    read: boolean;
+    routeId: number;
+    studentId: number | null;
+  }) {
     this.#id = notification.id;
     this.#type = notification.type;
     this.#priority = notification.priority;
     this.#title = notification.title;
     this.#message = notification.message;
-    this.#time = notification.time;
-    this.#date = notification.date;
+    this.#createdAt = notification.createdAt;
+    this.#readAt = notification.readAt;
     this.#read = notification.read;
     this.#routeId = notification.routeId;
     this.#studentId = notification.studentId;
-
   }
 
+  markAsRead(): void {
+    this.#readAt = new Date().toISOString();
+    this.#read = true;
+  }
   get id(): number {
     return this.#id;
   }
@@ -68,20 +80,20 @@ export class Notification implements BaseEntity {
     this.#message = value;
   }
 
-  get time(): string {
-    return this.#time;
+  get createdAt(): string {
+    return this.#createdAt;
   }
 
-  set time(value: string) {
-    this.#time = value;
+  set createdAt(value: string) {
+    this.#createdAt = value;
   }
 
-  get date(): string {
-    return this.#date;
+  get readAt(): string {
+    return this.#readAt;
   }
 
-  set date(value: string) {
-    this.#date = value;
+  set readAt(value: string) {
+    this.#readAt = value;
   }
 
   get read(): boolean {

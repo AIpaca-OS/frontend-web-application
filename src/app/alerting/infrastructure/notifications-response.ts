@@ -6,12 +6,11 @@ export interface NotificationResource extends BaseResource {
   priority: string;
   title: string;
   message: string;
-  time: string;
-  date: string;
+  createdAt: string;
+  readAt: string;
   read: boolean;
   routeId: number;
   studentId: number | null;
-
 }
 
 export interface NotificationsResponse extends BaseResponse {

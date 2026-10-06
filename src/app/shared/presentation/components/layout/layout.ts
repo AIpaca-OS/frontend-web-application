@@ -5,6 +5,7 @@ import {MatButtonModule} from '@angular/material/button';
 import {TranslatePipe} from '@ngx-translate/core';
 import {LanguageSwitcher} from '../language-switcher/language-switcher';
 import {FooterContent} from '../footer-content/footer-content';
+import { MatIcon } from '@angular/material/icon';
 /*
 import {
   AuthenticationSection
@@ -25,19 +26,20 @@ import {
     TranslatePipe,
     LanguageSwitcher,
     FooterContent,
+    MatIcon,
     // AuthenticationSection
   ],
   templateUrl: './layout.html',
-  styleUrl: './layout.css'
+  styleUrl: './layout.css',
 })
 export class Layout {
   /**
    * Array of navigation options for the application's menu.
    */
   options = signal([
-    {link: '/home', label: 'option.home'},
-    {link: '/about', label: 'option.about'},
-    {link: '/learning/categories', label: 'option.categories'},
-    {link: '/learning/courses', label: 'option.courses'}
+    { link: '/home', label: 'option.home' },
+    { link: '/about', label: 'option.about' },
+    { link: '/learning/categories', label: 'option.categories' },
+    { link: '/learning/courses', label: 'option.courses' },
   ]);
 }
