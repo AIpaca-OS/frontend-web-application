@@ -92,5 +92,36 @@
     "successEnabled": true,
     "warningEnabled": true,
     "infoEnabled": true
-  }
+  },
+
+  "vehicles": [
+    {
+      "id": 1,
+      "brand": "Toyota",
+      "model": "HiAce",
+      "licensePlate": "ABC-123",
+      "capacity": 15,
+      "year": 2022,
+      "status": "ACTIVE"
+    },
+    {
+      "id": 2,
+      "brand": "Mercedes-Benz",
+      "model": "Sprinter",
+      "licensePlate": "XYZ-789",
+      "capacity": 20,
+      "year": 2021,
+      "status": "ACTIVE"
+    }
+  ],
+  "credentials": [
+    {
+      "id": 1,
+      "vehicleId": 1,
+      "documentType": "SOAT",
+      "documentNumber": "SOAT-998822",
+      "expirationDate": "2027-05-10",
+      "status": "VALID"
+    }
+  ]
 }
