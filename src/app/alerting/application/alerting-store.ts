@@ -52,61 +52,96 @@ export class AlertingStore {
       });
   }
 
-  getNotificationById(id: number): Signal<Notification | undefined>{
-    return computed(() => id ? this.notifications().find(notification => notification.id === id) : undefined);
+  getNotificationById(id: number): Signal<Notification | undefined> {
+    return computed(() =>
+      id ? this.notifications().find((notification) => notification.id === id) : undefined,
+    );
   }
 
   addNotification(notification: Notification) {
-
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-    this.alertingApi.createNotification(notification).pipe(retry(2)).subscribe({
-      next: createdNotification => {
-        this.notificationsSignal.update(notifications => [...notifications, createdNotification]);
-        this.loadingSignal.set(false);
-        this.errorSignal.set(null);
-      },
-      error: error => {
-        this.errorSignal.set(this.formatError(error, 'Failed to create notification'));
-        this.loadingSignal.set(false);
-      }
-    });
+    this.alertingApi
+      .createNotification(notification)
+      .pipe(retry(2))
+      .subscribe({
+        next: (createdNotification) => {
+          this.notificationsSignal.update((notifications) => [
+            ...notifications,
+            createdNotification,
+          ]);
+          this.loadingSignal.set(false);
+          this.errorSignal.set(null);
+        },
+        error: (error) => {
+          this.errorSignal.set(this.formatError(error, 'Failed to create notification'));
+          this.loadingSignal.set(false);
+        },
+      });
   }
 
   updateNotification(notification: Notification) {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-    this.alertingApi.updateNotification(notification).pipe(retry(2)).subscribe({
-      next: updatedNotification => {
-        this.notificationsSignal.update(notifications => notifications.map(n => n.id === updatedNotification.id ? updatedNotification : n));
-        this.loadingSignal.set(false);
-        this.errorSignal.set(null);
-      },
-      error: error => {
-        this.errorSignal.set(this.formatError(error, 'Failed to update notification'));
-        this.loadingSignal.set(false);
-      }
-
-    });
+    this.alertingApi
+      .updateNotification(notification)
+      .pipe(retry(2))
+      .subscribe({
+        next: (updatedNotification) => {
+          this.notificationsSignal.update((notifications) =>
+            notifications.map((n) => (n.id === updatedNotification.id ? updatedNotification : n)),
+          );
+          this.loadingSignal.set(false);
+          this.errorSignal.set(null);
+        },
+        error: (error) => {
+          this.errorSignal.set(this.formatError(error, 'Failed to update notification'));
+          this.loadingSignal.set(false);
+        },
+      });
   }
 
-  deleteNotification(id: number) {
+  markNotificationAsRead(notification: Notification) {
+    notification.markAsRead();
 
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-    this.alertingApi.deleteNotification(id).pipe(retry(2)).subscribe({
-      next: () => {
-        this.notificationsSignal.update(notifications => notifications.filter(n => n.id !== id));
-        this.loadingSignal.set(false);
-        this.errorSignal.set(null);
-      },
-      error: error => {
-        this.errorSignal.set(this.formatError(error, 'Failed to delete notification'));
-        this.loadingSignal.set(false);
-      }
-    })
-
+    this.alertingApi
+      .updateNotification(notification)
+      .pipe(retry(2))
+      .subscribe({
+        next: (updatedNotification) => {
+          this.notificationsSignal.update((notifications) =>
+            notifications.map((n) => (n.id === updatedNotification.id ? updatedNotification : n)),
+          );
+          this.loadingSignal.set(false);
+          this.errorSignal.set(null);
+        },
+        error: (error) => {
+          this.errorSignal.set(this.formatError(error, 'Failed to update notification'));
+          this.loadingSignal.set(false);
+        },
+      });
   }
 
-
+  deleteNotification(id: number) {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+    this.alertingApi
+      .deleteNotification(id)
+      .pipe(retry(2))
+      .subscribe({
+        next: () => {
+          this.notificationsSignal.update((notifications) =>
+            notifications.filter((n) => n.id !== id),
+          );
+          this.loadingSignal.set(false);
+          this.errorSignal.set(null);
+        },
+        error: (error) => {
+          this.errorSignal.set(this.formatError(error, 'Failed to delete notification'));
+          this.loadingSignal.set(false);
+        },
+      });
+  }
 }
