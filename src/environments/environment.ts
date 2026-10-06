@@ -9,7 +9,7 @@ export const environment = {
   profilesStudentsEndpointPath: '/students',
   profilesProfilesEndpointPath: '/profiles',
 
-  relationshipsMockApiBaseUrl: 'http://6ac54f4854a61668c5f718ab.mockapi.io/api/v1',
+  relationshipsApiBaseUrl: 'http://6ac54f4854a61668c5f718ab.mockapi.io/api/v1',
   relationshipsTutorStudentsRelationshipsEndpointPath: '/tutor-student-relationships',
   relationshipsDataDeletionRequestsEndpointPath: '/data-deletion-requests',
 };
