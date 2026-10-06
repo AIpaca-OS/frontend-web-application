@@ -9,7 +9,6 @@ import { Person } from './person';
  * and current status.
  */
 export class Student extends Person {
-
   /**
    * The birthdate of the student.
    *
@@ -20,8 +19,12 @@ export class Student extends Person {
   #birthDate: string;
 
   /**
+   * The student's school name.
+   */
+  #schoolName: string;
+
+  /**
    * The current status of the student.
-   * @private
    */
   #status: StudentStatus;
 
@@ -41,6 +44,7 @@ export class Student extends Person {
     firstName: string;
     lastName: string;
     birthDate: string;
+    schoolName: string;
     status?: StudentStatus;
   }) {
     super({
@@ -50,6 +54,7 @@ export class Student extends Person {
     });
 
     this.#birthDate = props.birthDate;
+    this.#schoolName = props.schoolName;
     this.#status = props.status ?? StudentStatus.ACTIVE;
   }
 
@@ -59,6 +64,22 @@ export class Student extends Person {
    */
   get birthDate(): string {
     return this.#birthDate;
+  }
+
+  /**
+   * Updates the student's school name.
+   * @param value - New school's name.
+   */
+  set schoolName(value: string) {
+    this.#schoolName = value.trim();
+  }
+
+  /**
+   * Gets the student's school name.
+   * @returns The school's name.
+   */
+  get schoolName(): string {
+    return this.#schoolName;
   }
 
   /**
