@@ -14,7 +14,7 @@ export class DelayAssembler implements BaseAssembler<Delay, DelayResource, Delay
       cause: resource.cause,
       priority: resource.priority,
       magnitude: resource.magnitude,
-      studentIds: resource.studentsId,
+      studentIds: resource.studentIds,
       createdAt: resource.createdAt
     });
   }
@@ -25,7 +25,7 @@ export class DelayAssembler implements BaseAssembler<Delay, DelayResource, Delay
       cause: entity.cause,
       priority: entity.priority,
       magnitude: entity.magnitude,
-      studentIds: entity.studentsId,
+      studentIds: entity.studentIds,
       createdAt: entity.createdAt
     };
   }

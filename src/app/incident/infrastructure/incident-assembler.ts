@@ -2,7 +2,7 @@ import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { Incident } from '../domain/model/incident.entity'
 import { IncidentResource, IncidentsResponse } from '../infrastructure/incidents-response'
 
-export class IncidentAssembler implements BaseAssembler<Incident, IncidentResource, IncidentResponse>
+export class IncidentAssembler implements BaseAssembler<Incident, IncidentResource, IncidentsResponse>
 {
   toEntitiesFromResponse(response: IncidentsResponse): Incident[] {
 
