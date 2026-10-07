@@ -1,3 +1,13 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+const subscriptionsAndBillingRoutes = () =>
+  import('./subscriptions-and-billing/presentation/subscriptions-and-billing.routes').then(
+    (m) => m.subscriptionsAndBillingRoutes,
+  );
+
+export const routes: Routes = [
+  {
+    path: 'subscriptions-and-billing',
+    loadChildren: subscriptionsAndBillingRoutes,
+  },
+];

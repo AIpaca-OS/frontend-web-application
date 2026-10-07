@@ -1,0 +1,144 @@
+<div class="subscriptions-page">
+
+  <header class="page-header">
+
+    <div>
+      <p class="eyebrow">
+        SUSCRIPCIONES
+      </p>
+
+      <h1>Mi suscripción</h1>
+
+      <p>
+        Consulta y administra la información de tu suscripción en Rumbo.
+      </p>
+    </div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="secondary-action"
+      (click)="goToPlans()">
+      Ver planes
+    </button>
+
+  </header>
+
+  @if (store.loading()) {
+    <div class="loading">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+
+  @if (store.error()) {
+    <div class="error">
+      {{ store.error() }}
+    </div>
+  }
+
+  @if (!store.loading()) {
+
+    <div class="subscriptions-grid">
+
+      @for (
+        subscription of store.subscriptions();
+        track subscription.id
+        ) {
+
+        <article class="subscription-card">
+
+          <div class="card-header">
+
+            <div>
+              <span class="plan-label">
+                PLAN ACTUAL
+              </span>
+
+              <h2>
+                {{ getPlanName(subscription.planId) }}
+              </h2>
+            </div>
+
+            <span class="status-badge">
+              {{ subscription.status }}
+            </span>
+
+          </div>
+
+          <div class="detail">
+            <span>Fecha de inicio</span>
+            <strong>
+              {{ subscription.startDate }}
+            </strong>
+          </div>
+
+          <div class="detail">
+            <span>Estado de pago</span>
+            <strong>
+              {{ subscription.paymentStatus }}
+            </strong>
+          </div>
+
+          <div class="detail">
+            <span>Monto</span>
+            <strong class="amount">
+              S/ {{ subscription.paymentAmount }}
+            </strong>
+          </div>
+
+          <div class="actions">
+
+            <button
+              mat-raised-button
+              type="button"
+              class="primary-action"
+              (click)="editSubscription(subscription.id)">
+              Gestionar suscripción
+            </button>
+
+            <button
+              mat-stroked-button
+              type="button"
+              class="secondary-action"
+              (click)="deleteSubscription(subscription.id)">
+              Cancelar suscripción
+            </button>
+
+          </div>
+
+        </article>
+
+      } @empty {
+
+        <article class="empty-state">
+
+          <div class="empty-icon">
+            R
+          </div>
+
+          <h2>
+            No tienes una suscripción
+          </h2>
+
+          <p>
+            Consulta los planes disponibles y elige
+            el que mejor se adapte a tu servicio.
+          </p>
+
+          <button
+            mat-raised-button
+            type="button"
+            class="primary-action"
+            (click)="goToPlans()">
+            Ver planes disponibles
+          </button>
+
+        </article>
+
+      }
+
+    </div>
+
+  }
+
+</div>

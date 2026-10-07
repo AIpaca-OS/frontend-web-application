@@ -1,0 +1,142 @@
+:host {
+  display: block;
+  min-height: 100%;
+  background: #fbfaf6;
+  color: #0f172a;
+  font-family: 'Roboto', sans-serif;
+}
+
+.plans-page {
+  min-height: calc(100vh - 64px);
+  padding: 48px 32px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #3ea98a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: #0f172a;
+  font-family: 'Outfit', sans-serif;
+  font-size: 36px;
+}
+
+.page-header > div > p:last-child {
+  margin: 8px 0 0;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.plan-card {
+  min-height: 250px;
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  background: #ffffff;
+
+  border: 1px solid #f3d9a4;
+  border-radius: 16px;
+
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.plan-card h2 {
+  margin: 16px 0 8px;
+  color: #12403d;
+  font-family: 'Outfit', sans-serif;
+  font-size: 24px;
+}
+
+.available {
+  display: inline-block;
+
+  padding: 4px 12px;
+
+  background: #f5f4ea;
+  color: #12403d;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.price {
+  margin: 16px 0 24px;
+
+  color: #0f172a;
+
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.price span {
+  font-size: 18px;
+  color: #12403d;
+}
+
+.primary-action {
+  width: 100%;
+  background: #3ea98a !important;
+  color: #ffffff !important;
+}
+
+.primary-action:hover {
+  background: #12403d !important;
+}
+
+.secondary-action {
+  color: #12403d !important;
+  border-color: #12403d !important;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.error {
+  padding: 16px;
+  margin-bottom: 24px;
+
+  background: #f5f4ea;
+  border-left: 4px solid #12403d;
+  border-radius: 4px 12px 12px 4px;
+}
+
+@media (max-width: 700px) {
+  .plans-page {
+    padding: 32px 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-header button {
+    width: 100%;
+  }
+}
