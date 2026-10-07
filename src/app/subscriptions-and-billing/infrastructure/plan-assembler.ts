@@ -11,6 +11,7 @@ export class PlanAssembler implements BaseAssembler<Plan, PlanResource, PlansRes
     return new Plan({
       id: Number(resource.id),
       name: resource.name,
+      description: resource.description,
       referencePrice: Number(resource.referencePrice),
       active: resource.active,
     });
@@ -20,6 +21,7 @@ export class PlanAssembler implements BaseAssembler<Plan, PlanResource, PlansRes
     return {
       id: entity.id,
       name: entity.name,
+      description: entity.description,
       referencePrice: entity.referencePrice,
       active: entity.active,
     };
