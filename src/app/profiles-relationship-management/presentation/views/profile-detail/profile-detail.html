@@ -1,0 +1,75 @@
+<section class="page">
+
+  @if (profile(); as currentProfile) {
+
+    <header>
+
+      <h1>
+        Perfil del {{ getProfileType().toLowerCase() }}
+      </h1>
+
+      <p>
+        Gestiona tu información personal.
+      </p>
+
+    </header>
+
+    <article class="card">
+
+      <div class="card-header">
+
+        <h2>
+          Información del perfil
+        </h2>
+
+        <button
+          mat-button
+          type="button"
+          (click)="editProfile()"
+        >
+          Editar
+        </button>
+
+      </div>
+
+      <div class="profile-row">
+
+        <div class="avatar">
+          {{ currentProfile.firstName.charAt(0) }}
+          {{ currentProfile.lastName.charAt(0) }}
+        </div>
+
+        <div>
+
+          <strong>
+            {{ currentProfile.fullName }}
+          </strong>
+
+          <p>
+            {{ getProfileType() }}
+          </p>
+
+        </div>
+
+      </div>
+
+      <div class="profile-row">
+
+        <div>
+          <strong>Teléfono</strong>
+
+          <p>
+            {{
+              currentProfile.phoneNumber
+              ?? 'No registrado'
+            }}
+          </p>
+        </div>
+
+      </div>
+
+    </article>
+
+  }
+
+</section>

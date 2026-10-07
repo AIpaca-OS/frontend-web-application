@@ -19,6 +19,21 @@
     "reportIncident": "Reportar incidencia",
     "configureRoute": "Configurar ruta"
   },
+  "students": {
+    "main": {
+      "title": "Estudiantes",
+      "subtitle": "Gestiona los estudiantes asociados a tu perfil.",
+      "newStudent": "Nuevo estudiante",
+      "noStudents": "No hay estudiantes registrados."
+    },
+    "data": {
+      "name": "Nombre",
+      "birthdate": "Fecha de nacimiento",
+      "school": "Colegio",
+      "state": "Estado",
+      "actions": "Acciones"
+    }
+  },
   "footer": {
     "rights": "Todos los derechos reservados.",
     "terms": "Términos y condiciones",

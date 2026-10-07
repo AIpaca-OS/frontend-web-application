@@ -1,0 +1,99 @@
+<section class="page">
+
+  <article class="card">
+
+    <h1>
+      Autorizar tutor
+    </h1>
+
+    <p>
+      Selecciona un tutor registrado y define
+      su relación con el estudiante.
+    </p>
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="form"
+    >
+
+      <mat-form-field appearance="outline">
+
+        <mat-label>Tutor</mat-label>
+
+        <mat-select formControlName="tutorId">
+
+          @for (
+            tutor of store.tutors();
+            track tutor.id
+            ) {
+
+            <mat-option [value]="tutor.id">
+              {{ tutor.fullName }}
+            </mat-option>
+
+          }
+
+        </mat-select>
+
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+
+        <mat-label>Relación</mat-label>
+
+        <mat-select formControlName="relationshipType">
+
+          <mat-option
+            [value]="RelationshipType.MOTHER"
+          >
+            Madre
+          </mat-option>
+
+          <mat-option
+            [value]="RelationshipType.FATHER"
+          >
+            Padre
+          </mat-option>
+
+          <mat-option
+            [value]="RelationshipType.LEGAL_GUARDIAN"
+          >
+            Tutor legal
+          </mat-option>
+
+          <mat-option
+            [value]="RelationshipType.OTHER"
+          >
+            Otro
+          </mat-option>
+
+        </mat-select>
+
+      </mat-form-field>
+
+      <div class="actions">
+
+        <button
+          mat-button
+          type="button"
+          (click)="cancel()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="form.invalid"
+        >
+          Autorizar
+        </button>
+
+      </div>
+
+    </form>
+
+  </article>
+
+</section>
