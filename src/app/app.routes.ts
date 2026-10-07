@@ -8,4 +8,11 @@ export const routes: Routes = [
         (m) => m.vehicleCredentialRoutes,
       ),
   },
+  {
+    path: 'routes',
+    loadChildren: () =>
+      import('./route-trip-planning/presentation/views/route-trip.routes').then(
+        (m) => m.routeTripRoutes,
+      ),
+  },
 ];
