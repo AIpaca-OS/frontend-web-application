@@ -5,7 +5,11 @@
       "cause": "Tráfico pesado en la avenida principal",
       "priority": "regular",
       "magnitude": "8 minutos",
-      "studentIds": [102, 105, 108],
+      "studentIds": [
+        102,
+        105,
+        108
+      ],
       "createdAt": "2026-10-06T08:08:00Z"
     }
   ],
@@ -15,7 +19,13 @@
       "title": "Avería del vehículo",
       "message": "La movilidad se encuentra detenida debido a una avería del motor.",
       "priority": "important",
-      "studentIds": [101, 102, 103, 105, 108],
+      "studentIds": [
+        101,
+        102,
+        103,
+        105,
+        108
+      ],
       "resolved": false,
       "resolvedAt": null,
       "createdAt": "2026-10-06T07:40:00Z"
@@ -25,7 +35,9 @@
       "title": "Estudiante no localizado",
       "message": "No fue posible realizar el recojo de Valeria Torres en el punto establecido.",
       "priority": "important",
-      "studentIds": [102],
+      "studentIds": [
+        102
+      ],
       "resolved": true,
       "resolvedAt": "2026-10-06T08:05:00Z",
       "createdAt": "2026-10-06T07:50:00Z"
@@ -125,17 +137,7 @@
     "warningEnabled": true,
     "infoEnabled": true
   },
-
   "vehicles": [
-    {
-      "id": 1,
-      "brand": "Toyota",
-      "model": "HiAce",
-      "licensePlate": "ABC-123",
-      "capacity": 15,
-      "year": 2022,
-      "status": "ACTIVE"
-    },
     {
       "id": 2,
       "brand": "Mercedes-Benz",
@@ -144,16 +146,16 @@
       "capacity": 20,
       "year": 2021,
       "status": "ACTIVE"
+    },
+    {
+      "id": 3,
+      "brand": "SFDK",
+      "model": "C3",
+      "licensePlate": "PCA-123",
+      "capacity": 15,
+      "year": 2025,
+      "status": "ACTIVE"
     }
   ],
-  "credentials": [
-    {
-      "id": 1,
-      "vehicleId": 1,
-      "documentType": "SOAT",
-      "documentNumber": "SOAT-998822",
-      "expirationDate": "2027-05-10",
-      "status": "VALID"
-    }
-  ]
+  "credentials": []
 }

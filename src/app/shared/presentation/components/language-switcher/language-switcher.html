@@ -1,13 +1,16 @@
-<mat-button-toggle-group [value]="currentLang"
-                         appearance="standard"
-                         aria-label="Preferred language"
-                         name="language">
+<button mat-stroked-button [matMenuTriggerFor]="langMenu" class="lang-btn">
+  <mat-icon>language</mat-icon> {{ currentLang.toUpperCase() }}
+</button>
 
+<mat-menu #langMenu="matMenu" class="lang-dropdown">
   @for (language of languages; track language) {
-    <mat-button-toggle [value]="language"
-                       [aria-label]="language"
-                       (click)="useLanguage(language)">
-      {{ language.toUpperCase() }}
-    </mat-button-toggle>
+    <button
+      mat-menu-item
+      [class.active-lang]="currentLang === language"
+      (click)="useLanguage(language)"
+    >
+      <span>{{ language === 'es' ? 'Español' : 'English' }}</span>
+      <span class="lang-code">({{ language.toUpperCase() }})</span>
+    </button>
   }
-</mat-button-toggle-group>
+</mat-menu>

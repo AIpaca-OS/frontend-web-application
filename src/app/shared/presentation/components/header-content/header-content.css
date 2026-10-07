@@ -1,0 +1,102 @@
+/* Contenedor principal del header */
+.top-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #F5F4EA; /* Neutral Color II */
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Título dentro del header */
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #0F172A; /* Neutral Color III */
+}
+
+/* Contenedor derecho para las acciones (idioma, notificaciones, perfil) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Botón de idioma */
+.lang-btn {
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  border-color: #F5F4EA !important;
+}
+
+/* Icono de notificaciones con contenedor circular */
+.icon-notification {
+  position: relative;
+  padding: 8px;
+  border: 1px solid #F5F4EA; /* Neutral Color II */
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Puntito rojo de alerta en notificaciones */
+.dot-red {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+}
+
+/* Tarjeta contenedora del perfil del usuario */
+.user-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #F5F4EA; /* Neutral Color II */
+  padding: 4px 12px 4px 4px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+/* Avatar pequeño de las iniciales (ej. CE) */
+.avatar-xs {
+  width: 28px;
+  height: 28px;
+  background-color: #F3D9A4; /* Secondary Color I / II */
+  color: #0F172A; /* Neutral Color III */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* Nombre del usuario */
+.profile-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  color: #0F172A; /* Neutral Color III */
+}
+
+/* Subtítulo o rol del usuario (ej. Conductor) */
+.profile-sub {
+  font-size: 10px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Icono de flecha hacia abajo en el perfil */
+.dropdown-icon {
+  font-size: 18px;
+  color: #9ca3af;
+}

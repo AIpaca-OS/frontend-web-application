@@ -6,15 +6,9 @@ import {TranslatePipe} from '@ngx-translate/core';
 import {LanguageSwitcher} from '../language-switcher/language-switcher';
 import {FooterContent} from '../footer-content/footer-content';
 import { MatIcon } from '@angular/material/icon';
-/*
-import {
-  AuthenticationSection
-} from '../../../../iam/presentation/components/authentication-section/authentication-section';
-*/
+import { SideMenu } from '../side-menu/side-menu';
+import { HeaderContent } from '../header-content/header-content'
 
-/**
- * Main shell component that hosts top-level navigation and routed content.
- */
 @Component({
   selector: 'app-layout',
   imports: [
@@ -27,6 +21,8 @@ import {
     LanguageSwitcher,
     FooterContent,
     MatIcon,
+    SideMenu,
+    HeaderContent
     // AuthenticationSection
   ],
   templateUrl: './layout.html',
