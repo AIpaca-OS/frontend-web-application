@@ -1,0 +1,33 @@
+<h2 mat-dialog-title class="modal-title">Reportar retraso</h2>
+
+<mat-dialog-content class="modal-content">
+  <p class="modal-subtitle">Selecciona la magnitud estimada de la demora:</p>
+
+  <!-- Opciones rápidas de tiempo tipo "pill" o botones grandes -->
+  <div class="magnitude-grid">
+      <button
+        type="button"
+        class="mag-btn"
+      >
+        Important
+      </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width mt-3">
+    <mat-label>Causa del retraso</mat-label>
+    <input matInput placeholder="Ej. Tráfico pesado en la vía principal">
+  </mat-form-field>
+
+  <p class="info-note">ℹ️ Se notificará automáticamente a los tutores de los estudiantes pendientes.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="modal-actions">
+  <button mat-button mat-dialog-close class="cancel-btn">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    class="submit-btn"
+  >
+    Confirmar y enviar
+  </button>
+</mat-dialog-actions>
