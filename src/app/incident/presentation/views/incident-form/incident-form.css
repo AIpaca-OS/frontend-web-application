@@ -1,0 +1,67 @@
+.modal-title {
+  font-weight: 700 !important;
+  color: #111827;
+  font-size: 20px !important;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.full-width {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Botones rápidos de magnitud para el retraso */
+.magnitude-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .mag-btn {
+    background: #f7f6f0;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    color: #1b3123;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #eeede4;
+    }
+
+    &.selected {
+      background: #1b3123;
+      color: #ffffff;
+      border-color: #1b3123;
+    }
+  }
+}
+
+.info-note {
+  font-size: 12px;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.modal-actions {
+  padding: 16px 24px !important;
+}
+
+.cancel-btn {
+  color: #4b5563 !important;
+}
+
+.submit-btn {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+}
