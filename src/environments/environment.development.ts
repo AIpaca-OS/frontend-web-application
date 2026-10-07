@@ -5,4 +5,7 @@ export const environment = {
   platformProviderIncidentsEndpointPath: '/incidents',
   platformProviderNotificationsEndpointPath: '/notifications',
   platformProviderNotificationSettingsEndpointPath: '/notificationSettings',
+
+  routePlanningApiBaseUrl: 'https://6ac5a99754a61668c5f74d74.mockapi.io/api/v1',
+  routePlanningRoutesEndpointPath: '/routes',
 };
