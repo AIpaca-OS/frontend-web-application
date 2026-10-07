@@ -1,0 +1,38 @@
+﻿<h1 class="title">{{ isEdit ? 'Edit Vehicle' : 'New Vehicle' }}</h1>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-form-field appearance="outline">
+    <mat-label>License Plate</mat-label>
+    <input matInput formControlName="licensePlate" placeholder="ABC-123" required />
+    @if (form.get('licensePlate')!.touched && form.get('licensePlate')!.hasError('required')) {
+      <mat-error>Plate is required</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Brand</mat-label>
+    <input matInput formControlName="brand" placeholder="Toyota" required />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Model</mat-label>
+    <input matInput formControlName="model" placeholder="HiAce" required />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Capacity</mat-label>
+    <input matInput type="number" formControlName="capacity" required />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Year</mat-label>
+    <input matInput type="number" formControlName="year" required />
+  </mat-form-field>
+
+  <div class="button-group">
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+      {{ isEdit ? 'Update Vehicle' : 'Create Vehicle' }}
+    </button>
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+  </div>
+</form>
