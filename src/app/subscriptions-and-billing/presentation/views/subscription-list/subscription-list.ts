@@ -16,6 +16,9 @@ export class SubscriptionList {
   readonly store = inject(SubscriptionsAndBillingStore);
   private readonly router = inject(Router);
 
+  showCancelConfirmation = false;
+  pendingCancellationId: number | null = null;
+
   getPlanName(planId: string): string {
     const plan = this.store.plans().find((plan) => plan.id === Number(planId));
 
@@ -26,8 +29,24 @@ export class SubscriptionList {
     this.router.navigate(['subscriptions-and-billing', 'subscriptions', id, 'edit']).then();
   }
 
-  deleteSubscription(id: number): void {
-    this.store.deleteSubscription(id);
+  requestCancellation(id: number): void {
+    this.pendingCancellationId = id;
+    this.showCancelConfirmation = true;
+  }
+
+  confirmCancellation(): void {
+    if (this.pendingCancellationId === null) {
+      return;
+    }
+
+    this.store.deleteSubscription(this.pendingCancellationId);
+
+    this.closeCancellation();
+  }
+
+  closeCancellation(): void {
+    this.showCancelConfirmation = false;
+    this.pendingCancellationId = null;
   }
 
   goToPlans(): void {
