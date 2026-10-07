@@ -2,6 +2,33 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
-@Component({selector:'app-student-list',imports:[MatButtonModule,MatIconModule],template:`<section class="page"><div class="header"><div><h1>Estudiantes</h1><p>Gestión de estudiantes.</p></div><button mat-flat-button color="primary" (click)="createStudent()"><mat-icon>add</mat-icon> Nuevo estudiante</button></div>@if(store.error()){<p class="error">{{store.error()}}</p>}<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Fecha de nacimiento</th><th>Colegio</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>@for(student of store.students();track student.id){<tr><td>{{student.fullName}}</td><td>{{student.birthDate}}</td><td>{{student.schoolName}}</td><td>{{student.status}}</td><td><button mat-icon-button aria-label="Editar estudiante" (click)="editStudent(student.id)"><mat-icon>edit</mat-icon></button><button mat-icon-button aria-label="Eliminar estudiante" (click)="deleteStudent(student.id)"><mat-icon>delete</mat-icon></button></td></tr>}</tbody></table></div></section>`,styles:[`.page{padding:24px}.header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}.table-wrap{overflow:auto;background:white;border-radius:12px}table{width:100%;border-collapse:collapse}th,td{padding:14px;text-align:left;border-bottom:1px solid #e5e7eb}.error{color:#b91c1c}@media(max-width:700px){.header{align-items:flex-start;flex-direction:column}}`]})
-export class StudentList{readonly store=inject(ProfilesRelationshipStore);private readonly router=inject(Router);createStudent(){this.router.navigate(['/students/new']).then();}editStudent(id:number){this.router.navigate(['/students',id,'edit']).then();}deleteStudent(id:number){this.store.deleteStudent(id);}}
+
+/**
+ * Displays the students managed by the current tutor.
+ */
+@Component({
+  selector: 'app-student-list',
+  standalone: true,
+  imports: [MatButtonModule, MatIconModule],
+  templateUrl: './student-list.html',
+  styleUrl: './student-list.css',
+})
+export class StudentList {
+  readonly store = inject(ProfilesRelationshipStore);
+
+  private readonly router = inject(Router);
+
+  createStudent(): void {
+    this.router.navigate(['/students/new']).then();
+  }
+
+  viewStudent(id: number): void {
+    this.router.navigate(['/students', id]).then();
+  }
+
+  editStudent(id: number): void {
+    this.router.navigate(['/students', id, 'edit']).then();
+  }
+}

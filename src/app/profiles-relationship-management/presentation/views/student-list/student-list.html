@@ -1,0 +1,108 @@
+<section class="page">
+
+  <header class="page-header">
+
+    <div>
+      <h1>Estudiantes</h1>
+      <p>
+        Gestiona los estudiantes asociados a tu perfil.
+      </p>
+    </div>
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="createStudent()"
+    >
+      <mat-icon>add</mat-icon>
+      Nuevo estudiante
+    </button>
+
+  </header>
+
+  @if (store.error()) {
+    <p class="error" role="alert">
+      {{ store.error() }}
+    </p>
+  }
+
+  @if (store.loading()) {
+    <p>Cargando estudiantes...</p>
+  }
+
+  <div class="table-card">
+
+    <table>
+
+      <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Fecha de nacimiento</th>
+        <th>Colegio</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+      </thead>
+
+      <tbody>
+
+        @for (student of store.students(); track student.id) {
+
+          <tr>
+
+            <td>
+              {{ student.fullName }}
+            </td>
+
+            <td>
+              {{ student.birthDate }}
+            </td>
+
+            <td>
+              {{ student.schoolName }}
+            </td>
+
+            <td>
+              {{ student.status }}
+            </td>
+
+            <td class="actions">
+
+              <button
+                mat-icon-button
+                aria-label="Ver estudiante"
+                (click)="viewStudent(student.id)"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                aria-label="Editar estudiante"
+                (click)="editStudent(student.id)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+
+            </td>
+
+          </tr>
+
+        } @empty {
+
+          <tr>
+            <td colspan="5">
+              No hay estudiantes registrados.
+            </td>
+          </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>

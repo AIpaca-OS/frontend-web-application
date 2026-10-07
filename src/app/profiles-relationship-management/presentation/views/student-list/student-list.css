@@ -1,0 +1,54 @@
+.page {
+  padding: 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #66736f;
+}
+
+.table-card {
+  overflow: auto;
+  background: white;
+  border-radius: 16px;
+  padding: 8px 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 16px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e7ebe9;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

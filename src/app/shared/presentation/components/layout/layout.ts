@@ -5,9 +5,9 @@ import {MatButtonModule} from '@angular/material/button';
 import {TranslatePipe} from '@ngx-translate/core';
 import {LanguageSwitcher} from '../language-switcher/language-switcher';
 import {FooterContent} from '../footer-content/footer-content';
-import { MatIcon } from '@angular/material/icon';
-import { SideMenu } from '../side-menu/side-menu';
-import { HeaderContent } from '../header-content/header-content'
+import {MatIcon} from '@angular/material/icon';
+import {SideMenu} from '../side-menu/side-menu';
+import {HeaderContent} from '../header-content/header-content'
 
 @Component({
   selector: 'app-layout',
