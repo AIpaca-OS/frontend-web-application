@@ -3,6 +3,7 @@ import { BaseResource, BaseResponse } from '../../shared/infrastructure/base-res
 export interface PlanResource extends BaseResource {
   id: number;
   name: string;
+  description: string;
   referencePrice: number;
   active: boolean;
 }
