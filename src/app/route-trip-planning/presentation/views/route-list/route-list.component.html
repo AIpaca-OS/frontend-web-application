@@ -1,0 +1,93 @@
+<section class="routes-page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">ROUTE & TRIP PLANNING</p>
+      <h1>Configurar rutas</h1>
+      <p class="subtitle">
+        Administra las rutas registradas y sus datos básicos para la planificación del servicio.
+      </p>
+    </div>
+
+    <button mat-flat-button class="primary-action" (click)="navigateToNew()">
+      <mat-icon>add</mat-icon>
+      Nueva ruta
+    </button>
+  </div>
+
+  @if (store.loading()) {
+    <div class="state-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando rutas...</span>
+    </div>
+  }
+
+  @if (store.error()) {
+    <div class="error-box">{{ store.error() }}</div>
+  }
+
+  @if (!store.loading()) {
+    <div class="table-card">
+      <div class="table-summary">
+        <div>
+          <h2>Rutas registradas</h2>
+          <p>{{ store.routeCount() }} ruta(s) disponible(s)</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource()" matSort>
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+            <td mat-cell *matCellDef="let route">{{ route.code }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Ruta</th>
+            <td mat-cell *matCellDef="let route">{{ route.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="departureTime">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Salida</th>
+            <td mat-cell *matCellDef="let route">{{ route.departureTime }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="stopsCount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Paradas</th>
+            <td mat-cell *matCellDef="let route">{{ route.stopsCount }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+            <td mat-cell *matCellDef="let route">
+              <span class="status-chip" [class.scheduled]="route.status === 'SCHEDULED'">
+                {{ route.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let route" class="actions-cell">
+              <button mat-icon-button aria-label="Editar ruta" (click)="editRoute(route.id)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                class="delete-action"
+                aria-label="Eliminar ruta"
+                (click)="deleteRoute(route.id)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  }
+</section>
