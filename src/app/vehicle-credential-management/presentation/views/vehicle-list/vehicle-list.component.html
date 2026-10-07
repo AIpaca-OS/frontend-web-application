@@ -1,76 +1,75 @@
-﻿<h1 class="title">Vehicle & Credential Management</h1>
+﻿<div class="content-body">
+  <!-- Cabecera de la sección alineada correctamente -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">Vehicle & Credential Management</h1>
+      <p class="page-subtitle">Rumbo muestra y centraliza la información registrada de la flota vehicular.</p>
+    </div>
+    <button mat-flat-button class="btn-primary-custom" (click)="navigateToNew()">
+      <mat-icon>add</mat-icon> New Vehicle
+    </button>
+  </div>
 
-@if (store.loading()) {
-  <mat-spinner diameter="40"></mat-spinner>
-}
-@if (store.error()) {
-  <mat-error>{{ store.error() }}</mat-error>
-}
+  <!-- Estados de carga o error -->
+  @if (store.loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+  @if (store.error()) {
+    <mat-error class="error-banner">{{ store.error() }}</mat-error>
+  }
 
-<div class="actions-header">
-  <button mat-raised-button color="primary" (click)="navigateToNew()">
-    <mat-icon>add</mat-icon> New Vehicle
-  </button>
+  <!-- Grid de tarjetas de vehículos -->
+  <div class="vehicles-grid">
+    @for (v of store.vehicles(); track v.id) {
+      <mat-card class="custom-card vehicle-card">
+        <div class="card-header-row">
+          <div>
+            <h3 class="card-title">{{ v.brand }} {{ v.model }}</h3>
+          </div>
+          <span class="status-badge" [class.active]="v.status === 'ACTIVE'">
+            {{ v.status }}
+          </span>
+        </div>
+
+        <div class="vehicle-details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Plate</span>
+            <span class="detail-value plate-badge">{{ v.licensePlate }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Capacity</span>
+            <span class="detail-value">{{ v.capacity }} seats</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Year</span>
+            <span class="detail-value">{{ v.year }}</span>
+          </div>
+        </div>
+
+        <div class="card-footer-actions">
+          <button mat-stroked-button class="action-btn-sm" (click)="editVehicle(v.id)">
+            <mat-icon>edit</mat-icon> Editar
+          </button>
+          <button mat-stroked-button color="warn" class="action-btn-sm" (click)="deleteVehicle(v.id)">
+            <mat-icon>delete</mat-icon> Eliminar
+          </button>
+        </div>
+      </mat-card>
+    }
+  </div>
+
+  <!-- Banner Informativo -->
+  <div class="info-banner">
+    <div class="banner-icon">
+      <mat-icon>info</mat-icon>
+    </div>
+    <div>
+      <p class="banner-title">Importante</p>
+      <p class="banner-desc">
+        Estos registros y capacidades son declarados por el prestador en este prototipo. Rumbo centraliza la gestión operativa sin simular una validación gubernamental externa.
+      </p>
+    </div>
+  </div>
 </div>
-
-<table mat-table [dataSource]="dataSource()" class="mat-elevation-z8" matSort matSortActive="id" matSortDirection="asc">
-  <!-- ID Column -->
-  <ng-container matColumnDef="id">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-    <td mat-cell *matCellDef="let v">{{ v.id }}</td>
-  </ng-container>
-
-  <!-- Plate Column -->
-  <ng-container matColumnDef="licensePlate">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Plate</th>
-    <td mat-cell *matCellDef="let v">{{ v.licensePlate }}</td>
-  </ng-container>
-
-  <!-- Brand Column -->
-  <ng-container matColumnDef="brand">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Brand</th>
-    <td mat-cell *matCellDef="let v">{{ v.brand }}</td>
-  </ng-container>
-
-  <!-- Model Column -->
-  <ng-container matColumnDef="model">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Model</th>
-    <td mat-cell *matCellDef="let v">{{ v.model }}</td>
-  </ng-container>
-
-  <!-- Capacity Column -->
-  <ng-container matColumnDef="capacity">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Capacity</th>
-    <td mat-cell *matCellDef="let v">{{ v.capacity }} seats</td>
-  </ng-container>
-
-  <!-- Year Column -->
-  <ng-container matColumnDef="year">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Year</th>
-    <td mat-cell *matCellDef="let v">{{ v.year }}</td>
-  </ng-container>
-
-  <!-- Status Column -->
-  <ng-container matColumnDef="status">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-    <td mat-cell *matCellDef="let v">{{ v.status }}</td>
-  </ng-container>
-
-  <!-- Actions Column -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef>Actions</th>
-    <td mat-cell *matCellDef="let v">
-      <button mat-icon-button (click)="editVehicle(v.id)">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button color="warn" (click)="deleteVehicle(v.id)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
-
-<mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>

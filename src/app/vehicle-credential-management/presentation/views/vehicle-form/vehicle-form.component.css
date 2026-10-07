@@ -1,16 +1,75 @@
-﻿.title {
-  margin: 16px;
-}
-
-form {
+﻿.content-body {
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 600px;
-  margin: 16px;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  color: #0F172A;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+.form-card {
+  border-radius: 16px !important;
+  padding: 32px !important;
+  border: 1px solid #F5F4EA !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+.vehicle-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 24px;
+
+  .full-width {
+    grid-column: span 1;
+  }
+
+  /* El campo de placa o marca puede destacar si quieres, o mantener simetría */
+}
+
+/* Ajuste general para que los mat-form-field ocupen el 100% de su celda */
+mat-form-field {
+  width: 100%;
 }
 
 .button-group {
+  grid-column: span 2;
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
+  margin-top: 16px;
+  border-top: 1px solid #F5F4EA;
+  padding-top: 24px;
+}
+
+.btn-primary-custom {
+  background-color: #12403D !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  padding: 0 24px !important;
+  font-weight: 600 !important;
+  height: 44px;
+  box-shadow: 0 4px 12px rgba(18, 64, 61, 0.15) !important;
+}
+
+.btn-secondary-custom {
+  border-radius: 12px !important;
+  height: 44px !important;
+  padding: 0 20px !important;
+  color: #4b5563 !important;
+  border-color: #d1d5db !important;
+  font-weight: 600 !important;
 }

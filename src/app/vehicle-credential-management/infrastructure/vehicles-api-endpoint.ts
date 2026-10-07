@@ -12,7 +12,6 @@ export class VehiclesApiEndpoint extends BaseApiEndpoint<
   VehicleAssembler
 > {
   constructor(http: HttpClient) {
-    const baseUrl = (environment as any).platformProviderApiBaseUrl || '/api/v1';
-    super(http, `${baseUrl}/vehicles`, new VehicleAssembler());
+    super(http, `${environment.platformProviderApiBaseUrl}${environment.platformProviderVehiclesEndpointPath}`, new VehicleAssembler());
   }
 }

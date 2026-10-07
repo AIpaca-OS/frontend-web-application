@@ -1,193 +1,113 @@
-<div class="app-container">
-
-  <!-- ================= SIDEBAR IZQUIERDO ================= -->
-  <aside class="sidebar">
-    <div class="sidebar-top">
-      <div class="sidebar-brand">
-        <h1>Rumbo</h1>
-      </div>
-
-      <div class="user-card-sidebar">
-        <div class="avatar-sm">CE</div>
-        <div class="user-details">
-          <p class="user-name">Carlos Estrada</p>
-          <p class="user-role">Bus #14 · Ruta de la mañana</p>
-        </div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-link">
-          <mat-icon>home</mat-icon> Ruta asignada
-        </a>
-        <a href="#" class="nav-link">
-          <mat-icon>group</mat-icon> Estudiantes
-        </a>
-        <a href="#" class="nav-link">
-          <mat-icon>alt_route</mat-icon> Configurar ruta
-        </a>
-        <a href="#" class="nav-link active">
-          <mat-icon>notifications</mat-icon> Notificaciones
-          <span class="badge">1</span>
-        </a>
-        <a href="#" class="nav-link">
-          <mat-icon>payments</mat-icon> Plan y facturación
-        </a>
-        <a href="#" class="nav-link">
-          <mat-icon>settings</mat-icon> Configuración
-        </a>
-      </nav>
+<main class="main-content">
+  <div class="content-body">
+    <div class="page-header-section">
+      <h3 class="page-title">Notificaciones</h3>
+      <p class="page-subtitle">Los eventos operativos de tu ruta se centralizan aquí.</p>
     </div>
 
-    <div class="sidebar-footer">
-      <div class="help-box">
-        <div class="help-icon">?</div>
-        <div class="help-text">
-          <p class="help-title">¿Necesitas ayuda?</p>
-          <p class="help-desc">Revisa la ayuda y las indicaciones de seguridad.</p>
+    <div class="dashboard-grid">
+
+      <!-- Tarjeta de Actualizaciones Recientes con Expansion Panel Estilizado -->
+      <mat-card class="custom-card">
+        <div class="card-header-row">
+          <h4 class="card-title">Actualizaciones recientes</h4>
+          <button mat-button color="primary" class="action-text-btn">
+            Marcar todo como leído
+          </button>
         </div>
-      </div>
-      <button class="logout-btn">
-        <mat-icon>logout</mat-icon> Cerrar sesión
-      </button>
-    </div>
-  </aside>
 
-  <!-- ================= CONTENIDO PRINCIPAL ================= -->
-  <main class="main-content">
-
-    <header class="top-header">
-      <h2 class="header-title">Notificaciones</h2>
-      <div class="header-actions">
-        <button mat-stroked-button class="lang-btn">
-          <mat-icon>language</mat-icon> ES
-        </button>
-        <div class="icon-notification">
-          <mat-icon>auto_awesome</mat-icon>
-          <span class="dot-red"></span>
-        </div>
-        <div class="user-profile-top">
-          <div class="avatar-xs">CE</div>
-          <div class="profile-info-top">
-            <p class="profile-name">Carlos Estrada</p>
-            <p class="profile-sub">Conductor</p>
-          </div>
-          <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
-        </div>
-      </div>
-    </header>
-
-    <div class="content-body">
-      <div class="page-header-section">
-        <h3 class="page-title">Notificaciones</h3>
-        <p class="page-subtitle">Los eventos operativos de tu ruta se centralizan aquí.</p>
-      </div>
-
-      <div class="dashboard-grid">
-
-        <!-- Tarjeta de Actualizaciones Recientes con Expansion Panel Estilizado -->
-        <mat-card class="custom-card">
-          <div class="card-header-row">
-            <h4 class="card-title">Actualizaciones recientes</h4>
-            <button mat-button color="primary" class="action-text-btn">
-              Marcar todo como leído
-            </button>
-          </div>
-
-          <div class="notifications-list">
-            @for (notification of notifications(); track notification.id) {
-              <div class="notification-item" [class.unread-item]="!notification.read" >
-                @switch (notification.type) {
-                  @case ('important') {
-                    <div class="icon-box important">
-                      <mat-icon>warning</mat-icon>
-                    </div>
-                  }
-                  @case ('warning') {
-                    <div class="icon-box warning">
-                      <mat-icon>warning</mat-icon>
-                    </div>
-                  }
-                  @case ('success') {
-                    <div class="icon-box success">
-                      <mat-icon>check</mat-icon>
-                    </div>
-                  }
-                  @default {
-                    <div class="icon-box info">
-                      <mat-icon>info</mat-icon>
-                    </div>
-                  }
-                }
-
-                <!-- Contenido de la notificación -->
-                <div class="notification-content">
-                  <div class="notification-row">
-                    <p class="notification-item-title">
-                      {{ notification.title }}
-                      @if (!notification.read) {
-                        <span class="unread-dot"></span>
-                      }
-                    </p>
-                    <span class="notification-time">{{ notification.createdAt | date:'shortTime' }}</span>
+        <div class="notifications-list">
+          @for (notification of notifications(); track notification.id) {
+            <div class="notification-item" [class.unread-item]="!notification.read" >
+              @switch (notification.type) {
+                @case ('important') {
+                  <div class="icon-box important">
+                    <mat-icon>warning</mat-icon>
                   </div>
-                  <p class="notification-desc">{{ notification.message }}</p>
+                }
+                @case ('warning') {
+                  <div class="icon-box warning">
+                    <mat-icon>warning</mat-icon>
+                  </div>
+                }
+                @case ('success') {
+                  <div class="icon-box success">
+                    <mat-icon>check</mat-icon>
+                  </div>
+                }
+                @default {
+                  <div class="icon-box info">
+                    <mat-icon>info</mat-icon>
+                  </div>
+                }
+              }
+
+              <!-- Contenido de la notificación -->
+              <div class="notification-content">
+                <div class="notification-row">
+                  <p class="notification-item-title">
+                    {{ notification.title }}
+                    @if (!notification.read) {
+                      <span class="unread-dot"></span>
+                    }
+                  </p>
+                  <span class="notification-time">{{ notification.createdAt | date:'shortTime' }}</span>
                 </div>
+                <p class="notification-desc">{{ notification.message }}</p>
+              </div>
 
-                <!-- Botones de Acción (Ocultos por defecto, aparecen en el hover) -->
-                <div class="notification-actions" (click)="$event.stopPropagation()">
+              <!-- Botones de Acción (Ocultos por defecto, aparecen en el hover) -->
+              <div class="notification-actions" (click)="$event.stopPropagation()">
 
-                  @if (!notification.read) {
-                    <button
-                      mat-icon-button
-                      class="action-icon-btn check-btn"
-                      title="Marcar como leído"
-                      (click)="markAsRead(notification)"
-                    >
-                      <mat-icon>done</mat-icon>
-                    </button>
-                  }
-
+                @if (!notification.read) {
                   <button
                     mat-icon-button
-                    class="action-icon-btn delete-btn"
-                    title="Eliminar notificación"
-                    (click)="deleteNotification(notification.id)"
+                    class="action-icon-btn check-btn"
+                    title="Marcar como leído"
+                    (click)="markAsRead(notification)"
                   >
-                    <mat-icon>delete_outline</mat-icon>
+                    <mat-icon>done</mat-icon>
                   </button>
+                }
 
-                </div>
+                <button
+                  mat-icon-button
+                  class="action-icon-btn delete-btn"
+                  title="Eliminar notificación"
+                  (click)="deleteNotification(notification.id)"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
 
               </div>
-            }
-          </div>
-        </mat-card>
 
-        <app-delay-form />
+            </div>
+          }
+        </div>
+      </mat-card>
 
-        <!-- Tarjeta de Comportamiento de avisos -->
-        <mat-card class="custom-card">
-          <div class="card-inner-wrapper">
-            <h4 class="card-title">Comportamiento de avisos</h4>
-            <p class="card-desc-muted">
-              Las incidencias críticas permanecen disponibles aunque los avisos no críticos estén desactivados.
-            </p>
+      <!-- Tarjeta de Comportamiento de avisos -->
+      <mat-card class="custom-card">
+        <div class="card-inner-wrapper">
+          <h4 class="card-title">Comportamiento de avisos</h4>
+          <p class="card-desc-muted">
+            Las incidencias críticas permanecen disponibles aunque los avisos no críticos estén desactivados.
+          </p>
 
-            <div class="info-banner">
-              <div class="banner-icon">
-                <mat-icon>info</mat-icon>
-              </div>
-              <div class="banner-text-wrap">
-                <p class="banner-title">Diseñado para reducir ruido</p>
-                <p class="banner-desc">
-                  Rumbo concentra los avisos en recojos, retrasos, incidencias y llegadas en lugar de mensajes continuos de chat.
-                </p>
-              </div>
+          <div class="info-banner">
+            <div class="banner-icon">
+              <mat-icon>info</mat-icon>
+            </div>
+            <div class="banner-text-wrap">
+              <p class="banner-title">Diseñado para reducir ruido</p>
+              <p class="banner-desc">
+                Rumbo concentra los avisos en recojos, retrasos, incidencias y llegadas en lugar de mensajes continuos de chat.
+              </p>
             </div>
           </div>
-        </mat-card>
+        </div>
+      </mat-card>
 
-      </div>
     </div>
-  </main>
-</div>
+  </div>
+</main>
