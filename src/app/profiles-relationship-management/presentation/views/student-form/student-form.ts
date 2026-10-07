@@ -54,7 +54,8 @@ export class StudentForm {
         return;
       }
 
-      const student = this.store.students().find((current) => current.id === this.studentId);
+      const student = this.store.students().find(
+        current => String(current.id) === id);
 
       if (!student) {
         return;

@@ -23,7 +23,7 @@ export class StudentAssembler implements BaseAssembler<Student, StudentResource,
    */
   toEntityFromResource = (resource: StudentResource): Student =>
     new Student({
-      id: resource.id,
+      id: Number(resource.id),
       firstName: resource.firstName,
       lastName: resource.lastName,
       birthDate: resource.birthDate,
@@ -39,7 +39,7 @@ export class StudentAssembler implements BaseAssembler<Student, StudentResource,
    */
   toResourceFromEntity = (entity: Student): StudentResource =>
     ({
-      id: entity.id,
+      id: String(entity.id),
       firstName: entity.firstName,
       lastName: entity.lastName,
       birthDate: entity.birthDate,

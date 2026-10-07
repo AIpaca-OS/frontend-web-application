@@ -4,6 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Displays the students managed by the current tutor.
@@ -11,7 +13,7 @@ import { ProfilesRelationshipStore } from '../../../application/profiles-relatio
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinner, TranslatePipe],
   templateUrl: './student-list.html',
   styleUrl: './student-list.css',
 })

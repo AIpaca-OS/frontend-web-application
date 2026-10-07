@@ -19,6 +19,21 @@
     "reportIncident": "Report incident",
     "configureRoute": "Configure route"
   },
+  "students": {
+    "main": {
+      "title": "Students",
+      "subtitle": "Manage students associated to your account.",
+      "newStudent": "New student",
+      "noStudents": "No students registered."
+    },
+    "data": {
+      "name": "Name",
+      "birthdate": "Birthdate",
+      "school": "School",
+      "state": "State",
+      "actions": "Actions"
+    }
+  },
   "footer": {
     "rights": "All rights reserved.",
     "terms": "Terms and Conditions",

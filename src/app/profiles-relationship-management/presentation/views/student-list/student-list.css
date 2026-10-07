@@ -19,6 +19,12 @@
   color: #66736f;
 }
 
+.primary-action {
+  background: #3ea98a !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+}
+
 .table-card {
   overflow: auto;
   background: white;
@@ -44,6 +50,15 @@ td {
 
 .error {
   color: #b91c1c;
+}
+
+.state-box {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #64748b;
 }
 
 @media (max-width: 700px) {

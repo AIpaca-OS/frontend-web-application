@@ -14,7 +14,7 @@ export interface StudentResource extends BaseResource {
   /**
    * Unique identifier of the student resource.
    */
-  id: number;
+  id: string;
 
   /**
    * Student's first name.
