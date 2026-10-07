@@ -1,0 +1,16 @@
+﻿.title {
+  margin: 16px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 16px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+}
