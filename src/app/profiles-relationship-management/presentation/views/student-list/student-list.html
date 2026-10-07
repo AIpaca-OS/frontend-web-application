@@ -1,0 +1,97 @@
+<section class="page">
+
+  <header class="page-header">
+
+    <div>
+      <h1>{{ 'students.main.title' | translate }}</h1>
+      <p>{{ 'students.main.subtitle' | translate }}</p>
+    </div>
+
+    <button
+      mat-flat-button
+      class="primary-action"
+      type="button"
+      (click)="createStudent()"
+    >
+      <mat-icon>add</mat-icon>
+      {{'students.main.newStudent' | translate}}
+    </button>
+
+  </header>
+
+  @if (store.error()) {
+    <p class="error" role="alert">
+      {{ store.error() }}
+    </p>
+  }
+
+  @if (store.loading()) {
+    <div class="state-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando estudiantes...</span>
+    </div>
+  }
+
+  @if (!store.loading()) {
+    <div class="table-card">
+      <table>
+        <thead>
+        <tr>
+          <th>{{'students.data.name' | translate}}</th>
+          <th>{{'students.data.birthdate' | translate}}</th>
+          <th>{{'students.data.school' | translate}}</th>
+          <th>{{'students.data.state' | translate}}</th>
+          <th>{{'students.data.actions' | translate}}</th>
+        </tr>
+        </thead>
+
+      <tbody>
+        @for (student of store.students(); track student.id) {
+          <tr>
+            <td>
+              {{ student.fullName }}
+            </td>
+
+            <td>
+              {{ student.birthDate }}
+            </td>
+
+            <td>
+              {{ student.schoolName }}
+            </td>
+
+            <td>
+              {{ student.status }}
+            </td>
+
+            <td class="actions">
+              <button
+                mat-icon-button
+                aria-label="Ver estudiante"
+                (click)="viewStudent(student.id)"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                aria-label="Editar estudiante"
+                (click)="editStudent(student.id)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5">
+              {{ 'students.main.noStudents' | translate }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      </table>
+    </div>
+  }
+
+</section>

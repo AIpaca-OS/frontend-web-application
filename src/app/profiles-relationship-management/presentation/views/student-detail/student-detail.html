@@ -1,0 +1,176 @@
+<section class="page">
+
+  @if (student(); as currentStudent) {
+
+    <header class="page-header">
+
+      <div>
+        <span class="eyebrow">
+          Perfil del estudiante
+        </span>
+
+        <h1>
+          Vista de {{ currentStudent.fullName }}
+        </h1>
+
+        <p>
+          Gestiona la información y autorizaciones del estudiante.
+        </p>
+      </div>
+
+      <button
+        mat-flat-button
+        type="button"
+        (click)="editStudent()"
+      >
+        Editar
+      </button>
+
+    </header>
+
+    <div class="grid">
+
+      <article class="card">
+
+        <h2>Información básica</h2>
+
+        <div class="row">
+          <strong>
+            {{ currentStudent.fullName }}
+          </strong>
+
+          <span>
+            Estudiante
+          </span>
+        </div>
+
+        <div class="row">
+          <strong>
+            {{ currentStudent.schoolName }}
+          </strong>
+
+          <span>
+            Colegio
+          </span>
+        </div>
+
+        <div class="row">
+          <strong>
+            {{ currentStudent.birthDate }}
+          </strong>
+
+          <span>
+            Fecha de nacimiento
+          </span>
+        </div>
+
+        <div class="row">
+          <strong>
+            {{ currentStudent.status }}
+          </strong>
+
+          <span>
+            Estado
+          </span>
+        </div>
+
+      </article>
+
+      <article class="card">
+
+        <div class="card-header">
+
+          <h2>
+            Tutores autorizados
+          </h2>
+
+          <button
+            mat-button
+            type="button"
+            (click)="authorizeTutor()"
+          >
+            Autorizar tutor
+          </button>
+
+        </div>
+
+        @for (
+          relationship of authorizedRelationships();
+          track relationship.id
+          ) {
+
+          <div class="relationship">
+
+            <div>
+
+              <strong>
+                {{ getTutorName(relationship.tutorId) }}
+              </strong>
+
+              <p>
+                {{ relationship.relationshipType }}
+              </p>
+
+            </div>
+
+            <button
+              mat-button
+              type="button"
+              (click)="revokeTutor(relationship)"
+            >
+              Revocar
+            </button>
+
+          </div>
+
+        } @empty {
+
+          <p>
+            No existen tutores autorizados.
+          </p>
+
+        }
+
+      </article>
+
+    </div>
+
+    <article class="card privacy-card">
+
+      <div>
+
+        <h2>
+          Privacidad y manejo de datos
+        </h2>
+
+        @if (activeDeletionRequest()) {
+
+          <p>
+            Existe una solicitud de eliminación pendiente.
+          </p>
+
+        } @else {
+
+          <p>
+            Puedes solicitar la eliminación
+            de los datos personales del estudiante.
+          </p>
+
+        }
+
+      </div>
+
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="!!activeDeletionRequest()"
+        (click)="requestDataDeletion()"
+      >
+        Solicitar eliminación
+      </button>
+
+    </article>
+
+  }
+
+</section>
