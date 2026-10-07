@@ -1,24 +1,26 @@
-import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { Settings } from '../domain/model/settings.entity';
-import { SettingsResource, SettingsResponse } from './settings-response';
+import { SettingsResource } from './settings-response';
 
 export class SettingsAssembler {
-
-  toEntitiesFromResponse(response: SettingsResponse): Settings {
-    return this.toEntityFromResource(response.notificationSettings);
-  }
-
   toEntityFromResource(resource: SettingsResource): Settings {
     return new Settings({
-      nonCriticalEnabled: resource.nonCriticalEnabled,
       criticalEnabled: resource.criticalEnabled,
+      importantEnabled: resource.importantEnabled,
+      regularEnabled: resource.regularEnabled,
+      successEnabled: resource.successEnabled,
+      warningEnabled: resource.warningEnabled,
+      infoEnabled: resource.infoEnabled,
     });
   }
 
   toResourceFromEntity(entity: Settings): SettingsResource {
     return {
-      nonCriticalEnabled: entity.nonCriticalEnabled,
       criticalEnabled: entity.criticalEnabled,
-    }
+      importantEnabled: entity.importantEnabled,
+      regularEnabled: entity.regularEnabled,
+      successEnabled: entity.successEnabled,
+      warningEnabled: entity.warningEnabled,
+      infoEnabled: entity.infoEnabled,
+    };
   }
 }

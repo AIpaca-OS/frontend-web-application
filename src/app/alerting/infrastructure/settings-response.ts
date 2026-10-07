@@ -1,11 +1,8 @@
 export interface SettingsResource {
-
-  nonCriticalEnabled: boolean;
   criticalEnabled: boolean;
+  importantEnabled: boolean;
+  regularEnabled: boolean;
+  successEnabled: boolean;
+  warningEnabled: boolean;
+  infoEnabled: boolean;
 }
-
-export interface SettingsResponse {
-
-  notificationSettings: SettingsResource;
-}
-
