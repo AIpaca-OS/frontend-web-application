@@ -1,52 +1,7 @@
-import {Component, inject} from '@angular/core';
-import {MatButtonToggleModule} from '@angular/material/button-toggle';
-import {TranslateService} from '@ngx-translate/core';
-
-/**
- * Switches the active locale used by the translation service.
- */
-@Component({
-  selector: 'app-language-switcher',
-  imports: [
-    MatButtonToggleModule
-  ],
-  templateUrl: './language-switcher.html',
-  styleUrl: './language-switcher.css'
-})
-export class LanguageSwitcher {
-  /**
-   * The currently selected language code.
-   */
-  protected currentLang = 'en';
-
-  /**
-   * List of available language codes.
-   */
-  protected languages: string[] ;
-
-  /**
-   * Translation service instance.
-   */
-  private translate: TranslateService;
-
-  /**
-   * Creates an instance of LanguageSwitcherComponent.
-   * Initializes the current language from the translation service.
-   */
-  constructor() {
-    this.translate = inject(TranslateService);
-    this.currentLang = this.translate.getCurrentLang() ?? 'en';
-    this.languages = [...this.translate.getLangs()];
-  }
-
-  /**
-   * Changes the application's current language.
-   * Updates both the translation service and the component's local state.
-   *
-   * @param language - The language code to switch to (e.g., 'en', 'es')
-   */
-  useLanguage = (language: string) => {
-    this.translate.use(language);
-    this.currentLang = language;
-  };
-}
+import { Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { TranslateService } from '@ngx-translate/core';
+@Component({selector:'app-language-switcher',imports:[MatButtonModule,MatIconModule,MatMenuModule],templateUrl:'./language-switcher.html',styleUrl:'./language-switcher.css'})
+export class LanguageSwitcher{protected currentLang='en';protected readonly languages=['en','es-419'];private readonly translate=inject(TranslateService);constructor(){this.currentLang=this.translate.getCurrentLang()||'en';}useLanguage(language:string){this.translate.use(language);this.currentLang=language;}}

@@ -1,0 +1,75 @@
+﻿<div class="content-body">
+  <!-- Cabecera de la sección alineada correctamente -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">Vehicle & Credential Management</h1>
+      <p class="page-subtitle">Rumbo muestra y centraliza la información registrada de la flota vehicular.</p>
+    </div>
+    <button mat-flat-button class="btn-primary-custom" (click)="navigateToNew()">
+      <mat-icon>add</mat-icon> New Vehicle
+    </button>
+  </div>
+
+  <!-- Estados de carga o error -->
+  @if (store.loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+  @if (store.error()) {
+    <mat-error class="error-banner">{{ store.error() }}</mat-error>
+  }
+
+  <!-- Grid de tarjetas de vehículos -->
+  <div class="vehicles-grid">
+    @for (v of store.vehicles(); track v.id) {
+      <mat-card class="custom-card vehicle-card">
+        <div class="card-header-row">
+          <div>
+            <h3 class="card-title">{{ v.brand }} {{ v.model }}</h3>
+          </div>
+          <span class="status-badge" [class.active]="v.status === 'ACTIVE'">
+            {{ v.status }}
+          </span>
+        </div>
+
+        <div class="vehicle-details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Plate</span>
+            <span class="detail-value plate-badge">{{ v.licensePlate }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Capacity</span>
+            <span class="detail-value">{{ v.capacity }} seats</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Year</span>
+            <span class="detail-value">{{ v.year }}</span>
+          </div>
+        </div>
+
+        <div class="card-footer-actions">
+          <button mat-stroked-button class="action-btn-sm" (click)="editVehicle(v.id)">
+            <mat-icon>edit</mat-icon> Editar
+          </button>
+          <button mat-stroked-button color="warn" class="action-btn-sm" (click)="deleteVehicle(v.id)">
+            <mat-icon>delete</mat-icon> Eliminar
+          </button>
+        </div>
+      </mat-card>
+    }
+  </div>
+
+  <!-- Banner Informativo -->
+  <div class="info-banner">
+    <div class="banner-icon">
+      <mat-icon>info</mat-icon>
+    </div>
+    <div>
+      <p class="banner-title">Importante</p>
+      <p class="banner-desc">
+        Estos registros y capacidades son declarados por el prestador en este prototipo. Rumbo centraliza la gestión operativa sin simular una validación gubernamental externa.
+      </p>
+    </div>
+  </div>
+</div>

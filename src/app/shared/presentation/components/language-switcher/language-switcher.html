@@ -1,13 +1,1 @@
-<mat-button-toggle-group [value]="currentLang"
-                         appearance="standard"
-                         aria-label="Preferred language"
-                         name="language">
-
-  @for (language of languages; track language) {
-    <mat-button-toggle [value]="language"
-                       [aria-label]="language"
-                       (click)="useLanguage(language)">
-      {{ language.toUpperCase() }}
-    </mat-button-toggle>
-  }
-</mat-button-toggle-group>
+<button mat-stroked-button [matMenuTriggerFor]="langMenu" class="lang-btn" aria-label="Change language"><mat-icon>language</mat-icon> {{ currentLang === 'es-419' ? 'ES' : 'EN' }}</button><mat-menu #langMenu="matMenu">@for (language of languages; track language) {<button mat-menu-item [class.active-lang]="currentLang===language" (click)="useLanguage(language)"><span>{{ language==='es-419' ? 'Español (Latinoamérica)' : 'English' }}</span></button>}</mat-menu>

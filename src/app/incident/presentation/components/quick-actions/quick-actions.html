@@ -1,0 +1,22 @@
+<mat-card class="quick-actions-card">
+  <mat-card-content class="card-body">
+    <h3 class="card-title">{{ 'quickActions.title' | translate }}</h3>
+
+    <div class="actions-list">
+      <button mat-flat-button class="action-btn" (click)="reportDelay()">
+        <mat-icon>schedule</mat-icon>
+        {{ 'quickActions.reportDelay' | translate }}
+      </button>
+
+      <button mat-flat-button class="action-btn" (click)="reportIncident()">
+        <mat-icon>warning</mat-icon>
+        {{ 'quickActions.reportIncident' | translate }}
+      </button>
+
+      <button mat-flat-button class="action-btn" (click)="configureRoute()">
+        <mat-icon>alt_route</mat-icon>
+        {{ 'quickActions.configureRoute' | translate }}
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>

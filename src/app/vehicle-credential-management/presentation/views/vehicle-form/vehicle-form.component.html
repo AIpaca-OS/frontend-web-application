@@ -1,0 +1,65 @@
+﻿<div class="content-body">
+  <!-- Cabecera de la sección -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">{{ isEdit ? 'Edit Vehicle' : 'New Vehicle' }}</h1>
+      <p class="page-subtitle">Completa los datos del vehículo para actualizar el registro en la flota.</p>
+    </div>
+  </div>
+
+  <!-- Tarjeta contenedora del formulario -->
+  <mat-card class="custom-card form-card">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="vehicle-form-grid">
+
+      <!-- License Plate -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>License Plate</mat-label>
+        <input matInput formControlName="licensePlate" placeholder="ABC-123" required />
+        <mat-icon matSuffix>badge</mat-icon>
+        @if (form.get('licensePlate')!.touched && form.get('licensePlate')!.hasError('required')) {
+          <mat-error>Plate is required</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Brand -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Brand</mat-label>
+        <input matInput formControlName="brand" placeholder="Toyota" required />
+        <mat-icon matSuffix>directions_car</mat-icon>
+      </mat-form-field>
+
+      <!-- Model -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Model</mat-label>
+        <input matInput formControlName="model" placeholder="HiAce" required />
+        <mat-icon matSuffix>model_training</mat-icon>
+      </mat-form-field>
+
+      <!-- Capacity -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Capacity (Seats)</mat-label>
+        <input matInput type="number" formControlName="capacity" placeholder="20" required />
+        <mat-icon matSuffix>group</mat-icon>
+      </mat-form-field>
+
+      <!-- Year -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Year</mat-label>
+        <input matInput type="number" formControlName="year" placeholder="2025" required />
+        <mat-icon matSuffix>calendar_today</mat-icon>
+      </mat-form-field>
+
+      <!-- Grupo de Botones -->
+      <div class="button-group">
+        <button mat-flat-button class="btn-primary-custom" type="submit" [disabled]="form.invalid">
+          <mat-icon>{{ isEdit ? 'save' : 'add_circle' }}</mat-icon>
+          {{ isEdit ? 'Update Vehicle' : 'Create Vehicle' }}
+        </button>
+        <button mat-stroked-button class="btn-secondary-custom" type="button" (click)="cancel()">
+          Cancel
+        </button>
+      </div>
+
+    </form>
+  </mat-card>
+</div>
