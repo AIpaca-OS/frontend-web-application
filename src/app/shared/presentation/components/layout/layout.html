@@ -1,53 +1,10 @@
-<!-- ================= SIDEBAR IZQUIERDO ================= -->
-<aside class="sidebar">
-  <div class="sidebar-top">
-    <div class="sidebar-brand">
-      <h1>Rumbo</h1>
-    </div>
+<div class="app-container">
+  <!-- Sidebar izquierdo fijo -->
+  <app-side-menu />
 
-    <div class="user-card-sidebar">
-      <div class="avatar-sm">CE</div>
-      <div class="user-details">
-        <p class="user-name">Carlos Estrada</p>
-        <p class="user-role">Bus #14 · Ruta de la mañana</p>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-link">
-        <mat-icon>home</mat-icon> Ruta asignada
-      </a>
-      <a href="#" class="nav-link">
-        <mat-icon>group</mat-icon> Estudiantes
-      </a>
-      <a href="#" class="nav-link">
-        <mat-icon>alt_route</mat-icon> Configurar ruta
-      </a>
-      <a href="#" class="nav-link active">
-        <mat-icon>notifications</mat-icon> Notificaciones
-        <span class="badge">1</span>
-      </a>
-      <a href="#" class="nav-link">
-        <mat-icon>payments</mat-icon> Plan y facturación
-      </a>
-      <a href="#" class="nav-link">
-        <mat-icon>settings</mat-icon> Configuración
-      </a>
-    </nav>
+  <!-- Contenedor derecho que agrupa el Header y las vistas -->
+  <div class="main-content">
+    <app-header-content />
+    <router-outlet />
   </div>
-
-  <div class="sidebar-footer">
-    <div class="help-box">
-      <div class="help-icon">?</div>
-      <div class="help-text">
-        <p class="help-title">¿Necesitas ayuda?</p>
-        <p class="help-desc">Revisa la ayuda y las indicaciones de seguridad.</p>
-      </div>
-    </div>
-    <button class="logout-btn">
-      <mat-icon>logout</mat-icon> Cerrar sesión
-    </button>
-  </div>
-</aside>
-<router-outlet/>
-<app-footer-content/>
+</div>
