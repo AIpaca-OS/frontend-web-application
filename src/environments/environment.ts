@@ -1,6 +1,6 @@
 export const environment = {
   production:true,
-  platformProviderApiBaseUrl:'http://localhost:3000/api/v1',
+  platformProviderApiBaseUrl:'https://6a4ec144e785c9ef536d1e99.mockapi.io/api/v1',
   platformProviderDelaysEndpointPath:'/delays',
   platformProviderIncidentsEndpointPath:'/incidents',
   platformProviderNotificationsEndpointPath:'/notifications',
