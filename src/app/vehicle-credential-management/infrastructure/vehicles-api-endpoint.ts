@@ -12,7 +12,10 @@ export class VehiclesApiEndpoint extends BaseApiEndpoint<
   VehicleAssembler
 > {
   constructor(http: HttpClient) {
-    const baseUrl = (environment as any).platformProviderApiBaseUrl || '/api/v1';
-    super(http, `${baseUrl}/vehicles`, new VehicleAssembler());
+    super(
+      http,
+      'https://6ac59b2c54a61668c5f745e7.mockapi.io/api/v1/vehicles',
+      new VehicleAssembler()
+    );
   }
 }
