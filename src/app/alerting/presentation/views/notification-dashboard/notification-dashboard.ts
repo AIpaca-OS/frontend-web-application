@@ -5,12 +5,21 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AlertingStore } from '../../../application/alerting-store';
 import { Notification } from '../../../domain/model/notification.entity';
 
 @Component({
   selector: 'app-notification-dashboard',
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatDividerModule, MatExpansionModule],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDividerModule,
+    MatExpansionModule,
+    MatSlideToggleModule,
+  ],
   templateUrl: './notification-dashboard.html',
   styleUrl: './notification-dashboard.css',
 })
@@ -30,5 +39,9 @@ export class NotificationDashboard {
 
   deleteNotification(id: number): void {
     this.alertingStore.deleteNotification(id);
+  }
+
+  toggleNonCritical(enabled: boolean): void {
+    this.alertingStore.setNonCriticalEnabled(enabled);
   }
 }
