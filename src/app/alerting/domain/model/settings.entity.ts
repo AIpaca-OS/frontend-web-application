@@ -1,28 +1,66 @@
 export class Settings {
-
-  #nonCriticalEnabled: boolean;
   #criticalEnabled: boolean;
+  #importantEnabled: boolean;
+  #regularEnabled: boolean;
+  #successEnabled: boolean;
+  #warningEnabled: boolean;
+  #infoEnabled: boolean;
 
-  constructor(setting: { nonCriticalEnabled: boolean, criticalEnabled: boolean})
-  {
-    this.#nonCriticalEnabled = setting.nonCriticalEnabled;
+  constructor(setting: {
+    criticalEnabled: boolean;
+    importantEnabled: boolean;
+    regularEnabled: boolean;
+    successEnabled: boolean;
+    warningEnabled: boolean;
+    infoEnabled: boolean;
+  }) {
     this.#criticalEnabled = setting.criticalEnabled;
-  }
-
-  get nonCriticalEnabled(): boolean {
-    return this.#nonCriticalEnabled;
+    this.#importantEnabled = setting.importantEnabled;
+    this.#regularEnabled = setting.regularEnabled;
+    this.#successEnabled = setting.successEnabled;
+    this.#warningEnabled = setting.warningEnabled;
+    this.#infoEnabled = setting.infoEnabled;
   }
 
   get criticalEnabled(): boolean {
     return this.#criticalEnabled;
   }
 
+  get importantEnabled(): boolean {
+    return this.#importantEnabled;
+  }
+
+  get regularEnabled(): boolean {
+    return this.#regularEnabled;
+  }
+
+  get successEnabled(): boolean {
+    return this.#successEnabled;
+  }
+
+  get warningEnabled(): boolean {
+    return this.#warningEnabled;
+  }
+
+  get infoEnabled(): boolean {
+    return this.#infoEnabled;
+  }
+
+  get nonCriticalEnabled(): boolean {
+    return (
+      this.#importantEnabled &&
+      this.#regularEnabled &&
+      this.#successEnabled &&
+      this.#warningEnabled &&
+      this.#infoEnabled
+    );
+  }
+
   set nonCriticalEnabled(value: boolean) {
-    this.#nonCriticalEnabled = value;
+    this.#importantEnabled = value;
+    this.#regularEnabled = value;
+    this.#successEnabled = value;
+    this.#warningEnabled = value;
+    this.#infoEnabled = value;
   }
-
-  set criticalEnabled(value: boolean) {
-    this.#criticalEnabled = value;
-  }
-
 }
