@@ -1,0 +1,104 @@
+<section class="page">
+
+  <div class="form-card">
+
+    <header>
+      <h1>
+        {{ isEdit ? 'Editar estudiante' : 'Nuevo estudiante' }}
+      </h1>
+
+      <p>
+        Registra la información básica del estudiante.
+      </p>
+    </header>
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="form"
+    >
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nombres</mat-label>
+
+        <input
+          matInput
+          formControlName="firstName"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Apellidos</mat-label>
+
+        <input
+          matInput
+          formControlName="lastName"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de nacimiento</mat-label>
+
+        <input
+          matInput
+          type="date"
+          formControlName="birthDate"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Colegio</mat-label>
+
+        <input
+          matInput
+          formControlName="schoolName"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+
+        <mat-select formControlName="status">
+
+          <mat-option
+            [value]="StudentStatus.ACTIVE"
+          >
+            Activo
+          </mat-option>
+
+          <mat-option
+            [value]="StudentStatus.INACTIVE"
+          >
+            Inactivo
+          </mat-option>
+
+        </mat-select>
+
+      </mat-form-field>
+
+      <div class="actions">
+
+        <button
+          mat-button
+          type="button"
+          (click)="cancel()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="form.invalid || store.loading()"
+        >
+          Guardar
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</section>

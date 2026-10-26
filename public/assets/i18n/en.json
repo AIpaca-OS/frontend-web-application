@@ -1,0 +1,42 @@
+{
+  "home": {
+    "title": "Rumbo operations",
+    "content": "Manage the main frontend CRUD modules from this dashboard."
+  },
+  "nav": {
+    "home": "Home",
+    "students": "Students",
+    "routes": "Routes",
+    "vehicles": "Vehicles",
+    "notifications": "Notifications",
+    "billing": "Plan & billing",
+    "helpTitle": "Need help?",
+    "helpText": "Review the guidance and safety information."
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "reportDelay": "Report delay",
+    "reportIncident": "Report incident",
+    "configureRoute": "Configure route"
+  },
+  "students": {
+    "main": {
+      "title": "Students",
+      "subtitle": "Manage students associated to your account.",
+      "newStudent": "New student",
+      "noStudents": "No students registered."
+    },
+    "data": {
+      "name": "Name",
+      "birthdate": "Birthdate",
+      "school": "School",
+      "state": "State",
+      "actions": "Actions"
+    }
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy"
+  }
+}

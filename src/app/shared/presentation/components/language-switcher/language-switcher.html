@@ -1,16 +1,1 @@
-<button mat-stroked-button [matMenuTriggerFor]="langMenu" class="lang-btn">
-  <mat-icon>language</mat-icon> {{ currentLang.toUpperCase() }}
-</button>
-
-<mat-menu #langMenu="matMenu" class="lang-dropdown">
-  @for (language of languages; track language) {
-    <button
-      mat-menu-item
-      [class.active-lang]="currentLang === language"
-      (click)="useLanguage(language)"
-    >
-      <span>{{ language === 'es' ? 'Español' : 'English' }}</span>
-      <span class="lang-code">({{ language.toUpperCase() }})</span>
-    </button>
-  }
-</mat-menu>
+<button mat-stroked-button [matMenuTriggerFor]="langMenu" class="lang-btn" aria-label="Change language"><mat-icon>language</mat-icon> {{ currentLang === 'es-419' ? 'ES' : 'EN' }}</button><mat-menu #langMenu="matMenu">@for (language of languages; track language) {<button mat-menu-item [class.active-lang]="currentLang===language" (click)="useLanguage(language)"><span>{{ language==='es-419' ? 'Español (Latinoamérica)' : 'English' }}</span></button>}</mat-menu>

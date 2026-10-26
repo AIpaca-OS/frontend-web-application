@@ -1,0 +1,122 @@
+<div class="subscription-page">
+
+  <section class="subscription-panel">
+
+    <p class="eyebrow">
+      SUSCRIPCIONES
+    </p>
+
+    <h1>
+      {{ isEdit ? 'Gestionar mi suscripción' : 'Confirmar suscripción' }}
+    </h1>
+
+    <p class="description">
+      {{
+        isEdit
+          ? 'Actualiza el plan o estado de tu suscripción.'
+          : 'Revisa el plan seleccionado antes de confirmar.'
+      }}
+    </p>
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()">
+
+      <mat-form-field appearance="outline">
+        <mat-label>Plan</mat-label>
+
+        <mat-select formControlName="planId">
+
+          @for (plan of store.plans(); track plan.id) {
+            @if (plan.active) {
+              <mat-option [value]="plan.id.toString()">
+                {{ plan.name }} - S/ {{ plan.referencePrice }}
+              </mat-option>
+            }
+          }
+
+        </mat-select>
+      </mat-form-field>
+
+      @if (getSelectedPlan(); as plan) {
+
+        <div class="plan-summary">
+
+          <div>
+            <span class="summary-label">
+              Plan seleccionado
+            </span>
+
+            <strong>
+              {{ plan.name }}
+            </strong>
+          </div>
+
+          <div class="summary-price">
+            S/ {{ plan.referencePrice }}
+          </div>
+
+        </div>
+
+      }
+
+      @if (isEdit) {
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado de la suscripción</mat-label>
+
+          <mat-select formControlName="status">
+            <mat-option value="ACTIVE">
+              Activa
+            </mat-option>
+
+            <mat-option value="PAUSED">
+              Pausada
+            </mat-option>
+          </mat-select>
+
+        </mat-form-field>
+
+      }
+
+      <div class="information">
+        <strong>
+          {{ isEdit ? 'Actualización de suscripción' : 'Nueva suscripción' }}
+        </strong>
+
+        <p>
+          Los datos se registrarán en Rumbo al confirmar la operación.
+        </p>
+      </div>
+
+      <div class="actions">
+
+        <button
+          mat-button
+          type="button"
+          class="secondary-action"
+          (click)="cancel()">
+          Volver
+        </button>
+
+        <button
+          mat-raised-button
+          type="submit"
+          class="primary-action"
+          [disabled]="form.invalid">
+
+          {{
+            isEdit
+              ? 'Guardar cambios'
+              : 'Confirmar suscripción'
+          }}
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </section>
+
+</div>

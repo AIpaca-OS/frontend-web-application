@@ -2,6 +2,7 @@ import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { AlertingApi } from '../infrastructure/alerting-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Notification } from '../domain/model/notification.entity';
+import { Settings } from '../domain/model/settings.entity';
 import { retry } from 'rxjs';
 
 @Injectable({
@@ -9,8 +10,12 @@ import { retry } from 'rxjs';
 })
 export class AlertingStore {
   private readonly alertingApi = inject(AlertingApi);
+
   private readonly notificationsSignal = signal<Notification[]>([]);
   readonly notifications = this.notificationsSignal.asReadonly();
+
+  private readonly settingsSignal = signal<Settings | null>(null);
+  readonly settings = this.settingsSignal.asReadonly();
 
   private readonly loadingSignal = signal<boolean>(false);
   readonly loading = this.loadingSignal.asReadonly();
@@ -20,7 +25,12 @@ export class AlertingStore {
 
   readonly notificationsCount = computed(() => this.notifications().length);
 
-  private formatError(error: any, fallback: string): string {
+  constructor() {
+    this.loadNotifications();
+    this.loadSettings();
+  }
+
+  private formatError(error: unknown, fallback: string): string {
     if (error instanceof Error) {
       return error.message.includes('Resource not found')
         ? `${fallback}: Not found`
@@ -29,11 +39,7 @@ export class AlertingStore {
     return fallback;
   }
 
-  constructor() {
-    this.loadNotifications();
-  }
-
-  private loadNotifications() {
+  private loadNotifications(): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
@@ -43,12 +49,22 @@ export class AlertingStore {
         next: (notifications) => {
           this.notificationsSignal.set(notifications);
           this.loadingSignal.set(false);
-          this.errorSignal.set(null);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to load notifications'));
           this.loadingSignal.set(false);
         },
+      });
+  }
+
+  private loadSettings(): void {
+    this.alertingApi
+      .getSettings()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (settings) => this.settingsSignal.set(settings),
+        error: (error) =>
+          this.errorSignal.set(this.formatError(error, 'Failed to load notification settings')),
       });
   }
 
@@ -58,7 +74,7 @@ export class AlertingStore {
     );
   }
 
-  addNotification(notification: Notification) {
+  addNotification(notification: Notification): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
@@ -71,7 +87,6 @@ export class AlertingStore {
             createdNotification,
           ]);
           this.loadingSignal.set(false);
-          this.errorSignal.set(null);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to create notification'));
@@ -80,7 +95,7 @@ export class AlertingStore {
       });
   }
 
-  updateNotification(notification: Notification) {
+  updateNotification(notification: Notification): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
@@ -89,10 +104,11 @@ export class AlertingStore {
       .subscribe({
         next: (updatedNotification) => {
           this.notificationsSignal.update((notifications) =>
-            notifications.map((n) => (n.id === updatedNotification.id ? updatedNotification : n)),
+            notifications.map((item) =>
+              item.id === updatedNotification.id ? updatedNotification : item,
+            ),
           );
           this.loadingSignal.set(false);
-          this.errorSignal.set(null);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to update notification'));
@@ -101,30 +117,12 @@ export class AlertingStore {
       });
   }
 
-  markNotificationAsRead(notification: Notification) {
+  markNotificationAsRead(notification: Notification): void {
     notification.markAsRead();
-
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-    this.alertingApi
-      .updateNotification(notification)
-      .pipe(retry(2))
-      .subscribe({
-        next: (updatedNotification) => {
-          this.notificationsSignal.update((notifications) =>
-            notifications.map((n) => (n.id === updatedNotification.id ? updatedNotification : n)),
-          );
-          this.loadingSignal.set(false);
-          this.errorSignal.set(null);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to update notification'));
-          this.loadingSignal.set(false);
-        },
-      });
+    this.updateNotification(notification);
   }
 
-  deleteNotification(id: number) {
+  deleteNotification(id: number): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
@@ -133,15 +131,38 @@ export class AlertingStore {
       .subscribe({
         next: () => {
           this.notificationsSignal.update((notifications) =>
-            notifications.filter((n) => n.id !== id),
+            notifications.filter((notification) => notification.id !== id),
           );
           this.loadingSignal.set(false);
-          this.errorSignal.set(null);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to delete notification'));
           this.loadingSignal.set(false);
         },
+      });
+  }
+
+  setNonCriticalEnabled(enabled: boolean): void {
+    const current = this.settingsSignal();
+    if (!current) return;
+
+    const updated = new Settings({
+      criticalEnabled: current.criticalEnabled,
+      importantEnabled: current.importantEnabled,
+      regularEnabled: current.regularEnabled,
+      successEnabled: current.successEnabled,
+      warningEnabled: current.warningEnabled,
+      infoEnabled: current.infoEnabled,
+    });
+    updated.nonCriticalEnabled = enabled;
+
+    this.alertingApi
+      .updateSettings(updated)
+      .pipe(retry(2))
+      .subscribe({
+        next: (settings) => this.settingsSignal.set(settings),
+        error: (error) =>
+          this.errorSignal.set(this.formatError(error, 'Failed to update notification settings')),
       });
   }
 }

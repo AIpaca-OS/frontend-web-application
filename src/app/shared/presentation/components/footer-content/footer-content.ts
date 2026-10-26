@@ -1,17 +1,5 @@
-import {Component} from '@angular/core';
-import {TranslatePipe} from '@ngx-translate/core';
-
-/**
- * Displays localized footer text.
- */
-@Component({
-  selector: 'app-footer-content',
-  imports: [
-    TranslatePipe
-  ],
-  templateUrl: './footer-content.html',
-  styleUrl: './footer-content.css'
-})
-export class FooterContent {
-
-}
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+@Component({selector:'app-footer-content',imports:[TranslatePipe,RouterLink],templateUrl:'./footer-content.html',styleUrl:'./footer-content.css'})
+export class FooterContent{}

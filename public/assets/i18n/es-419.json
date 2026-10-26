@@ -1,0 +1,42 @@
+{
+  "home": {
+    "title": "Operaciones de Rumbo",
+    "content": "Gestiona los principales módulos CRUD del frontend desde este panel."
+  },
+  "nav": {
+    "home": "Inicio",
+    "students": "Estudiantes",
+    "routes": "Rutas",
+    "vehicles": "Vehículos",
+    "notifications": "Notificaciones",
+    "billing": "Plan y facturación",
+    "helpTitle": "¿Necesitas ayuda?",
+    "helpText": "Revisa la ayuda y las indicaciones de seguridad."
+  },
+  "quickActions": {
+    "title": "Acciones rápidas",
+    "reportDelay": "Reportar retraso",
+    "reportIncident": "Reportar incidencia",
+    "configureRoute": "Configurar ruta"
+  },
+  "students": {
+    "main": {
+      "title": "Estudiantes",
+      "subtitle": "Gestiona los estudiantes asociados a tu perfil.",
+      "newStudent": "Nuevo estudiante",
+      "noStudents": "No hay estudiantes registrados."
+    },
+    "data": {
+      "name": "Nombre",
+      "birthdate": "Fecha de nacimiento",
+      "school": "Colegio",
+      "state": "Estado",
+      "actions": "Acciones"
+    }
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados.",
+    "terms": "Términos y condiciones",
+    "privacy": "Privacidad"
+  }
+}

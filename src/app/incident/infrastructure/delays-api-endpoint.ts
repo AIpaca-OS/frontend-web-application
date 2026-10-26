@@ -5,12 +5,6 @@ import { DelayAssembler } from './delay-assembler';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-export class DelaysApiEndpoint extends BaseApiEndpoint<Delay, DelayResource, DelaysResponse, DelayAssembler> {
-
-  constructor(http: HttpClient) {
-    super(
-      http, `${environment.platformProviderDelaysEndpointPath}${environment.platformProviderDelaysEndpointPath}`, new DelayAssembler(),
-    );
-  }
-
+export class DelaysApiEndpoint extends BaseApiEndpoint<Delay,DelayResource,DelaysResponse,DelayAssembler>{
+  constructor(http:HttpClient){super(http,`${environment.platformProviderApiBaseUrl}${environment.platformProviderDelaysEndpointPath}`,new DelayAssembler());}
 }
