@@ -1,93 +1,82 @@
 <section class="routes-page">
-  <div class="page-heading">
+  <div class="page-head">
     <div>
       <p class="eyebrow">ROUTE & TRIP PLANNING</p>
-      <h1>Configurar rutas</h1>
-      <p class="subtitle">
-        Administra las rutas registradas y sus datos básicos para la planificación del servicio.
-      </p>
+      <h1>Mis rutas escolares</h1>
+      <p class="subtitle">Organiza recorridos, paradas y turnos para preparar los viajes de cada jornada.</p>
     </div>
-
     <button mat-flat-button class="primary-action" (click)="navigateToNew()">
-      <mat-icon>add</mat-icon>
-      Nueva ruta
+      <mat-icon>add</mat-icon> Nueva ruta
     </button>
   </div>
 
+  <div class="summary-grid">
+    <div class="summary-card"><mat-icon>route</mat-icon><div><strong>{{ store.routeCount() }}</strong><span>Rutas registradas</span></div></div>
+    <div class="summary-card"><mat-icon>verified</mat-icon><div><strong>{{ publishedCount() }}</strong><span>Rutas publicadas</span></div></div>
+    <div class="summary-card"><mat-icon>pending_actions</mat-icon><div><strong>{{ store.routeCount() - publishedCount() }}</strong><span>Por configurar</span></div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-field">
+      <mat-icon>search</mat-icon>
+      <input type="search" aria-label="Buscar rutas" placeholder="Buscar ruta por nombre o código"
+             [value]="search()" (input)="onSearch($event)" />
+    </div>
+    <div class="filter-tabs" aria-label="Filtrar por estado">
+      <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">Todas</button>
+      <button type="button" [class.active]="filter() === 'CONFIGURABLE'" (click)="setFilter('CONFIGURABLE')">Por configurar</button>
+      <button type="button" [class.active]="filter() === 'PUBLISHED'" (click)="setFilter('PUBLISHED')">Publicadas</button>
+    </div>
+  </div>
+
   @if (store.loading()) {
-    <div class="state-box">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Cargando rutas...</span>
+    <div class="empty-state"><mat-icon>hourglass_empty</mat-icon><strong>Cargando rutas...</strong></div>
+  } @else if (filteredRoutes().length === 0) {
+    <div class="empty-state">
+      <mat-icon>map</mat-icon><strong>No encontramos rutas para esta búsqueda.</strong>
+      <span>Prueba otro filtro o crea una nueva ruta.</span>
+    </div>
+  } @else {
+    <div class="route-grid">
+      @for (route of filteredRoutes(); track route.id) {
+        <article class="route-card">
+          <div class="route-card-top">
+            <span class="route-icon"><mat-icon>alt_route</mat-icon></span>
+            <span class="status-pill" [class.published]="isPublished(route)">{{ statusLabel(route) }}</span>
+          </div>
+          <h2>{{ route.name }}</h2>
+          <p class="route-code">{{ route.code || ('Ruta #' + route.id + ' · Código pendiente') }}</p>
+          <div class="route-details">
+            <div><mat-icon>schedule</mat-icon><span>{{ route.departureTime || 'Sin horario' }}</span></div>
+            <div><mat-icon>sunny</mat-icon><span>{{ shiftLabel(route) }}</span></div>
+            <div><mat-icon>place</mat-icon><span>{{ route.stopsCount }} parada(s)</span></div>
+          </div>
+          @if (route.stops.length === 0 && route.stopsCount > 0) {
+            <div class="legacy-note"><mat-icon>warning_amber</mat-icon> Faltan las direcciones de las paradas</div>
+          } @else if (route.stops.length > 0) {
+            <div class="stops-preview">
+              <span>Primera parada</span>
+              <strong>{{ route.stops[0].address }}</strong>
+            </div>
+          }
+          <div class="route-actions">
+            <button mat-stroked-button type="button" (click)="editRoute(route.id)">
+              <mat-icon>edit</mat-icon> Configurar ruta
+            </button>
+            <button mat-icon-button type="button" class="danger" aria-label="Eliminar ruta" title="Eliminar ruta"
+                    (click)="deleteRoute(route.id)"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        </article>
+      }
     </div>
   }
 
   @if (store.error()) {
-    <div class="error-box">{{ store.error() }}</div>
+    <div class="error-box" role="alert">{{ store.error() }}</div>
   }
 
-  @if (!store.loading()) {
-    <div class="table-card">
-      <div class="table-summary">
-        <div>
-          <h2>Rutas registradas</h2>
-          <p>{{ store.routeCount() }} ruta(s) disponible(s)</p>
-        </div>
-      </div>
-
-      <div class="table-wrapper">
-        <table mat-table [dataSource]="dataSource()" matSort>
-          <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
-            <td mat-cell *matCellDef="let route">{{ route.code }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Ruta</th>
-            <td mat-cell *matCellDef="let route">{{ route.name }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="departureTime">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Salida</th>
-            <td mat-cell *matCellDef="let route">{{ route.departureTime }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="stopsCount">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Paradas</th>
-            <td mat-cell *matCellDef="let route">{{ route.stopsCount }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
-            <td mat-cell *matCellDef="let route">
-              <span class="status-chip" [class.scheduled]="route.status === 'SCHEDULED'">
-                {{ route.status }}
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Acciones</th>
-            <td mat-cell *matCellDef="let route" class="actions-cell">
-              <button mat-icon-button aria-label="Editar ruta" (click)="editRoute(route.id)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                class="delete-action"
-                aria-label="Eliminar ruta"
-                (click)="deleteRoute(route.id)"
-              >
-                <mat-icon>delete_outline</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-      </div>
-
-      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
-    </div>
-  }
+  <div class="next-info">
+    <mat-icon>info</mat-icon>
+    Las rutas se configuran aquí. Los horarios recurrentes, estudiantes autorizados y publicación se añadirán en los siguientes incrementos de Jira.
+  </div>
 </section>

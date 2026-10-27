@@ -1,63 +1,66 @@
-import { Component, computed, inject, viewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { RouteTripStore } from '../../../application/route-trip.store';
+import { Route } from '../../../domain/model/route.entity';
+
+type RouteFilter = 'ALL' | 'CONFIGURABLE' | 'PUBLISHED';
 
 @Component({
   selector: 'app-route-list',
   standalone: true,
-  imports: [
-    MatButtonModule,
-    MatIconModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSortModule,
-    MatTableModule,
-  ],
+  imports: [MatButtonModule, MatIconModule],
   templateUrl: './route-list.component.html',
   styleUrl: './route-list.component.css',
 })
 export class RouteListComponent {
   readonly store = inject(RouteTripStore);
   private readonly router = inject(Router);
+  readonly search = signal('');
+  readonly filter = signal<RouteFilter>('ALL');
 
-  readonly displayedColumns = [
-    'code',
-    'name',
-    'departureTime',
-    'stopsCount',
-    'status',
-    'actions',
-  ];
-
-  readonly sort = viewChild(MatSort);
-  readonly paginator = viewChild(MatPaginator);
-
-  readonly dataSource = computed(() => {
-    const source = new MatTableDataSource(this.store.routes());
-    const sort = this.sort();
-    const paginator = this.paginator();
-
-    if (sort) source.sort = sort;
-    if (paginator) source.paginator = paginator;
-
-    return source;
+  readonly filteredRoutes = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    return this.store.routes().filter(route => {
+      const statusMatches = this.filter() === 'ALL'
+        || (this.filter() === 'PUBLISHED' && route.status.toUpperCase() === 'PUBLISHED')
+        || (this.filter() === 'CONFIGURABLE' && route.status.toUpperCase() !== 'PUBLISHED');
+      const textMatches = !term || [route.name, route.code, route.departureTime]
+        .some(value => String(value ?? '').toLowerCase().includes(term));
+      return statusMatches && textMatches;
+    });
   });
 
-  navigateToNew(): void {
-    this.router.navigate(['/routes/new']);
+  readonly publishedCount = computed(() =>
+    this.store.routes().filter(route => route.status.toUpperCase() === 'PUBLISHED').length,
+  );
+
+  onSearch(event: Event): void {
+    this.search.set((event.target as HTMLInputElement).value);
   }
 
-  editRoute(id: number): void {
-    this.router.navigate(['/routes', id, 'edit']);
+  setFilter(value: RouteFilter): void { this.filter.set(value); }
+
+  statusLabel(route: Route): string {
+    switch (route.status.toUpperCase()) {
+      case 'PUBLISHED': return 'Publicada';
+      case 'DRAFT': return 'Borrador';
+      case 'CONFIGURABLE': return 'Configurable';
+      case 'SCHEDULED': return 'Programada';
+      default: return route.status || 'Por configurar';
+    }
   }
+
+  shiftLabel(route: Route): string { return route.shift === 'AFTERNOON' ? 'Tarde' : 'Mañana'; }
+  isPublished(route: Route): boolean { return route.status.toUpperCase() === 'PUBLISHED'; }
+
+  navigateToNew(): void { void this.router.navigate(['/routes/new']); }
+  editRoute(id: number): void { void this.router.navigate(['/routes', id, 'edit']); }
 
   deleteRoute(id: number): void {
-    this.store.deleteRoute(id);
+    if (window.confirm('¿Eliminar esta ruta? Esta acción afecta los datos de la API conectada.')) {
+      this.store.deleteRoute(id);
+    }
   }
 }

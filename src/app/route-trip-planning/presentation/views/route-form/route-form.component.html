@@ -1,62 +1,161 @@
 <section class="route-form-page">
   <div class="form-card">
     <div class="form-heading">
-      <button mat-icon-button aria-label="Volver a rutas" (click)="cancel()">
+      <button mat-icon-button type="button" aria-label="Regresar a rutas" (click)="cancel()">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div>
         <p class="eyebrow">ROUTE & TRIP PLANNING</p>
         <h1>{{ isEdit ? 'Editar ruta' : 'Nueva ruta' }}</h1>
-        <p>Completa los datos básicos que se mostrarán en la planificación del servicio.</p>
+        <p>Configura el recorrido escolar paso a paso. Las asignaciones de estudiantes se conectarán con la API.</p>
       </div>
     </div>
 
+    <div class="step-strip" aria-label="Etapas para publicar una ruta">
+      <span class="step-chip active"><span class="step-num">1</span> Ruta y paradas</span>
+      <span class="step-chip"><span class="step-num">2</span> Horarios</span>
+      <span class="step-chip"><span class="step-num">3</span> Estudiantes</span>
+      <span class="step-chip"><span class="step-num">4</span> Publicar</span>
+    </div>
+
     @if (store.error()) {
-      <div class="error-box">{{ store.error() }}</div>
+      <div class="error-box" role="alert">{{ store.error() }}</div>
+    }
+    @if (legacyRouteWithoutStops) {
+      <div class="warning-box" role="status">
+        <mat-icon>warning_amber</mat-icon>
+        Esta ruta antigua guarda únicamente la cantidad de paradas. Ingresa las direcciones antes de actualizarla.
+      </div>
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Código</mat-label>
-          <input matInput formControlName="code" placeholder="RUT-001" />
-          @if (form.controls.code.touched && form.controls.code.hasError('required')) {
-            <mat-error>El código es obligatorio.</mat-error>
+      <section class="form-section" aria-labelledby="route-details-title">
+        <div class="section-heading">
+          <span class="section-icon"><mat-icon>directions_bus</mat-icon></span>
+          <div>
+            <h2 id="route-details-title">1. Datos generales</h2>
+            <p>Identifica el servicio y el turno en que operará.</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de la ruta</mat-label>
+            <input matInput formControlName="name" placeholder="Ej. Ruta Colegio San Marcos" />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <mat-error>Escribe un nombre de al menos 3 caracteres.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Hora de salida</mat-label>
+            <input matInput formControlName="departureTime" type="time" />
+            @if (form.controls.departureTime.touched && form.controls.departureTime.invalid) {
+              <mat-error>La hora es obligatoria.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Turno</mat-label>
+            <mat-select formControlName="shift">
+              <mat-option value="MORNING">Mañana</mat-option>
+              <mat-option value="AFTERNOON">Tarde</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="auto-code">
+          <mat-icon>confirmation_number</mat-icon>
+          <div>
+            <strong>Código de ruta: {{ codePreview || 'Automático al guardar' }}</strong>
+            <p>No es necesario escribirlo. Por ahora MockAPI recibe un código provisional; la API definitiva lo generará.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="stops-title">
+        <div class="section-heading section-heading-between">
+          <div class="section-heading-group">
+            <span class="section-icon"><mat-icon>route</mat-icon></span>
+            <div>
+              <h2 id="stops-title">2. Paradas del recorrido</h2>
+              <p>Ordénalas de acuerdo con el trayecto real del vehículo.</p>
+            </div>
+          </div>
+          <button mat-stroked-button type="button" (click)="addStop()" [disabled]="saving">
+            <mat-icon>add</mat-icon> Añadir parada
+          </button>
+        </div>
+
+        <div formArrayName="stops" class="stops-list">
+          @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
+            <div class="stop-card" [formGroupName]="i">
+              <div class="stop-card-head">
+                <span class="stop-position">{{ i + 1 }}</span>
+                <strong>Parada {{ i + 1 }}</strong>
+                <span class="stop-order">Orden de recojo</span>
+                <div class="stop-actions">
+                  <button mat-icon-button type="button" aria-label="Subir parada" title="Subir parada"
+                          [disabled]="i === 0 || saving" (click)="moveStop(i, -1)">
+                    <mat-icon>arrow_upward</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" aria-label="Bajar parada" title="Bajar parada"
+                          [disabled]="i === stops.length - 1 || saving" (click)="moveStop(i, 1)">
+                    <mat-icon>arrow_downward</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" aria-label="Quitar parada" title="Eliminar parada"
+                          [disabled]="stops.length <= 1 || saving" (click)="removeStop(i)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <mat-form-field appearance="outline" class="stop-address">
+                <mat-label>Dirección de la parada {{ i + 1 }}</mat-label>
+                <input matInput formControlName="address" placeholder="Ej. Av. Primavera 120, Lima" />
+                @if (stop.controls.address.touched && stop.controls.address.invalid) {
+                  <mat-error>La dirección debe tener al menos 5 caracteres.</mat-error>
+                }
+              </mat-form-field>
+              <div class="student-slot">
+                <mat-icon>school</mat-icon>
+                <div>
+                  <strong>Estudiante de esta parada</strong>
+                  @if (stop.controls.studentId.value) {
+                    <p>{{ stop.controls.studentName.value || 'Estudiante asignado' }}</p>
+                  } @else {
+                    <p>Sin asignar todavía · La selección se habilitará con la API (RMW-20).</p>
+                  }
+                </div>
+                <span class="student-status">{{ stop.controls.studentId.value ? 'Asignado' : 'Pendiente' }}</span>
+              </div>
+            </div>
           }
-        </mat-form-field>
+        </div>
+        <p class="address-note"><mat-icon>info</mat-icon> La integración de mapas y la validación geográfica corresponden a RMW-49.</p>
+      </section>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Nombre de la ruta</mat-label>
-          <input matInput formControlName="name" placeholder="Ruta de la mañana" />
-          @if (form.controls.name.touched && form.controls.name.hasError('required')) {
-            <mat-error>El nombre es obligatorio.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Hora de salida</mat-label>
-          <input matInput type="time" formControlName="departureTime" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Cantidad de paradas</mat-label>
-          <input matInput type="number" min="1" formControlName="stopsCount" />
-          @if (form.controls.stopsCount.touched && form.controls.stopsCount.invalid) {
-            <mat-error>Debe existir al menos una parada.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Estado</mat-label>
-          <input matInput formControlName="status" placeholder="ACTIVE" />
-        </mat-form-field>
-      </div>
+      <section class="form-section final-section" aria-labelledby="next-steps-title">
+        <div class="section-heading">
+          <span class="section-icon"><mat-icon>fact_check</mat-icon></span>
+          <div>
+            <h2 id="next-steps-title">3. Preparación para publicar</h2>
+            <p>{{ routeStatus === 'PUBLISHED' ? 'Ruta publicada: la API definitiva deberá proteger los viajes ya iniciados al editarla (RMW-22).' : 'La ruta permanecerá configurable hasta completar horarios y asignaciones.' }}</p>
+          </div>
+        </div>
+        <div class="readiness-grid">
+          <div><mat-icon>check_circle</mat-icon><span>{{ stops.length }} parada(s) en el recorrido</span></div>
+          <div><mat-icon>schedule</mat-icon><span>Horario recurrente: próximo incremento RMW-19</span></div>
+          <div><mat-icon>group</mat-icon><span>{{ assignedCount }} de {{ stops.length }} estudiante(s) vinculados</span></div>
+        </div>
+      </section>
 
       <div class="form-actions">
-        <button mat-button type="button" (click)="cancel()">Cancelar</button>
-        <button mat-flat-button class="primary-action" type="submit" [disabled]="form.invalid">
-          {{ isEdit ? 'Guardar cambios' : 'Crear ruta' }}
-        </button>
+        <span class="save-hint">Se guarda como configuración de ruta; no se publica automáticamente.</span>
+        <div class="form-buttons">
+          <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancelar</button>
+          <button mat-flat-button type="submit" class="primary-action" [disabled]="form.invalid || saving">
+            <mat-icon>save</mat-icon>
+            {{ saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Guardar ruta') }}
+          </button>
+        </div>
       </div>
     </form>
   </div>
