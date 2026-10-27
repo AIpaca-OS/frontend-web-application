@@ -45,9 +45,9 @@
             <span class="status-pill" [class.published]="isPublished(route)">{{ statusLabel(route) }}</span>
           </div>
           <h2>{{ route.name }}</h2>
-          <p class="route-code">{{ route.code || ('Ruta #' + route.id + ' · Código pendiente') }}</p>
+          <p class="route-code">{{ route.code || ('Ruta #' + route.id) }}</p>
           <div class="route-details">
-            <div><mat-icon>schedule</mat-icon><span>{{ route.departureTime || 'Sin horario' }}</span></div>
+            <div><mat-icon>schedule</mat-icon><span>{{ route.scheduleConfirmed ? (route.schedule.length + ' día(s) programado(s)') : 'Horario sin confirmar' }}</span></div>
             <div><mat-icon>sunny</mat-icon><span>{{ shiftLabel(route) }}</span></div>
             <div><mat-icon>place</mat-icon><span>{{ route.stopsCount }} parada(s)</span></div>
           </div>
@@ -75,8 +75,4 @@
     <div class="error-box" role="alert">{{ store.error() }}</div>
   }
 
-  <div class="next-info">
-    <mat-icon>info</mat-icon>
-    Las rutas se configuran aquí. Los horarios recurrentes, estudiantes autorizados y publicación se añadirán en los siguientes incrementos de Jira.
-  </div>
 </section>

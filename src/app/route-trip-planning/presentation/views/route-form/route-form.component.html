@@ -1,162 +1,265 @@
-<section class="route-form-page">
-  <div class="form-card">
-    <div class="form-heading">
-      <button mat-icon-button type="button" aria-label="Regresar a rutas" (click)="cancel()">
-        <mat-icon>arrow_back</mat-icon>
+<section class="route-editor">
+  <div class="editor-header">
+    <button mat-icon-button type="button" aria-label="Volver a mis rutas" (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="editor-heading">
+      <p class="eyebrow">MIS RUTAS ESCOLARES</p>
+      <h1>{{ isEdit ? 'Configurar ruta' : 'Crear nueva ruta' }}</h1>
+      <p>Organiza el recorrido a tu ritmo. Puedes guardar y continuar después.</p>
+    </div>
+    <span class="route-label">{{ routeStatus === 'PUBLISHED' ? 'Publicada' : 'En configuración' }}</span>
+  </div>
+
+  <nav class="wizard-navigation" aria-label="Pasos de configuración">
+    @for (title of stepTitles; track title; let i = $index) {
+      <button type="button" class="wizard-step" [class.selected]="activeStep === i"
+              [class.completed]="activeStep > i" [attr.aria-current]="activeStep === i ? 'step' : null"
+              (click)="goToStep(i)">
+        <span class="wizard-number">
+          @if (activeStep > i) { <mat-icon>check</mat-icon> } @else { {{ i + 1 }} }
+        </span>
+        <span>{{ title }}</span>
       </button>
-      <div>
-        <p class="eyebrow">ROUTE & TRIP PLANNING</p>
-        <h1>{{ isEdit ? 'Editar ruta' : 'Nueva ruta' }}</h1>
-        <p>Configura el recorrido escolar paso a paso. Las asignaciones de estudiantes se conectarán con la API.</p>
-      </div>
-    </div>
-
-    <div class="step-strip" aria-label="Etapas para publicar una ruta">
-      <span class="step-chip active"><span class="step-num">1</span> Ruta y paradas</span>
-      <span class="step-chip"><span class="step-num">2</span> Horarios</span>
-      <span class="step-chip"><span class="step-num">3</span> Estudiantes</span>
-      <span class="step-chip"><span class="step-num">4</span> Publicar</span>
-    </div>
-
-    @if (store.error()) {
-      <div class="error-box" role="alert">{{ store.error() }}</div>
     }
-    @if (legacyRouteWithoutStops) {
-      <div class="warning-box" role="status">
-        <mat-icon>warning_amber</mat-icon>
-        Esta ruta antigua guarda únicamente la cantidad de paradas. Ingresa las direcciones antes de actualizarla.
-      </div>
-    }
+  </nav>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <section class="form-section" aria-labelledby="route-details-title">
-        <div class="section-heading">
-          <span class="section-icon"><mat-icon>directions_bus</mat-icon></span>
-          <div>
-            <h2 id="route-details-title">1. Datos generales</h2>
-            <p>Identifica el servicio y el turno en que operará.</p>
-          </div>
-        </div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre de la ruta</mat-label>
-            <input matInput formControlName="name" placeholder="Ej. Ruta Colegio San Marcos" />
-            @if (form.controls.name.touched && form.controls.name.invalid) {
-              <mat-error>Escribe un nombre de al menos 3 caracteres.</mat-error>
-            }
-          </mat-form-field>
+  @if (store.error()) { <div class="alert error" role="alert">{{ store.error() }}</div> }
+  @if (legacyRouteWithoutStops && activeStep === 1) {
+    <div class="alert attention" role="status">
+      <mat-icon>info</mat-icon> Completa las direcciones de esta ruta antes de guardar los cambios.
+    </div>
+  }
 
-          <mat-form-field appearance="outline">
-            <mat-label>Hora de salida</mat-label>
-            <input matInput formControlName="departureTime" type="time" />
-            @if (form.controls.departureTime.touched && form.controls.departureTime.invalid) {
-              <mat-error>La hora es obligatoria.</mat-error>
-            }
-          </mat-form-field>
+  <form [formGroup]="form" (ngSubmit)="submit(false)">
+    <div class="editor-grid">
+      <div class="editor-main">
+        @if (stepMessage) {
+          <div class="alert attention" role="alert"><mat-icon>info</mat-icon>{{ stepMessage }}</div>
+        }
 
-          <mat-form-field appearance="outline">
-            <mat-label>Turno</mat-label>
-            <mat-select formControlName="shift">
-              <mat-option value="MORNING">Mañana</mat-option>
-              <mat-option value="AFTERNOON">Tarde</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div class="auto-code">
-          <mat-icon>confirmation_number</mat-icon>
-          <div>
-            <strong>Código de ruta: {{ codePreview || 'Automático al guardar' }}</strong>
-            <p>No es necesario escribirlo. Por ahora MockAPI recibe un código provisional; la API definitiva lo generará.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="form-section" aria-labelledby="stops-title">
-        <div class="section-heading section-heading-between">
-          <div class="section-heading-group">
-            <span class="section-icon"><mat-icon>route</mat-icon></span>
-            <div>
-              <h2 id="stops-title">2. Paradas del recorrido</h2>
-              <p>Ordénalas de acuerdo con el trayecto real del vehículo.</p>
-            </div>
-          </div>
-          <button mat-stroked-button type="button" (click)="addStop()" [disabled]="saving">
-            <mat-icon>add</mat-icon> Añadir parada
-          </button>
-        </div>
-
-        <div formArrayName="stops" class="stops-list">
-          @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
-            <div class="stop-card" [formGroupName]="i">
-              <div class="stop-card-head">
-                <span class="stop-position">{{ i + 1 }}</span>
-                <strong>Parada {{ i + 1 }}</strong>
-                <span class="stop-order">Orden de recojo</span>
-                <div class="stop-actions">
-                  <button mat-icon-button type="button" aria-label="Subir parada" title="Subir parada"
-                          [disabled]="i === 0 || saving" (click)="moveStop(i, -1)">
-                    <mat-icon>arrow_upward</mat-icon>
-                  </button>
-                  <button mat-icon-button type="button" aria-label="Bajar parada" title="Bajar parada"
-                          [disabled]="i === stops.length - 1 || saving" (click)="moveStop(i, 1)">
-                    <mat-icon>arrow_downward</mat-icon>
-                  </button>
-                  <button mat-icon-button type="button" aria-label="Quitar parada" title="Eliminar parada"
-                          [disabled]="stops.length <= 1 || saving" (click)="removeStop(i)">
-                    <mat-icon>delete_outline</mat-icon>
-                  </button>
-                </div>
+        @if (activeStep === 0) {
+          <section aria-labelledby="basic-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>directions_bus</mat-icon></span>
+              <div>
+                <span class="stage-overline">PASO 1 DE 4</span>
+                <h2 id="basic-heading">Datos generales</h2>
+                <p>Identifica la ruta y el horario de salida habitual.</p>
               </div>
-              <mat-form-field appearance="outline" class="stop-address">
-                <mat-label>Dirección de la parada {{ i + 1 }}</mat-label>
-                <input matInput formControlName="address" placeholder="Ej. Av. Primavera 120, Lima" />
-                @if (stop.controls.address.touched && stop.controls.address.invalid) {
-                  <mat-error>La dirección debe tener al menos 5 caracteres.</mat-error>
+            </div>
+            <div class="field-layout">
+              <mat-form-field appearance="outline" class="span-two">
+                <mat-label>Nombre de la ruta</mat-label>
+                <input matInput formControlName="name" placeholder="Ej. Ruta Colegio San Marcos" />
+                @if (form.controls.name.touched && form.controls.name.invalid) {
+                  <mat-error>Ingresa un nombre de al menos 3 caracteres.</mat-error>
                 }
               </mat-form-field>
-              <div class="student-slot">
-                <mat-icon>school</mat-icon>
-                <div>
-                  <strong>Estudiante de esta parada</strong>
-                  @if (stop.controls.studentId.value) {
-                    <p>{{ stop.controls.studentName.value || 'Estudiante asignado' }}</p>
-                  } @else {
-                    <p>Sin asignar todavía · La selección se habilitará con la API (RMW-20).</p>
-                  }
+              <mat-form-field appearance="outline">
+                <mat-label>Hora de salida habitual</mat-label>
+                <input matInput type="time" formControlName="departureTime" />
+                @if (form.controls.departureTime.touched && form.controls.departureTime.invalid) {
+                  <mat-error>Indica una hora de salida.</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Turno</mat-label>
+                <mat-select formControlName="shift">
+                  <mat-option value="MORNING">Mañana</mat-option>
+                  <mat-option value="AFTERNOON">Tarde</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="inline-tip">
+              <mat-icon>confirmation_number</mat-icon>
+              <span>{{ codePreview ? ('Código de ruta: ' + codePreview) : 'El código de la ruta se asignará al guardarla.' }}</span>
+            </div>
+          </section>
+        }
+
+        @if (activeStep === 1) {
+          <section aria-labelledby="stops-heading" class="panel-stage">
+            <div class="stage-intro stage-intro-actions">
+              <span class="stage-icon"><mat-icon>alt_route</mat-icon></span>
+              <div>
+                <span class="stage-overline">PASO 2 DE 4</span>
+                <h2 id="stops-heading">Paradas del recorrido</h2>
+                <p>Agrega direcciones y organiza el orden de recojo.</p>
+              </div>
+              <button mat-stroked-button type="button" (click)="addStop()" [disabled]="saving">
+                <mat-icon>add</mat-icon> Añadir parada
+              </button>
+            </div>
+            <div formArrayName="stops" class="stops-list">
+              @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
+                <div class="stop-row" [formGroupName]="i">
+                  <div class="stop-track"><span class="stop-dot">{{ i + 1 }}</span></div>
+                  <div class="stop-body">
+                    <div class="stop-title">
+                      <strong>Parada {{ i + 1 }}</strong>
+                      <div class="icon-buttons">
+                        <button mat-icon-button type="button" title="Subir parada" [attr.aria-label]="'Subir parada ' + (i + 1)"
+                                [disabled]="i === 0 || saving" (click)="moveStop(i, -1)"><mat-icon>arrow_upward</mat-icon></button>
+                        <button mat-icon-button type="button" title="Bajar parada" [attr.aria-label]="'Bajar parada ' + (i + 1)"
+                                [disabled]="i === stops.length - 1 || saving" (click)="moveStop(i, 1)"><mat-icon>arrow_downward</mat-icon></button>
+                        <button mat-icon-button type="button" title="Quitar parada" [attr.aria-label]="'Quitar parada ' + (i + 1)"
+                                [disabled]="stops.length <= 1 || saving" (click)="removeStop(i)"><mat-icon>delete_outline</mat-icon></button>
+                      </div>
+                    </div>
+                    <mat-form-field appearance="outline" class="stop-address">
+                      <mat-label>Dirección</mat-label>
+                      <input matInput formControlName="address" placeholder="Ej. Av. Primavera 910, Surco" />
+                      @if (stop.controls.address.touched && stop.controls.address.invalid) {
+                        <mat-error>Escribe una dirección de al menos 5 caracteres.</mat-error>
+                      }
+                    </mat-form-field>
+                    <div class="stop-student">
+                      <mat-icon>person_outline</mat-icon>
+                      <span>{{ stop.controls.studentName.value || 'Sin estudiante asociado' }}</span>
+                      <span class="stop-student-status">{{ stop.controls.studentId.value ? 'Asignado' : 'Pendiente' }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span class="student-status">{{ stop.controls.studentId.value ? 'Asignado' : 'Pendiente' }}</span>
+              }
+            </div>
+            <button class="text-add-stop" type="button" (click)="addStop()" [disabled]="saving">
+              <mat-icon>add_circle_outline</mat-icon> Agregar otra parada
+            </button>
+          </section>
+        }
+
+        @if (activeStep === 2) {
+          <section aria-labelledby="schedule-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>event_repeat</mat-icon></span>
+              <div>
+                <span class="stage-overline">PASO 3 DE 4</span>
+                <h2 id="schedule-heading">Días y horarios</h2>
+                <p>Elige cuándo operará tu ruta. Cada día puede tener una hora distinta.</p>
               </div>
             </div>
-          }
-        </div>
-        <p class="address-note"><mat-icon>info</mat-icon> La integración de mapas y la validación geográfica corresponden a RMW-49.</p>
-      </section>
+            <div class="quick-actions">
+              <button mat-stroked-button type="button" (click)="applySchoolWeek()" [disabled]="saving">
+                <mat-icon>event_available</mat-icon> Lunes a viernes
+              </button>
+              <button mat-button type="button" (click)="clearServiceDays()" [disabled]="saving">
+                Limpiar selección
+              </button>
+            </div>
+            <div class="service-days" formArrayName="serviceDays">
+              @for (day of serviceDays.controls; track day.controls.dayOfWeek.value; let i = $index) {
+                <div class="service-day" [formGroupName]="i" [class.selected]="day.controls.enabled.value">
+                  <mat-checkbox formControlName="enabled" [disabled]="saving">
+                    {{ weekdayLabels[day.controls.dayOfWeek.value] }}
+                  </mat-checkbox>
+                  @if (day.controls.enabled.value) {
+                    <mat-form-field appearance="outline" class="day-time">
+                      <mat-label>Salida</mat-label>
+                      <input matInput type="time" formControlName="departureTime" [readonly]="saving" />
+                    </mat-form-field>
+                    @if (day.hasError('departureTimeRequired') && (day.touched || scheduleMessage)) {
+                      <span class="day-error">Hora requerida</span>
+                    }
+                  } @else {
+                    <span class="day-off">Sin servicio</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="schedule-foot">
+              <mat-icon>calendar_month</mat-icon>
+              {{ selectedDaysCount }} de 7 días seleccionados
+            </div>
+            @if (scheduleMessage) { <div class="alert attention" role="alert">{{ scheduleMessage }}</div> }
+          </section>
+        }
 
-      <section class="form-section final-section" aria-labelledby="next-steps-title">
-        <div class="section-heading">
-          <span class="section-icon"><mat-icon>fact_check</mat-icon></span>
-          <div>
-            <h2 id="next-steps-title">3. Preparación para publicar</h2>
-            <p>{{ routeStatus === 'PUBLISHED' ? 'Ruta publicada: la API definitiva deberá proteger los viajes ya iniciados al editarla (RMW-22).' : 'La ruta permanecerá configurable hasta completar horarios y asignaciones.' }}</p>
-          </div>
-        </div>
-        <div class="readiness-grid">
-          <div><mat-icon>check_circle</mat-icon><span>{{ stops.length }} parada(s) en el recorrido</span></div>
-          <div><mat-icon>schedule</mat-icon><span>Horario recurrente: próximo incremento RMW-19</span></div>
-          <div><mat-icon>group</mat-icon><span>{{ assignedCount }} de {{ stops.length }} estudiante(s) vinculados</span></div>
-        </div>
-      </section>
-
-      <div class="form-actions">
-        <span class="save-hint">Se guarda como configuración de ruta; no se publica automáticamente.</span>
-        <div class="form-buttons">
-          <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancelar</button>
-          <button mat-flat-button type="submit" class="primary-action" [disabled]="form.invalid || saving">
-            <mat-icon>save</mat-icon>
-            {{ saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Guardar ruta') }}
-          </button>
-        </div>
+        @if (activeStep === 3) {
+          <section aria-labelledby="review-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>fact_check</mat-icon></span>
+              <div>
+                <span class="stage-overline">PASO 4 DE 4</span>
+                <h2 id="review-heading">Revisa tu recorrido</h2>
+                <p>Comprueba los datos antes de guardar la configuración.</p>
+              </div>
+            </div>
+            <div class="review-block">
+              <div class="review-title">
+                <h3>Ruta y paradas</h3>
+                <button mat-button type="button" (click)="goToStep(0)">Editar datos</button>
+              </div>
+              <strong>{{ form.controls.name.value || 'Ruta sin nombre' }}</strong>
+              <p>{{ shiftLabel }} · Salida habitual: {{ form.controls.departureTime.value }}</p>
+              <div class="review-stops">
+                @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
+                  <div><span class="review-number">{{ i + 1 }}</span> {{ stop.controls.address.value || 'Dirección pendiente' }}</div>
+                }
+              </div>
+              <button mat-button type="button" (click)="goToStep(1)">Editar paradas</button>
+            </div>
+            <div class="review-block">
+              <div class="review-title">
+                <h3>Programación semanal</h3>
+                <button mat-button type="button" (click)="goToStep(2)">Editar horarios</button>
+              </div>
+              @if (selectedDaysCount === 0) {
+                <p>Sin días de servicio seleccionados. Puedes guardar la ruta y definirlos después.</p>
+              } @else {
+                <div class="review-days">
+                  @for (day of serviceDays.controls; track day.controls.dayOfWeek.value) {
+                    @if (day.controls.enabled.value) {
+                      <span>{{ weekdayLabels[day.controls.dayOfWeek.value] }} · {{ day.controls.departureTime.value }}</span>
+                    }
+                  }
+                </div>
+              }
+            </div>
+            <div class="review-note">
+              <mat-icon>info_outline</mat-icon>
+              Las rutas se guardan sin publicar. Podrás completar las asignaciones de estudiantes después.
+            </div>
+          </section>
+        }
       </div>
-    </form>
-  </div>
+
+      <aside class="route-overview" aria-label="Vista previa de la ruta">
+        <div class="overview-header"><span class="overview-icon"><mat-icon>route</mat-icon></span><span>Vista previa</span></div>
+        <h3>{{ form.controls.name.value.trim() || 'Nueva ruta' }}</h3>
+        <p class="overview-shift"><mat-icon>wb_sunny</mat-icon>{{ shiftLabel }} · {{ form.controls.departureTime.value }}</p>
+        <div class="overview-divider"></div>
+        <div class="overview-detail"><mat-icon>pin_drop</mat-icon><span>{{ stops.length }} {{ stops.length === 1 ? 'parada' : 'paradas' }}</span></div>
+        <div class="overview-detail"><mat-icon>calendar_today</mat-icon><span>{{ selectedDaysCount }} {{ selectedDaysCount === 1 ? 'día programado' : 'días programados' }}</span></div>
+        <div class="overview-detail"><mat-icon>groups</mat-icon><span>{{ assignedCount }} {{ assignedCount === 1 ? 'estudiante asignado' : 'estudiantes asignados' }}</span></div>
+        <div class="overview-divider"></div>
+        <p class="overview-caption">PRIMERA PARADA</p>
+        <p class="overview-stop">{{ previewFirstStop }}</p>
+        <div class="overview-foot"><mat-icon>edit_note</mat-icon> {{ routeStatus === 'PUBLISHED' ? 'Ruta publicada' : 'Configuración en curso' }}</div>
+      </aside>
+    </div>
+
+    <footer class="wizard-footer">
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancelar</button>
+      <div class="wizard-footer-right">
+        @if (activeStep > 0) {
+          <button mat-stroked-button type="button" (click)="goToStep(activeStep - 1)" [disabled]="saving">
+            <mat-icon>arrow_back</mat-icon> Anterior
+          </button>
+        }
+        @if (activeStep < 3) {
+          <button mat-flat-button class="primary-action" type="button" (click)="goToStep(activeStep + 1)" [disabled]="saving">
+            Continuar <mat-icon>arrow_forward</mat-icon>
+          </button>
+        } @else {
+          <button mat-stroked-button type="button" (click)="submit(false)" [disabled]="saving">
+            {{ saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Guardar borrador') }}
+          </button>
+          <button mat-flat-button class="primary-action" type="button" (click)="submit(true)" [disabled]="saving">
+            <mat-icon>event_available</mat-icon> Confirmar horario y guardar
+          </button>
+        }
+      </div>
+    </footer>
+  </form>
 </section>
