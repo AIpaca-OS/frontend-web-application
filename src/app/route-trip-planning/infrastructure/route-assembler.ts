@@ -1,5 +1,8 @@
 import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { Route } from '../domain/model/route.entity';
+import {
+  ROUTE_WEEKDAYS, RouteSchedule, RouteWeekday, isValidRouteSchedule,
+} from '../domain/model/route-schedule.entity';
 import { RouteResource, RoutesResponse } from './routes-response';
 
 export class RouteAssembler implements BaseAssembler<Route, RouteResource, RoutesResponse> {
@@ -20,6 +23,16 @@ export class RouteAssembler implements BaseAssembler<Route, RouteResource, Route
           studentName: stop.studentName == null ? null : String(stop.studentName),
         }))
       : [];
+
+    const schedule: RouteSchedule[] = Array.isArray(resource.schedule)
+      ? resource.schedule
+          .filter(row => row && ROUTE_WEEKDAYS.includes(row.dayOfWeek as RouteWeekday))
+          .map(row => ({
+            dayOfWeek: row.dayOfWeek,
+            departureTime: String(row.departureTime ?? ''),
+          }))
+      : [];
+
     return new Route({
       id: Number(resource.id),
       name: String(resource.name ?? ''),
@@ -29,6 +42,8 @@ export class RouteAssembler implements BaseAssembler<Route, RouteResource, Route
       stopsCount: Number(resource.stopsCount ?? stops.length),
       shift: resource.shift === 'AFTERNOON' ? 'AFTERNOON' : 'MORNING',
       stops,
+      schedule,
+      scheduleConfirmed: Boolean(resource.scheduleConfirmed) && isValidRouteSchedule(schedule),
     });
   }
 
@@ -42,6 +57,8 @@ export class RouteAssembler implements BaseAssembler<Route, RouteResource, Route
       stopsCount: entity.stops.length,
       shift: entity.shift,
       stops: entity.stops,
+      schedule: entity.schedule,
+      scheduleConfirmed: entity.scheduleConfirmed,
     };
   }
 }

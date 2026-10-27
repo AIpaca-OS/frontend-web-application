@@ -24,20 +24,9 @@
     }
   </nav>
 
-  @if (store.error()) { <div class="alert error" role="alert">{{ store.error() }}</div> }
-  @if (legacyRouteWithoutStops && activeStep === 1) {
-    <div class="alert attention" role="status">
-      <mat-icon>info</mat-icon> Completa las direcciones de esta ruta antes de guardar los cambios.
-    </div>
-  }
-
   <form [formGroup]="form" (ngSubmit)="submit(false)">
     <div class="editor-grid">
       <div class="editor-main">
-        @if (stepMessage) {
-          <div class="alert attention" role="alert"><mat-icon>info</mat-icon>{{ stepMessage }}</div>
-        }
-
         @if (activeStep === 0) {
           <section aria-labelledby="basic-heading" class="panel-stage">
             <div class="stage-intro">
@@ -73,8 +62,11 @@
             </div>
             <div class="inline-tip">
               <mat-icon>confirmation_number</mat-icon>
-              <span>{{ codePreview ? ('Código de ruta: ' + codePreview) : 'El código de la ruta se asignará al guardarla.' }}</span>
+              <span>{{ codePreview ? ('Código de ruta: ' + codePreview) : 'El código se asignará al guardar la ruta.' }}</span>
             </div>
+            @if (stepMessage) {
+              <div class="inline-validation" role="alert">{{ stepMessage }}</div>
+            }
           </section>
         }
 
@@ -91,6 +83,19 @@
                 <mat-icon>add</mat-icon> Añadir parada
               </button>
             </div>
+            <p class="student-hint">Cada parada puede tener un estudiante asociado. Puedes dejarla sin asignación y completarla después.</p>
+            @if (studentsLoading()) {
+              <p class="catalog-feedback" role="status">Cargando estudiantes…</p>
+            }
+            @if (studentsError()) {
+              <div class="catalog-feedback warning" role="alert">
+                {{ studentsError() }}
+                <button mat-button type="button" (click)="loadStudentCandidates(true)">Reintentar</button>
+              </div>
+            }
+            @if (studentsLoaded() && students().length === 0) {
+              <p class="catalog-feedback" role="status">No hay estudiantes disponibles para asignar.</p>
+            }
             <div formArrayName="stops" class="stops-list">
               @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
                 <div class="stop-row" [formGroupName]="i">
@@ -115,8 +120,21 @@
                       }
                     </mat-form-field>
                     <div class="stop-student">
-                      <mat-icon>person_outline</mat-icon>
-                      <span>{{ stop.controls.studentName.value || 'Sin estudiante asociado' }}</span>
+                      <mat-icon>school</mat-icon>
+                      <mat-form-field appearance="outline" class="student-picker">
+                        <mat-label>Estudiante de esta parada</mat-label>
+                        <mat-select formControlName="studentId" (selectionChange)="changeStudent(i)"
+                                    [disabled]="saving || !studentsLoaded()">
+                          <mat-option value="">Sin asignar</mat-option>
+                          @for (student of availableStudents(i); track student.id) {
+                            <mat-option [value]="student.id">{{ student.fullName }}</mat-option>
+                          }
+                          @if (stop.controls.studentId.value &&
+                               !studentIsAvailable(stop.controls.studentId.value)) {
+                            <mat-option [value]="stop.controls.studentId.value" disabled>Asignación no disponible</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
                       <span class="stop-student-status">{{ stop.controls.studentId.value ? 'Asignado' : 'Pendiente' }}</span>
                     </div>
                   </div>
@@ -126,6 +144,12 @@
             <button class="text-add-stop" type="button" (click)="addStop()" [disabled]="saving">
               <mat-icon>add_circle_outline</mat-icon> Agregar otra parada
             </button>
+            @if (legacyRouteWithoutStops) {
+              <div class="inline-validation">Completa las direcciones de esta ruta antes de guardar los cambios.</div>
+            }
+            @if (assignmentMessage || stepMessage) {
+              <div class="inline-validation" role="alert">{{ assignmentMessage || stepMessage }}</div>
+            }
           </section>
         }
 
@@ -171,7 +195,9 @@
               <mat-icon>calendar_month</mat-icon>
               {{ selectedDaysCount }} de 7 días seleccionados
             </div>
-            @if (scheduleMessage) { <div class="alert attention" role="alert">{{ scheduleMessage }}</div> }
+            @if (scheduleMessage || stepMessage) {
+              <div class="inline-validation" role="alert">{{ scheduleMessage || stepMessage }}</div>
+            }
           </section>
         }
 
@@ -194,7 +220,10 @@
               <p>{{ shiftLabel }} · Salida habitual: {{ form.controls.departureTime.value }}</p>
               <div class="review-stops">
                 @for (stop of stops.controls; track stop.controls.id.value; let i = $index) {
-                  <div><span class="review-number">{{ i + 1 }}</span> {{ stop.controls.address.value || 'Dirección pendiente' }}</div>
+                  <div>
+                    <span class="review-number">{{ i + 1 }}</span> {{ stop.controls.address.value || 'Dirección pendiente' }}
+                    <small class="review-student">{{ studentNameFor(i) }}</small>
+                  </div>
                 }
               </div>
               <button mat-button type="button" (click)="goToStep(1)">Editar paradas</button>
@@ -218,9 +247,15 @@
             </div>
             <div class="review-note">
               <mat-icon>info_outline</mat-icon>
-              Las rutas se guardan sin publicar. Podrás completar las asignaciones de estudiantes después.
+              Esta ruta se guardará sin publicarse.
             </div>
+            @if (stepMessage) {
+              <div class="inline-validation" role="alert">{{ stepMessage }}</div>
+            }
           </section>
+        }
+        @if (store.error()) {
+          <div class="inline-validation" role="alert">{{ store.error() }}</div>
         }
       </div>
 

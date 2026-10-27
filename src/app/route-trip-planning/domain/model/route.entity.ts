@@ -1,5 +1,6 @@
 import { BaseEntity } from '../../../shared/domain/model/base-entity';
 import { RouteStop } from './route-stop.entity';
+import { RouteSchedule } from './route-schedule.entity';
 
 export type RouteShift = 'MORNING' | 'AFTERNOON';
 
@@ -12,6 +13,8 @@ export class Route implements BaseEntity {
   #shift: RouteShift;
   #stops: RouteStop[];
   #legacyStopsCount: number;
+  #schedule: RouteSchedule[];
+  #scheduleConfirmed: boolean;
 
   constructor(props: {
     id: number;
@@ -22,6 +25,8 @@ export class Route implements BaseEntity {
     stopsCount?: number;
     shift?: RouteShift;
     stops?: RouteStop[];
+    schedule?: RouteSchedule[];
+    scheduleConfirmed?: boolean;
   }) {
     this.#id = props.id;
     this.#name = props.name;
@@ -30,8 +35,9 @@ export class Route implements BaseEntity {
     this.#status = props.status;
     this.#shift = props.shift ?? 'MORNING';
     this.#stops = [...(props.stops ?? [])].sort((a, b) => a.position - b.position);
-    // Older MockAPI records only have stopsCount, not the addresses.
     this.#legacyStopsCount = props.stopsCount ?? 0;
+    this.#schedule = (props.schedule ?? []).map(row => ({ ...row }));
+    this.#scheduleConfirmed = props.scheduleConfirmed ?? false;
   }
 
   get id(): number { return this.#id; }
@@ -53,7 +59,12 @@ export class Route implements BaseEntity {
     this.#legacyStopsCount = this.#stops.length;
   }
 
-  // Backward compatibility for the existing route-list table.
+  get schedule(): RouteSchedule[] { return this.#schedule.map(row => ({ ...row })); }
+  set schedule(value: RouteSchedule[]) { this.#schedule = value.map(row => ({ ...row })); }
+  get scheduleConfirmed(): boolean { return this.#scheduleConfirmed; }
+  set scheduleConfirmed(value: boolean) { this.#scheduleConfirmed = value; }
+
+  /** Mantiene la lectura de registros anteriores de MockAPI. */
   get stopsCount(): number {
     return this.#stops.length > 0 ? this.#stops.length : this.#legacyStopsCount;
   }

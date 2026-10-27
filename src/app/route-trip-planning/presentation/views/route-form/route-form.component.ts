@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import {
   AbstractControl, FormArray, FormBuilder, FormControl, FormGroup,
   ReactiveFormsModule, ValidationErrors, Validators,
@@ -13,6 +13,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouteTripStore } from '../../../application/route-trip.store';
 import { Route, RouteShift } from '../../../domain/model/route.entity';
 import { RouteStop } from '../../../domain/model/route-stop.entity';
+import { RouteStudentCatalog, RouteStudentOption } from '../../../infrastructure/route-student-catalog';
+import { firstValueFrom } from 'rxjs';
 import {
   ROUTE_WEEKDAY_LABELS, ROUTE_WEEKDAYS, RouteSchedule, RouteWeekday,
   isValidRouteSchedule, isValidRouteTime,
@@ -47,13 +49,19 @@ function validateServiceDay(control: AbstractControl): ValidationErrors | null {
     MatInputModule, MatSelectModule, ReactiveFormsModule,
   ],
   templateUrl: './route-form.component.html',
-  styleUrl: './route-form.component.css',
+  styleUrls: ['./route-form.component.css', './route-students.component.css'],
 })
 export class RouteFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly store = inject(RouteTripStore);
+  private readonly studentCatalog = inject(RouteStudentCatalog);
+  readonly students = signal<RouteStudentOption[]>([]);
+  readonly studentsLoading = signal(false);
+  readonly studentsLoaded = signal(false);
+  readonly studentsError = signal('');
+  assignmentMessage = ''; 
   readonly weekdayLabels = ROUTE_WEEKDAY_LABELS;
 
   readonly stops = new FormArray<StopForm>([], { validators: Validators.minLength(1) });
@@ -132,6 +140,70 @@ export class RouteFormComponent {
     return this.stops.controls.filter(stop => Boolean(stop.controls.studentId.value)).length;
   }
 
+  async loadStudentCandidates(force = false): Promise<void> {
+    if (this.studentsLoading() || (this.studentsLoaded() && !force)) return;
+    this.studentsLoading.set(true);
+    this.studentsError.set('');
+    try {
+      const candidates = await firstValueFrom(this.studentCatalog.getCandidates());
+      this.students.set(candidates);
+      this.studentsLoaded.set(true);
+    } catch {
+      this.studentsLoaded.set(false);
+      this.studentsError.set('No se pudieron cargar los estudiantes. Intenta nuevamente.');
+    } finally {
+      this.studentsLoading.set(false);
+    }
+  }
+
+  studentIsAvailable(id: string): boolean {
+    return this.students().some(student => student.id === id);
+  }
+
+  availableStudents(index: number): RouteStudentOption[] {
+    const current = this.stops.at(index).controls.studentId.value;
+    const assignedElsewhere = new Set(this.stops.controls
+      .filter((_, stopIndex) => stopIndex !== index)
+      .map(stop => stop.controls.studentId.value)
+      .filter(Boolean));
+    return this.students().filter(student => !assignedElsewhere.has(student.id) || student.id === current);
+  }
+
+  studentNameFor(index: number): string {
+    const studentId = this.stops.at(index).controls.studentId.value;
+    if (!studentId) return 'Sin estudiante asignado';
+    return this.students().find(student => student.id === studentId)?.fullName
+      ?? 'Estudiante asignado (pendiente de verificar)';
+  }
+
+  private validAssignments(): boolean {
+    const selectedIds = this.stops.controls.map(stop => stop.controls.studentId.value).filter(Boolean);
+    if (new Set(selectedIds).size !== selectedIds.length) {
+      this.assignmentMessage = 'Un estudiante no puede estar en dos paradas de la misma ruta y turno.';
+      return false;
+    }
+    if (selectedIds.length > 0 && !this.studentsLoaded()) {
+      this.assignmentMessage = 'Necesitas cargar los estudiantes antes de guardar estas asignaciones.';
+      return false;
+    }
+    const authorizedIds = new Set(this.students().map(student => student.id));
+    if (selectedIds.some(id => !authorizedIds.has(id))) {
+      this.assignmentMessage = 'Hay una asignación que ya no está disponible. Revísala antes de continuar.';
+      return false;
+    }
+    this.assignmentMessage = '';
+    return true;
+  }
+
+  changeStudent(index: number): void {
+    const control = this.stops.at(index).controls.studentId;
+    const studentId = control.value;
+    if (studentId && !this.students().some(student => student.id === studentId)) {
+      control.setValue('');
+    }
+    this.assignmentMessage = '';
+  }
+
   get selectedDaysCount(): number {
     return this.serviceDays.controls.filter(row => row.controls.enabled.value).length;
   }
@@ -185,7 +257,7 @@ export class RouteFormComponent {
     }
     if (step === 1) {
       this.stops.markAllAsTouched();
-      return this.stops.length > 0 && this.stops.valid;
+      return this.stops.length > 0 && this.stops.valid && this.validAssignments();
     }
     // El horario es opcional mientras la ruta se guarda como borrador.
     return true;
@@ -200,12 +272,13 @@ export class RouteFormComponent {
           this.activeStep = index;
           this.stepMessage = index === 0
             ? 'Completa el nombre, la hora de salida y el turno.'
-            : 'Revisa las direcciones de las paradas.';
+            : 'Revisa las paradas y las asignaciones.';
           return;
         }
       }
     }
     this.activeStep = step;
+    if (step === 1) void this.loadStudentCandidates();
   }
 
   applySchoolWeek(): void {
@@ -233,10 +306,11 @@ export class RouteFormComponent {
     if (this.saving) return;
     this.scheduleMessage = '';
     this.stepMessage = '';
-    if (this.form.invalid) {
+    if (this.form.invalid || !this.validAssignments()) {
       this.form.markAllAsTouched();
-      this.stepMessage = 'Revisa los campos obligatorios antes de guardar.';
+      this.stepMessage = this.assignmentMessage || 'Revisa los campos obligatorios antes de guardar.';
       this.activeStep = this.validStep(0) ? (this.validStep(1) ? 2 : 1) : 0;
+      if (this.activeStep === 1) void this.loadStudentCandidates();
       return;
     }
 
@@ -267,7 +341,8 @@ export class RouteFormComponent {
         address: stop.address.trim(),
         position: index + 1,
         studentId: stop.studentId || null,
-        studentName: stop.studentName || null,
+        // Los nombres pertenecen a Profiles; en la ruta se persiste solo la referencia.
+        studentName: null,
       })),
       schedule,
       scheduleConfirmed: confirmSchedule || Boolean(current?.scheduleConfirmed && scheduleUnchanged),
