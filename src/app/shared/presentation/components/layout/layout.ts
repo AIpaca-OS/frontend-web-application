@@ -1,28 +1,12 @@
-import {Component, signal} from '@angular/core';
-import {RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
-import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatButtonModule} from '@angular/material/button';
-import {TranslatePipe} from '@ngx-translate/core';
-import {LanguageSwitcher} from '../language-switcher/language-switcher';
-import {FooterContent} from '../footer-content/footer-content';
-import {MatIcon} from '@angular/material/icon';
-import {SideMenu} from '../side-menu/side-menu';
-import {HeaderContent} from '../header-content/header-content'
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { SideMenu } from '../side-menu/side-menu';
+import { HeaderContent } from '../header-content/header-content';
 
 @Component({
   selector: 'app-layout',
   imports: [
-    RouterOutlet,
-    RouterLink,
-    MatToolbarModule,
-    MatButtonModule,
-    RouterLinkActive,
-    TranslatePipe,
-    LanguageSwitcher,
-    FooterContent,
-    MatIcon,
-    SideMenu,
-    HeaderContent
+    RouterOutlet, SideMenu, HeaderContent,
     // AuthenticationSection
   ],
   templateUrl: './layout.html',

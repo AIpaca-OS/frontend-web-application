@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { RoutesApiEndpoint } from './routes-api-endpoint';
 import { Route } from '../domain/model/route.entity';
+import { TranslateService } from '@ngx-translate/core';
+import { RouteSchedule } from '../domain/model/route-schedule.entity';
 
 @Injectable({
   providedIn: 'root',
@@ -11,16 +13,16 @@ import { Route } from '../domain/model/route.entity';
 export class RoutesApi extends BaseApi {
   private readonly endpoint: RoutesApiEndpoint;
 
-  constructor(http: HttpClient) {
+  constructor(http: HttpClient, translate: TranslateService) {
     super();
-    this.endpoint = new RoutesApiEndpoint(http);
+    this.endpoint = new RoutesApiEndpoint(http, () => translate.getCurrentLang() ?? 'en');
   }
 
   getRoutes(): Observable<Route[]> {
     return this.endpoint.getAll();
   }
 
-  getRouteById(id: number): Observable<Route> {
+  getRouteById(id: string): Observable<Route> {
     return this.endpoint.getById(id);
   }
 
@@ -32,7 +34,15 @@ export class RoutesApi extends BaseApi {
     return this.endpoint.update(route, route.id);
   }
 
-  deleteRoute(id: number): Observable<void> {
+  updateSchedule(id: string, schedule: RouteSchedule[], confirm: boolean): Observable<Route> {
+    return this.endpoint.updateSchedule(id, schedule, confirm);
+  }
+
+  publishRoute(id: string): Observable<Route> {
+    return this.endpoint.publish(id);
+  }
+
+  deleteRoute(id: string): Observable<void> {
     return this.endpoint.delete(id);
   }
 }
