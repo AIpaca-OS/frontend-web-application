@@ -1,11 +1,10 @@
-import { BaseEntity } from '../../../shared/domain/model/base-entity';
 import { RouteStop } from './route-stop.entity';
 import { RouteSchedule } from './route-schedule.entity';
 
 export type RouteShift = 'MORNING' | 'AFTERNOON';
 
-export class Route implements BaseEntity {
-  #id: number;
+export class Route {
+  #id: string;
   #name: string;
   #code: string;
   #departureTime: string;
@@ -17,7 +16,7 @@ export class Route implements BaseEntity {
   #scheduleConfirmed: boolean;
 
   constructor(props: {
-    id: number;
+    id: string;
     name: string;
     code: string;
     departureTime: string;
@@ -40,8 +39,8 @@ export class Route implements BaseEntity {
     this.#scheduleConfirmed = props.scheduleConfirmed ?? false;
   }
 
-  get id(): number { return this.#id; }
-  set id(value: number) { this.#id = value; }
+  get id(): string { return this.#id; }
+  set id(value: string) { this.#id = value; }
   get name(): string { return this.#name; }
   set name(value: string) { this.#name = value; }
   get code(): string { return this.#code; }

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { ProfilesRelationshipApi } from '../../profiles-relationship-management/infrastructure/profiles-relationship-management-api';
 import { StudentStatus } from '../../profiles-relationship-management/domain/model/student.entity';
 import { AuthorizationStatus } from '../../profiles-relationship-management/domain/model/tutor-student-relationship.entity';
@@ -18,6 +19,13 @@ export class RouteStudentCatalog {
   private readonly profilesApi = inject(ProfilesRelationshipApi);
 
   getCandidates(): Observable<RouteStudentOption[]> {
+    if (environment.routePlanningUseLocalDemoStudents) {
+      return of([
+        { id: 'demo-101', fullName: 'Estudiante de demostración 101' },
+        { id: 'demo-102', fullName: 'Estudiante de demostración 102' },
+        { id: 'demo-103', fullName: 'Estudiante de demostración 103' },
+      ]);
+    }
     return forkJoin({
       students: this.profilesApi.getStudents(),
       relationships: this.profilesApi.getTutorStudentRelationships(),

@@ -39,7 +39,7 @@ export class RouteTripStore {
     });
   }
 
-  getRouteById(id: number): Signal<Route | undefined> {
+  getRouteById(id: string): Signal<Route | undefined> {
     return computed(() => this.routes().find(route => route.id === id));
   }
 
@@ -75,7 +75,24 @@ export class RouteTripStore {
     }
   }
 
-  deleteRoute(id: number): void {
+  async publishRoute(id: string): Promise<boolean> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+    try {
+      const published = await firstValueFrom(this.routesApi.publishRoute(id));
+      this.routesSignal.update(routes =>
+        routes.map(current => current.id === published.id ? published : current),
+      );
+      return true;
+    } catch (error) {
+      this.errorSignal.set(this.formatError(error, 'Failed to publish route'));
+      return false;
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  deleteRoute(id: string): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     // Avoid retrying mutations automatically: duplicates / repeated side effects are possible.

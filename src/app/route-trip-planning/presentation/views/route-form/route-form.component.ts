@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RouteTripStore } from '../../../application/route-trip.store';
 import { Route, RouteShift } from '../../../domain/model/route.entity';
 import { RouteStop } from '../../../domain/model/route-stop.entity';
@@ -21,7 +22,7 @@ import {
 } from '../../../domain/model/route-schedule.entity';
 
 type StopForm = FormGroup<{
-  id: FormControl<string>;
+  id: FormControl<string | null>;
   address: FormControl<string>;
   studentId: FormControl<string>;
   studentName: FormControl<string>;
@@ -46,7 +47,7 @@ function validateServiceDay(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [
     MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
-    MatInputModule, MatSelectModule, ReactiveFormsModule,
+    MatInputModule, MatSelectModule, ReactiveFormsModule, TranslatePipe,
   ],
   templateUrl: './route-form.component.html',
   styleUrls: ['./route-form.component.css', './route-students.component.css'],
@@ -55,6 +56,7 @@ export class RouteFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   readonly store = inject(RouteTripStore);
   private readonly studentCatalog = inject(RouteStudentCatalog);
   readonly students = signal<RouteStudentOption[]>([]);
@@ -77,7 +79,7 @@ export class RouteFormComponent {
   });
 
   isEdit = false;
-  routeId: number | null = null;
+  routeId: string | null = null;
   codePreview = '';
   routeStatus = 'CONFIGURABLE';
   saving = false;
@@ -85,14 +87,17 @@ export class RouteFormComponent {
   scheduleMessage = '';
   activeStep = 0;
   stepMessage = '';
-  readonly stepTitles = ['Datos generales', 'Paradas', 'Horarios', 'Resumen'];
-  private patchedRouteId: number | null = null;
+  readonly stepTitles = [
+    'routes.form.stepGeneral', 'routes.form.stepStops',
+    'routes.form.stepSchedule', 'routes.form.stepReview',
+  ];
+  private patchedRouteId: string | null = null;
 
   constructor() {
     this.addStop();
     this.activatedRoute.paramMap.subscribe(params => {
       const raw = params.get('id');
-      this.routeId = raw === null ? null : Number(raw);
+      this.routeId = raw;
       this.isEdit = this.routeId !== null;
       this.patchedRouteId = null;
       this.activeStep = 0;
@@ -123,7 +128,7 @@ export class RouteFormComponent {
         });
       }
       this.scheduleMessage = existing.scheduleConfirmed
-        ? 'Horario recurrente confirmado en la configuración guardada.' : '';
+        ? this.translate.instant('routes.form.scheduleSaved') : '';
       this.patchedRouteId = existing.id;
     });
   }
@@ -150,7 +155,7 @@ export class RouteFormComponent {
       this.studentsLoaded.set(true);
     } catch {
       this.studentsLoaded.set(false);
-      this.studentsError.set('No se pudieron cargar los estudiantes. Intenta nuevamente.');
+      this.studentsError.set(this.translate.instant('routes.form.studentsLoadError'));
     } finally {
       this.studentsLoading.set(false);
     }
@@ -171,24 +176,24 @@ export class RouteFormComponent {
 
   studentNameFor(index: number): string {
     const studentId = this.stops.at(index).controls.studentId.value;
-    if (!studentId) return 'Sin estudiante asignado';
+    if (!studentId) return this.translate.instant('routes.form.studentNone');
     return this.students().find(student => student.id === studentId)?.fullName
-      ?? 'Estudiante asignado (pendiente de verificar)';
+      ?? this.translate.instant('routes.form.studentPending');
   }
 
   private validAssignments(): boolean {
     const selectedIds = this.stops.controls.map(stop => stop.controls.studentId.value).filter(Boolean);
     if (new Set(selectedIds).size !== selectedIds.length) {
-      this.assignmentMessage = 'Un estudiante no puede estar en dos paradas de la misma ruta y turno.';
+      this.assignmentMessage = this.translate.instant('routes.form.duplicateStudent');
       return false;
     }
     if (selectedIds.length > 0 && !this.studentsLoaded()) {
-      this.assignmentMessage = 'Necesitas cargar los estudiantes antes de guardar estas asignaciones.';
+      this.assignmentMessage = this.translate.instant('routes.form.loadStudentsBeforeAssign');
       return false;
     }
     const authorizedIds = new Set(this.students().map(student => student.id));
     if (selectedIds.some(id => !authorizedIds.has(id))) {
-      this.assignmentMessage = 'Hay una asignación que ya no está disponible. Revísala antes de continuar.';
+      this.assignmentMessage = this.translate.instant('routes.form.assignmentUnavailable');
       return false;
     }
     this.assignmentMessage = '';
@@ -210,7 +215,7 @@ export class RouteFormComponent {
 
   addStop(stop?: RouteStop): void {
     this.stops.push(this.fb.group({
-      id: this.fb.nonNullable.control(stop?.id ?? crypto.randomUUID()),
+      id: this.fb.control<string | null>(stop?.id ?? null),
       address: this.fb.nonNullable.control(stop?.address ?? '', [
         Validators.required, Validators.minLength(5),
       ]),
@@ -240,11 +245,13 @@ export class RouteFormComponent {
   }
 
   get shiftLabel(): string {
-    return this.form.controls.shift.value === 'MORNING' ? 'Mañana' : 'Tarde';
+    return this.translate.instant(this.form.controls.shift.value === 'MORNING'
+      ? 'routes.form.morning' : 'routes.form.afternoon');
   }
 
   get previewFirstStop(): string {
-    return this.stops.controls[0]?.controls.address.value.trim() || 'Por definir';
+    return this.stops.controls[0]?.controls.address.value.trim()
+      || this.translate.instant('routes.form.pendingAddress');
   }
 
   private validStep(step: number): boolean {
@@ -270,9 +277,8 @@ export class RouteFormComponent {
       for (let index = this.activeStep; index < step; index++) {
         if (!this.validStep(index)) {
           this.activeStep = index;
-          this.stepMessage = index === 0
-            ? 'Completa el nombre, la hora de salida y el turno.'
-            : 'Revisa las paradas y las asignaciones.';
+          this.stepMessage = this.translate.instant(index === 0
+            ? 'routes.form.requiredGeneral' : 'routes.form.reviewStops');
           return;
         }
       }
@@ -298,17 +304,14 @@ export class RouteFormComponent {
     this.serviceDays.controls.forEach(row => row.controls.enabled.setValue(false));
   }
 
-  private generateProvisionalCode(): string {
-    return `RUT-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-  }
-
   async submit(confirmSchedule = false): Promise<void> {
     if (this.saving) return;
     this.scheduleMessage = '';
     this.stepMessage = '';
     if (this.form.invalid || !this.validAssignments()) {
       this.form.markAllAsTouched();
-      this.stepMessage = this.assignmentMessage || 'Revisa los campos obligatorios antes de guardar.';
+      this.stepMessage = this.assignmentMessage
+        || this.translate.instant('routes.form.requiredFields');
       this.activeStep = this.validStep(0) ? (this.validStep(1) ? 2 : 1) : 0;
       if (this.activeStep === 1) void this.loadStudentCandidates();
       return;
@@ -320,7 +323,7 @@ export class RouteFormComponent {
       .map(day => ({ dayOfWeek: day.dayOfWeek, departureTime: day.departureTime }));
 
     if (confirmSchedule && !isValidRouteSchedule(schedule)) {
-      this.scheduleMessage = 'Selecciona un día de servicio y completa su hora de salida.';
+      this.scheduleMessage = this.translate.instant('routes.form.scheduleIncomplete');
       this.activeStep = 2;
       this.serviceDays.markAllAsTouched();
       return;
@@ -330,8 +333,8 @@ export class RouteFormComponent {
     const scheduleUnchanged = current !== undefined &&
       JSON.stringify(current.schedule) === JSON.stringify(schedule);
     const route = new Route({
-      id: this.routeId ?? 0,
-      code: current?.code || this.generateProvisionalCode(),
+      id: this.routeId ?? '',
+      code: current?.code || '',
       name: values.name.trim(),
       departureTime: values.departureTime,
       shift: values.shift,

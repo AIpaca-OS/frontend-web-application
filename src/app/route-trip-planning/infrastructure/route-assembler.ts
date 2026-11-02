@@ -1,11 +1,10 @@
-import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { Route } from '../domain/model/route.entity';
 import {
   ROUTE_WEEKDAYS, RouteSchedule, RouteWeekday, isValidRouteSchedule,
 } from '../domain/model/route-schedule.entity';
 import { RouteResource, RoutesResponse } from './routes-response';
 
-export class RouteAssembler implements BaseAssembler<Route, RouteResource, RoutesResponse> {
+export class RouteAssembler {
   toEntitiesFromResponse(response: RoutesResponse): Route[] {
     const list = Array.isArray(response)
       ? (response as unknown as RouteResource[])
@@ -16,7 +15,7 @@ export class RouteAssembler implements BaseAssembler<Route, RouteResource, Route
   toEntityFromResource(resource: RouteResource): Route {
     const stops = Array.isArray(resource.stops)
       ? resource.stops.map((stop, index) => ({
-          id: String(stop.id ?? `legacy-stop-${index + 1}`),
+          id: stop.id == null ? null : String(stop.id),
           address: String(stop.address ?? ''),
           position: Number(stop.position ?? index + 1),
           studentId: stop.studentId == null ? null : String(stop.studentId),
@@ -34,7 +33,7 @@ export class RouteAssembler implements BaseAssembler<Route, RouteResource, Route
       : [];
 
     return new Route({
-      id: Number(resource.id),
+      id: String(resource.id),
       name: String(resource.name ?? ''),
       code: String(resource.code ?? ''),
       departureTime: String(resource.departureTime ?? ''),

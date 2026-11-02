@@ -7,13 +7,13 @@ export const ROUTE_WEEKDAYS = [
 export type RouteWeekday = typeof ROUTE_WEEKDAYS[number];
 
 export const ROUTE_WEEKDAY_LABELS: Record<RouteWeekday, string> = {
-  MONDAY: 'Lunes',
-  TUESDAY: 'Martes',
-  WEDNESDAY: 'Miércoles',
-  THURSDAY: 'Jueves',
-  FRIDAY: 'Viernes',
-  SATURDAY: 'Sábado',
-  SUNDAY: 'Domingo',
+  MONDAY: 'routes.days.MONDAY',
+  TUESDAY: 'routes.days.TUESDAY',
+  WEDNESDAY: 'routes.days.WEDNESDAY',
+  THURSDAY: 'routes.days.THURSDAY',
+  FRIDAY: 'routes.days.FRIDAY',
+  SATURDAY: 'routes.days.SATURDAY',
+  SUNDAY: 'routes.days.SUNDAY',
 };
 
 /** Un registro por día: no depende del estado visual del formulario. */

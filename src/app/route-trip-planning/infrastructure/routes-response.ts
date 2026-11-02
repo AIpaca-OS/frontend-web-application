@@ -3,9 +3,10 @@ import { RouteShift } from '../domain/model/route.entity';
 import { RouteSchedule } from '../domain/model/route-schedule.entity';
 import { RouteStop } from '../domain/model/route-stop.entity';
 
-/** Contrato provisional de MockAPI; algunos registros antiguos carecen de campos. */
+/** Route resource accepted by the backend and legacy MockAPI records. */
 export interface RouteResource extends BaseResource {
-  id: number | string;
+  id: string | number;
+  vehicleId?: string | null;
   name: string;
   code?: string;
   departureTime?: string;

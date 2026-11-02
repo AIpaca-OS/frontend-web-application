@@ -4,7 +4,7 @@
  * La ausencia de estudiante se permite mientras la ruta siga configurable.
  */
 export interface RouteStop {
-  id: string;
+  id: string | null;
   address: string;
   position: number;
   studentId?: string | null;

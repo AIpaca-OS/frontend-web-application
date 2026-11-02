@@ -1,40 +1,41 @@
 <section class="routes-page">
   <div class="page-head">
     <div>
-      <p class="eyebrow">ROUTE & TRIP PLANNING</p>
-      <h1>Mis rutas escolares</h1>
-      <p class="subtitle">Organiza recorridos, paradas y turnos para preparar los viajes de cada jornada.</p>
+      <p class="eyebrow">{{ 'routes.list.eyebrow' | translate }}</p>
+      <h1>{{ 'routes.list.title' | translate }}</h1>
+      <p class="subtitle">{{ 'routes.list.subtitle' | translate }}</p>
     </div>
     <button mat-flat-button class="primary-action" (click)="navigateToNew()">
-      <mat-icon>add</mat-icon> Nueva ruta
+      <mat-icon>add</mat-icon> {{ 'routes.list.new' | translate }}
     </button>
   </div>
 
   <div class="summary-grid">
-    <div class="summary-card"><mat-icon>route</mat-icon><div><strong>{{ store.routeCount() }}</strong><span>Rutas registradas</span></div></div>
-    <div class="summary-card"><mat-icon>verified</mat-icon><div><strong>{{ publishedCount() }}</strong><span>Rutas publicadas</span></div></div>
-    <div class="summary-card"><mat-icon>pending_actions</mat-icon><div><strong>{{ store.routeCount() - publishedCount() }}</strong><span>Por configurar</span></div></div>
+    <div class="summary-card"><mat-icon>route</mat-icon><div><strong>{{ store.routeCount() }}</strong><span>{{ 'routes.list.registered' | translate }}</span></div></div>
+    <div class="summary-card"><mat-icon>verified</mat-icon><div><strong>{{ publishedCount() }}</strong><span>{{ 'routes.list.publishedCount' | translate }}</span></div></div>
+    <div class="summary-card"><mat-icon>pending_actions</mat-icon><div><strong>{{ store.routeCount() - publishedCount() }}</strong><span>{{ 'routes.list.configCount' | translate }}</span></div></div>
   </div>
 
   <div class="toolbar">
     <div class="search-field">
       <mat-icon>search</mat-icon>
-      <input type="search" aria-label="Buscar rutas" placeholder="Buscar ruta por nombre o código"
+      <input type="search" [attr.aria-label]="'routes.list.searchLabel' | translate"
+             [placeholder]="'routes.list.searchPlaceholder' | translate"
              [value]="search()" (input)="onSearch($event)" />
     </div>
-    <div class="filter-tabs" aria-label="Filtrar por estado">
-      <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">Todas</button>
-      <button type="button" [class.active]="filter() === 'CONFIGURABLE'" (click)="setFilter('CONFIGURABLE')">Por configurar</button>
-      <button type="button" [class.active]="filter() === 'PUBLISHED'" (click)="setFilter('PUBLISHED')">Publicadas</button>
+    <div class="filter-tabs" [attr.aria-label]="'routes.list.filterLabel' | translate">
+      <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">{{ 'routes.list.all' | translate }}</button>
+      <button type="button" [class.active]="filter() === 'CONFIGURABLE'" (click)="setFilter('CONFIGURABLE')">{{ 'routes.list.configurable' | translate }}</button>
+      <button type="button" [class.active]="filter() === 'PUBLISHED'" (click)="setFilter('PUBLISHED')">{{ 'routes.list.published' | translate }}</button>
     </div>
   </div>
 
   @if (store.loading()) {
-    <div class="empty-state"><mat-icon>hourglass_empty</mat-icon><strong>Cargando rutas...</strong></div>
+    <div class="empty-state" role="status"><mat-icon>hourglass_empty</mat-icon><strong>{{ 'routes.list.loading' | translate }}</strong></div>
   } @else if (filteredRoutes().length === 0) {
     <div class="empty-state">
-      <mat-icon>map</mat-icon><strong>No encontramos rutas para esta búsqueda.</strong>
-      <span>Prueba otro filtro o crea una nueva ruta.</span>
+      <mat-icon>map</mat-icon><strong>{{ 'routes.list.emptyTitle' | translate }}</strong>
+      <span>{{ 'routes.list.emptyHint' | translate }}</span>
     </div>
   } @else {
     <div class="route-grid">
@@ -45,25 +46,36 @@
             <span class="status-pill" [class.published]="isPublished(route)">{{ statusLabel(route) }}</span>
           </div>
           <h2>{{ route.name }}</h2>
-          <p class="route-code">{{ route.code || ('Ruta #' + route.id) }}</p>
+          <p class="route-code">{{ route.code || ('routes.list.routeNumber' | translate: { id: route.id }) }}</p>
           <div class="route-details">
-            <div><mat-icon>schedule</mat-icon><span>{{ route.scheduleConfirmed ? (route.schedule.length + ' día(s) programado(s)') : 'Horario sin confirmar' }}</span></div>
+            <div><mat-icon>schedule</mat-icon><span>{{ route.scheduleConfirmed
+              ? ('routes.list.scheduleConfirmed' | translate: { count: route.schedule.length })
+              : ('routes.list.scheduleUnconfirmed' | translate) }}</span></div>
             <div><mat-icon>sunny</mat-icon><span>{{ shiftLabel(route) }}</span></div>
-            <div><mat-icon>place</mat-icon><span>{{ route.stopsCount }} parada(s)</span></div>
+            <div><mat-icon>place</mat-icon><span>{{ 'routes.list.stopsCount' | translate: { count: route.stopsCount } }}</span></div>
           </div>
           @if (route.stops.length === 0 && route.stopsCount > 0) {
-            <div class="legacy-note"><mat-icon>warning_amber</mat-icon> Faltan las direcciones de las paradas</div>
+            <div class="legacy-note"><mat-icon>warning_amber</mat-icon> {{ 'routes.list.missingStops' | translate }}</div>
           } @else if (route.stops.length > 0) {
             <div class="stops-preview">
-              <span>Primera parada</span>
+              <span>{{ 'routes.list.firstStop' | translate }}</span>
               <strong>{{ route.stops[0].address }}</strong>
             </div>
           }
           <div class="route-actions">
             <button mat-stroked-button type="button" (click)="editRoute(route.id)">
-              <mat-icon>edit</mat-icon> Configurar ruta
+              <mat-icon>edit</mat-icon> {{ 'routes.list.configure' | translate }}
             </button>
-            <button mat-icon-button type="button" class="danger" aria-label="Eliminar ruta" title="Eliminar ruta"
+            @if (!isPublished(route)) {
+              <button mat-stroked-button type="button" (click)="publishRoute(route.id)"
+                      [disabled]="!canPublish(route)"
+                      [attr.aria-label]="'routes.list.publish' | translate">
+                <mat-icon>publish</mat-icon> {{ 'routes.list.publish' | translate }}
+              </button>
+            }
+            <button mat-icon-button type="button" class="danger"
+                    [attr.aria-label]="'routes.list.delete' | translate"
+                    [attr.title]="'routes.list.delete' | translate"
                     (click)="deleteRoute(route.id)"><mat-icon>delete_outline</mat-icon></button>
           </div>
         </article>
