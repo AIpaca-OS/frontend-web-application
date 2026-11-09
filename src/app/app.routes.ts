@@ -8,19 +8,61 @@ const routeTripRoutes=()=>import('./route-trip-planning/presentation/views/route
 const profilesRoutes=()=>import('./profiles-relationship-management/presentation/profiles.routes').then(m=>m.profilesRoutes);
 const subscriptionsRoutes=()=>import('./subscriptions-and-billing/presentation/subscriptions-and-billing.routes').then(m=>m.subscriptionsAndBillingRoutes);
 const termsPage=()=>import('./shared/presentation/views/legal/terms').then(m=>m.TermsPage);
-const privacyPage=()=>import('./shared/presentation/views/legal/privacy').then(m=>m.PrivacyPage);
+const loginPage = () => import('./identity-and-access-management/presentation/views/login/login').then((m) => m.Login);
+const privacyPage = () => import('./shared/presentation/views/legal/privacy').then((m) => m.PrivacyPage);
+const tutorLayout = () => import('./shared/presentation/components/tutor-layout/tutor-layout').then((m) => m.TutorLayout);
+const driverLayout = () => import('./shared/presentation/components/driver-layout/driver-layout').then((m) => m.DriverLayout);
+
 const baseTitle='Rumbo';
 
 export const routes: Routes = [
-  { path:'home', component:Home, title:`${baseTitle} - Home` },
-  { path:'routes', loadChildren:routeTripRoutes, title:`${baseTitle} - Routes` },
-  { path:'vehicles', loadChildren:vehiclesRoutes, title:`${baseTitle} - Vehicles` },
-  { path:'students', loadChildren:profilesRoutes, title:`${baseTitle} - Students` },
-  { path:'notifications', loadChildren:notificationRoutes, title:`${baseTitle} - Notifications` },
-  { path:'subscriptions-and-billing', loadChildren:subscriptionsRoutes, title:`${baseTitle} - Billing` },
-  { path:'subscription', redirectTo:'/subscriptions-and-billing', pathMatch:'full' },
-  { path:'terms', loadComponent:termsPage, title:`${baseTitle} - Terms` },
-  { path:'privacy', loadComponent:privacyPage, title:`${baseTitle} - Privacy` },
-  { path:'', redirectTo:'/home', pathMatch:'full' },
-  { path:'**', loadComponent:pageNotFound, title:`${baseTitle} - Page Not Found` },
+  {
+    path: 'tutor',
+    loadComponent: tutorLayout,
+    children: [
+      { path: 'current-trip', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
+      { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
+      { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
+      {
+        path: 'notifications',
+        loadChildren: notificationRoutes,
+        title: `${baseTitle} - Notifications`,
+      },
+      {
+        path: '',
+        redirectTo: 'home',
+        pathMatch: 'full',
+      },
+    ],
+  },
+  {
+    path: 'driver',
+    loadComponent: driverLayout,
+    children: [
+      { path: 'routes', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
+      { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
+      { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
+      {
+        path: 'notifications',
+        loadChildren: notificationRoutes,
+        title: `${baseTitle} - Notifications`,
+      },
+      {
+        path: 'plans',
+        loadChildren: subscriptionsRoutes,
+        title: `${baseTitle} - Plans`,
+      },
+      {
+        path: '',
+        redirectTo: 'home',
+        pathMatch: 'full',
+      },
+    ],
+  },
+
+  { path: 'terms', loadComponent: termsPage, title: `${baseTitle} - Terms` },
+  { path: 'privacy', loadComponent: privacyPage, title: `${baseTitle} - Privacy` },
+  { path: 'login', loadComponent: loginPage, title: `${baseTitle} - Login` },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', loadComponent: pageNotFound, title: `${baseTitle} - Page Not Found` },
 ];

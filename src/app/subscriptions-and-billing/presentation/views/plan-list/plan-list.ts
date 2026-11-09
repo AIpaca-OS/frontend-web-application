@@ -25,6 +25,6 @@ export class PlanList {
   }
 
   goToSubscriptions(): void {
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions']).then();
+    this.router.navigate(['driver', 'plans', 'subscriptions']).then();
   }
 }
