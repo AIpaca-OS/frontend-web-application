@@ -59,9 +59,17 @@ export class RouteListComponent {
       ? 'routes.list.afternoon' : 'routes.list.morning');
   }
   isPublished(route: Route): boolean { return route.status.toUpperCase() === 'PUBLISHED'; }
+  publicationMessage(route: Route): string {
+    if (!route.vehicleId) return 'workspace.publishMissingVehicle';
+    if (route.stops.length === 0) return 'workspace.publishMissingStops';
+    if (!route.scheduleConfirmed || route.schedule.length === 0)
+      return 'workspace.publishMissingSchedule';
+    if (!route.stops.some(stop => Boolean(stop.studentId)))
+      return 'workspace.publishMissingStudent';
+    return 'workspace.publishReady';
+  }
   canPublish(route: Route): boolean {
-    return !this.isPublished(route) && Boolean(route.vehicleId) && route.stops.length > 0 && route.scheduleConfirmed
-      && route.schedule.length > 0 && route.stops.some(stop => Boolean(stop.studentId));
+    return !this.isPublished(route) && this.publicationMessage(route) === 'workspace.publishReady';
   }
 
   navigateToNew(): void { void this.router.navigate(['/driver/routes/new']); }
