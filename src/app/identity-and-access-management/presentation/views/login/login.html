@@ -48,9 +48,9 @@
     <div class="form-content">
 
       <div class="welcome-text">
-        <span class="eyebrow">BIENVENIDO DE NUEVO</span>
-        <h2>Inicia sesión en Rumbo</h2>
-        <p>Elige tu rol para abrir la experiencia correspondiente.</p>
+        <span class="eyebrow">{{ 'workspace.previewWelcome' | translate }}</span>
+        <h2>{{ 'workspace.previewAccessTitle' | translate }}</h2>
+        <p>{{ 'workspace.previewAccessDescription' | translate }}</p>
       </div>
 
       <!-- ROLE SELECTOR -->
@@ -64,7 +64,7 @@
           (click)="selectRole('tutor')">
 
           <span class="role-dot"></span>
-          Padres / Tutores
+          {{ 'workspace.tutorRole' | translate }}
         </button>
 
         <button
@@ -75,7 +75,7 @@
           (click)="selectRole('driver')">
 
           <span class="role-dot"></span>
-          Conductor
+          {{ 'workspace.driverRole' | translate }}
         </button>
 
       </div>
