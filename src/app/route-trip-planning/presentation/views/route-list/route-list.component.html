@@ -63,7 +63,7 @@
             </div>
           }
           <div class="route-actions">
-            <button mat-stroked-button type="button" (click)="editRoute(route.id)">
+            <button mat-stroked-button type="button" (click)="editRoute(route.id)" [disabled]="isPublished(route)">
               <mat-icon>edit</mat-icon> {{ 'routes.list.configure' | translate }}
             </button>
             @if (!isPublished(route)) {
