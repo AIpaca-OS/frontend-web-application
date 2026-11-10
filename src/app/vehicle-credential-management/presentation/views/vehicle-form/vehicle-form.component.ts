@@ -104,10 +104,10 @@ export class VehicleFormComponent {
       this.store.addVehicle(vehicle);
     }
 
-    this.router.navigate(['vehicles']);
+    this.router.navigate(['/driver/vehicles']);
   }
 
   cancel(): void {
-    this.router.navigate(['vehicles']);
+    this.router.navigate(['/driver/vehicles']);
   }
 }
