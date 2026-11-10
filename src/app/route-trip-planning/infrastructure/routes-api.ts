@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
-import { RoutesApiEndpoint } from './routes-api-endpoint';
+import { AssignmentInputResource, EligibleStudentResource, RoutesApiEndpoint } from './routes-api-endpoint';
 import { Route } from '../domain/model/route.entity';
 import { TranslateService } from '@ngx-translate/core';
 import { RouteSchedule } from '../domain/model/route-schedule.entity';
@@ -36,6 +36,14 @@ export class RoutesApi extends BaseApi {
 
   updateSchedule(id: string, schedule: RouteSchedule[], confirm: boolean): Observable<Route> {
     return this.endpoint.updateSchedule(id, schedule, confirm);
+  }
+
+  getEligibleStudents(): Observable<EligibleStudentResource[]> {
+    return this.endpoint.getEligibleStudents();
+  }
+
+  replaceAssignments(id: string, assignments: AssignmentInputResource[]): Observable<Route> {
+    return this.endpoint.replaceAssignments(id, assignments);
   }
 
   publishRoute(id: string): Observable<Route> {
