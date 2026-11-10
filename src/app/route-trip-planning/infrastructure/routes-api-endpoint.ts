@@ -13,6 +13,16 @@ export interface RouteAssignmentResource {
   studentId: string;
 }
 
+export interface EligibleStudentResource {
+  id: string;
+  fullName: string;
+}
+
+export interface AssignmentInputResource {
+  studentId: string;
+  stopId: string;
+}
+
 export class RoutesApiEndpoint {
   private readonly endpointUrl =
     environment.routePlanningApiBaseUrl + environment.routePlanningRoutesEndpointPath;
@@ -69,6 +79,22 @@ export class RoutesApiEndpoint {
     ).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Unable to update route schedule')),
+    );
+  }
+
+  getEligibleStudents(): Observable<EligibleStudentResource[]> {
+    return this.http.get<EligibleStudentResource[]>(
+      this.endpointUrl + '/eligible-students', this.requestOptions(),
+    ).pipe(catchError(this.handleError('Unable to load eligible students')));
+  }
+
+  replaceAssignments(id: string, assignments: AssignmentInputResource[]): Observable<Route> {
+    return this.http.put<RouteResource>(
+      this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments',
+      assignments, this.requestOptions(),
+    ).pipe(
+      map(resource => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Unable to save route assignments')),
     );
   }
 
