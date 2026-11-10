@@ -2,6 +2,8 @@ import { computed, inject, Injectable, signal, Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Route } from '../domain/model/route.entity';
+import { RouteStop } from '../domain/model/route-stop.entity';
+import { AssignmentInputResource } from '../infrastructure/routes-api-endpoint';
 import { RoutesApi } from '../infrastructure/routes-api';
 
 @Injectable({ providedIn: 'root' })
@@ -43,22 +45,22 @@ export class RouteTripStore {
     return computed(() => this.routes().find(route => route.id === id));
   }
 
-  async addRoute(route: Route): Promise<boolean> {
+  async addRoute(route: Route): Promise<Route | null> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     try {
       const created = await firstValueFrom(this.routesApi.createRoute(route));
       this.routesSignal.update(routes => [...routes, created]);
-      return true;
+      return created;
     } catch (error) {
       this.errorSignal.set(this.formatError(error, 'Failed to create route'));
-      return false;
+      return null;
     } finally {
       this.loadingSignal.set(false);
     }
   }
 
-  async updateRoute(route: Route): Promise<boolean> {
+  async updateRoute(route: Route): Promise<Route | null> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     try {
@@ -66,9 +68,42 @@ export class RouteTripStore {
       this.routesSignal.update(routes =>
         routes.map(current => current.id === updated.id ? updated : current),
       );
-      return true;
+      return updated;
     } catch (error) {
       this.errorSignal.set(this.formatError(error, 'Failed to update route'));
+      return null;
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  async saveAssignments(savedRoute: Route, selectedStops: RouteStop[]): Promise<boolean> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+    try {
+      const assignments: AssignmentInputResource[] = [];
+      for (const stop of savedRoute.stops) {
+        const selected = selectedStops[stop.position - 1];
+        if (selected?.studentId) {
+          if (!stop.id) throw new Error('The server did not return a stop ID');
+          assignments.push({ stopId: stop.id, studentId: selected.studentId });
+        }
+      }
+
+      // An empty draft without previous assignments does not require student permissions.
+      if (assignments.length === 0 && !savedRoute.stops.some(stop => Boolean(stop.studentId))) {
+        return true;
+      }
+
+      const updated = await firstValueFrom(
+        this.routesApi.replaceAssignments(savedRoute.id, assignments),
+      );
+      this.routesSignal.update(routes =>
+        routes.map(current => current.id === updated.id ? updated : current),
+      );
+      return true;
+    } catch (error) {
+      this.errorSignal.set(this.formatError(error, 'Failed to save student assignments'));
       return false;
     } finally {
       this.loadingSignal.set(false);
