@@ -168,7 +168,9 @@
       "reviewStops": "Revisa las paradas y las asignaciones.",
       "requiredFields": "Revisa los campos obligatorios antes de guardar.",
       "scheduleIncomplete": "Selecciona un día de servicio y completa su hora de salida.",
-      "scheduleSaved": "Horario recurrente confirmado en la configuración guardada."
+      "scheduleSaved": "Horario recurrente confirmado en la configuración guardada.",
+      "vehicleLabel": "ID del vehículo",
+      "vehiclePlaceholder": "Ingrese el ID del vehículo registrado"
     },
     "days": {
       "MONDAY": "Lunes",
