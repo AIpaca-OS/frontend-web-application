@@ -4,6 +4,8 @@
     "content": "Manage the main frontend CRUD modules from this dashboard."
   },
   "workspace": {
+    "tutorStudentsHint": "Review linked student records and approved relationships.",
+    "tutorAlertsHint": "Consult notices relevant to your school trip.",
     "demoLoginNotice": "Role preview only: no password is checked yet. Real sign-in requires the IAM service (RMO-49/RMO-53).",
     "previewAsTutor": "Explore tutor view",
     "previewAsDriver": "Explore driver view",
