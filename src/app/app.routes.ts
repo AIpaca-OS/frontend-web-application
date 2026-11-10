@@ -13,6 +13,12 @@ const privacyPage = () => import('./shared/presentation/views/legal/privacy').th
 const tutorLayout = () => import('./shared/presentation/components/tutor-layout/tutor-layout').then((m) => m.TutorLayout);
 const driverLayout = () => import('./shared/presentation/components/driver-layout/driver-layout').then((m) => m.DriverLayout);
 
+
+const driverHome = () => import('./shared/presentation/views/role-dashboard/driver-home').then(m => m.DriverHome);
+const tutorHome = () => import('./shared/presentation/views/role-dashboard/tutor-home').then(m => m.TutorHome);
+const tutorCurrentTrip = () => import('./shared/presentation/views/role-dashboard/tutor-current-trip').then(m => m.TutorCurrentTrip);
+const roleSettings = () => import('./shared/presentation/views/role-dashboard/role-settings').then(m => m.RoleSettings);
+
 const baseTitle='Rumbo';
 
 export const routes: Routes = [
@@ -20,7 +26,9 @@ export const routes: Routes = [
     path: 'tutor',
     loadComponent: tutorLayout,
     children: [
-      { path: 'current-trip', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
+      { path: 'home', loadComponent: tutorHome, title: `${baseTitle} - Home` },
+      { path: 'current-trip', loadComponent: tutorCurrentTrip, title: `${baseTitle} - Current trip` },
+      { path: 'configuration', loadComponent: roleSettings, data: { role: 'tutor' }, title: `${baseTitle} - Settings` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
       { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
       {
@@ -39,6 +47,8 @@ export const routes: Routes = [
     path: 'driver',
     loadComponent: driverLayout,
     children: [
+      { path: 'home', loadComponent: driverHome, title: `${baseTitle} - Home` },
+      { path: 'configuration', loadComponent: roleSettings, data: { role: 'driver' }, title: `${baseTitle} - Settings` },
       { path: 'routes', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
       { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
