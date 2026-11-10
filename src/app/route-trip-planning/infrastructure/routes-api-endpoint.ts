@@ -108,7 +108,7 @@ export class RoutesApiEndpoint {
       name: entity.name,
       shift: entity.shift,
       departureTime: entity.departureTime,
-      vehicleId: null,
+      vehicleId: entity.vehicleId,
       stops: entity.stops.map(stop => ({
         id: stop.id,
         address: stop.address,
