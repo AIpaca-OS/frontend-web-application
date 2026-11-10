@@ -20,6 +20,20 @@ describe('Rumbo role navigation', () => {
     expect(tutorTrip?.loadChildren).toBeUndefined();
   });
 
+  it('protects tutor and driver previews with separate role guards', () => {
+    expect(driver?.canActivate?.length).toBe(1);
+    expect(tutor?.canActivate?.length).toBe(1);
+  });
+
+  it('registers independent Settings components for each role', () => {
+    const driverSettings = driver?.children?.find(route => route.path === 'configuration');
+    const tutorSettings = tutor?.children?.find(route => route.path === 'configuration');
+
+    expect(driverSettings?.loadComponent).toBeDefined();
+    expect(tutorSettings?.loadComponent).toBeDefined();
+    expect(driverSettings?.loadComponent).not.toBe(tutorSettings?.loadComponent);
+  });
+
   it('does not expose route editing under the tutor role', () => {
     const tutorPaths = tutor?.children?.map(route => route.path);
     expect(tutorPaths).not.toContain('routes');
