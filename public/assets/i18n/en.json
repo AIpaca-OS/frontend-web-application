@@ -168,7 +168,9 @@
       "reviewStops": "Review the stops and assignments.",
       "requiredFields": "Review the required fields before saving.",
       "scheduleIncomplete": "Choose a service day and enter its departure time.",
-      "scheduleSaved": "Recurring schedule confirmed in the saved configuration."
+      "scheduleSaved": "Recurring schedule confirmed in the saved configuration.",
+      "vehicleLabel": "Vehicle ID",
+      "vehiclePlaceholder": "Enter registered vehicle ID"
     },
     "days": {
       "MONDAY": "Monday",
