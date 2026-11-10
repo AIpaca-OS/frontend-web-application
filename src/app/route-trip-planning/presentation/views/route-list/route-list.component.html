@@ -62,6 +62,12 @@
               <strong>{{ route.stops[0].address }}</strong>
             </div>
           }
+          @if (!isPublished(route) && !canPublish(route)) {
+            <p class="publish-requirement" role="status">
+              <mat-icon>info_outline</mat-icon>
+              {{ publicationMessage(route) | translate }}
+            </p>
+          }
           <div class="route-actions">
             <button mat-stroked-button type="button" (click)="editRoute(route.id)" [disabled]="isPublished(route)">
               <mat-icon>edit</mat-icon> {{ 'routes.list.configure' | translate }}
@@ -69,6 +75,7 @@
             @if (!isPublished(route)) {
               <button mat-stroked-button type="button" (click)="publishRoute(route.id)"
                       [disabled]="!canPublish(route)"
+                      [attr.title]="publicationMessage(route) | translate"
                       [attr.aria-label]="'routes.list.publish' | translate">
                 <mat-icon>publish</mat-icon> {{ 'routes.list.publish' | translate }}
               </button>
