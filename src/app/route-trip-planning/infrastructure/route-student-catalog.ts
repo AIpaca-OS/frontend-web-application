@@ -1,9 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { forkJoin, map, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ProfilesRelationshipApi } from '../../profiles-relationship-management/infrastructure/profiles-relationship-management-api';
-import { StudentStatus } from '../../profiles-relationship-management/domain/model/student.entity';
-import { AuthorizationStatus } from '../../profiles-relationship-management/domain/model/tutor-student-relationship.entity';
+import { RoutesApi } from './routes-api';
 
 export interface RouteStudentOption {
   id: string;
@@ -11,41 +9,23 @@ export interface RouteStudentOption {
 }
 
 /**
- * Adaptador provisional para el catálogo del prototipo.
- * No sustituye la validación de acceso del conductor en el backend.
+ * Routes only consumes student candidates authorized by Profiles for the
+ * authenticated driver. No unprotected GET /students is used in backend mode.
  */
 @Injectable({ providedIn: 'root' })
 export class RouteStudentCatalog {
-  private readonly profilesApi = inject(ProfilesRelationshipApi);
+  private readonly routesApi = inject(RoutesApi);
 
   getCandidates(): Observable<RouteStudentOption[]> {
     if (environment.routePlanningUseLocalDemoStudents) {
+      // Visual demonstration only; backend authorization still rejects these IDs
+      // unless Profiles explicitly recognizes the student and the driver.
       return of([
-        { id: 'demo-101', fullName: 'Estudiante de demostración 101' },
-        { id: 'demo-102', fullName: 'Estudiante de demostración 102' },
-        { id: 'demo-103', fullName: 'Estudiante de demostración 103' },
+        { id: 'demo-101', fullName: 'Demo Student 101' },
+        { id: 'demo-102', fullName: 'Demo Student 102' },
+        { id: 'demo-103', fullName: 'Demo Student 103' },
       ]);
     }
-    return forkJoin({
-      students: this.profilesApi.getStudents(),
-      relationships: this.profilesApi.getTutorStudentRelationships(),
-    }).pipe(
-      map(({ students, relationships }) => {
-        const authorizedIds = new Set(
-          relationships
-            .filter(relationship => relationship.authorizationStatus === AuthorizationStatus.AUTHORIZED
-              && relationship.revokedAt === null)
-            .map(relationship => String(relationship.studentId)),
-        );
-        return students
-          .filter(student => student.status === StudentStatus.ACTIVE
-            && authorizedIds.has(String(student.id)))
-          .map(student => ({
-            id: String(student.id),
-            fullName: `${student.firstName} ${student.lastName}`.trim(),
-          }))
-          .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'));
-      }),
-    );
+    return this.routesApi.getEligibleStudents();
   }
 }
