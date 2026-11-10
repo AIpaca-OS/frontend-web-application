@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { previewRoleGuard } from './identity-and-access-management/application/demo-role-session.service';
 
 const pageNotFound=()=>import('./shared/presentation/views/page-not-found/page-not-found').then(m=>m.PageNotFound);
 const notificationRoutes=()=>import('./alerting/presentation/views/alerting.routes').then(m=>m.alertingRoutes);
@@ -16,18 +17,20 @@ const driverLayout = () => import('./shared/presentation/components/driver-layou
 const driverHome = () => import('./shared/presentation/views/role-dashboard/driver-home').then(m => m.DriverHome);
 const tutorHome = () => import('./shared/presentation/views/role-dashboard/tutor-home').then(m => m.TutorHome);
 const tutorCurrentTrip = () => import('./shared/presentation/views/role-dashboard/tutor-current-trip').then(m => m.TutorCurrentTrip);
-const roleSettings = () => import('./shared/presentation/views/role-dashboard/role-settings').then(m => m.RoleSettings);
+const driverSettings = () => import('./shared/presentation/views/role-dashboard/driver-settings').then(m => m.DriverSettings);
+const tutorSettings = () => import('./shared/presentation/views/role-dashboard/tutor-settings').then(m => m.TutorSettings);
 
 const baseTitle='Rumbo';
 
 export const routes: Routes = [
   {
     path: 'tutor',
+    canActivate: [previewRoleGuard('tutor')],
     loadComponent: tutorLayout,
     children: [
       { path: 'home', loadComponent: tutorHome, title: `${baseTitle} - Home` },
       { path: 'current-trip', loadComponent: tutorCurrentTrip, title: `${baseTitle} - Current trip` },
-      { path: 'configuration', loadComponent: roleSettings, data: { role: 'tutor' }, title: `${baseTitle} - Settings` },
+      { path: 'configuration', loadComponent: tutorSettings, title: `${baseTitle} - Tutor settings` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
       { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
       {
@@ -44,10 +47,11 @@ export const routes: Routes = [
   },
   {
     path: 'driver',
+    canActivate: [previewRoleGuard('driver')],
     loadComponent: driverLayout,
     children: [
       { path: 'home', loadComponent: driverHome, title: `${baseTitle} - Home` },
-      { path: 'configuration', loadComponent: roleSettings, data: { role: 'driver' }, title: `${baseTitle} - Settings` },
+      { path: 'configuration', loadComponent: driverSettings, title: `${baseTitle} - Driver settings` },
       { path: 'routes', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
       { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
