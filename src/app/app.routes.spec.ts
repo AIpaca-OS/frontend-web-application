@@ -34,6 +34,12 @@ describe('Rumbo role navigation', () => {
     expect(driverSettings?.loadComponent).not.toBe(tutorSettings?.loadComponent);
   });
 
+  it('does not expose unfiltered vehicle CRUD under the tutor role', () => {
+    const tutorPaths = tutor?.children?.map(route => route.path);
+    expect(tutorPaths).not.toContain('vehicles');
+    expect(driver?.children?.some(route => route.path === 'vehicles')).toBe(true);
+  });
+
   it('does not expose route editing under the tutor role', () => {
     const tutorPaths = tutor?.children?.map(route => route.path);
     expect(tutorPaths).not.toContain('routes');
