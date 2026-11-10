@@ -60,7 +60,7 @@ export class RouteListComponent {
   }
   isPublished(route: Route): boolean { return route.status.toUpperCase() === 'PUBLISHED'; }
   canPublish(route: Route): boolean {
-    return !this.isPublished(route) && route.stops.length > 0 && route.scheduleConfirmed
+    return !this.isPublished(route) && Boolean(route.vehicleId) && route.stops.length > 0 && route.scheduleConfirmed
       && route.schedule.length > 0 && route.stops.some(stop => Boolean(stop.studentId));
   }
 
