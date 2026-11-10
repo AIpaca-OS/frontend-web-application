@@ -45,6 +45,10 @@
                   <mat-error>{{ 'routes.form.nameError' | translate }}</mat-error>
                 }
               </mat-form-field>
+              <mat-form-field appearance="outline" class="span-two">
+                <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
+                <input matInput formControlName="vehicleId" [placeholder]="'routes.form.vehiclePlaceholder' | translate" />
+              </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'routes.form.departureLabel' | translate }}</mat-label>
                 <input matInput type="time" formControlName="departureTime" />
