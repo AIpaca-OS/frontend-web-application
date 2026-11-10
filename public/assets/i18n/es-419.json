@@ -230,7 +230,10 @@
       "scheduleIncomplete": "Selecciona un día de servicio y completa su hora de salida.",
       "scheduleSaved": "Horario recurrente confirmado en la configuración guardada.",
       "vehicleLabel": "ID del vehículo",
-      "vehiclePlaceholder": "Ingrese el ID del vehículo registrado"
+      "vehiclePlaceholder": "Ingrese el ID del vehículo registrado",
+      "vehicleIdHint": "Usa el ID mostrado en tu registro de vehículos.",
+      "vehicleRegistryNotice": "El registro de vehículos es un prototipo. Antes de publicar, el backend debe verificar el titular y las credenciales del vehículo.",
+      "openVehicles": "Gestionar vehículos"
     },
     "days": {
       "MONDAY": "Lunes",
