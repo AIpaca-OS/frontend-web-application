@@ -2,7 +2,6 @@
 import { VehiclesApi } from '../infrastructure/vehicles-api';
 import { Vehicle } from '../domain/model/vehicle.entity';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { retry } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -62,7 +61,7 @@ export class VehicleCredentialStore {
     this.errorSignal.set(null);
     this.vehiclesApi
       .createVehicle(vehicle)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (created) => {
           this.vehiclesSignal.update((list) => [...list, created]);
@@ -80,7 +79,7 @@ export class VehicleCredentialStore {
     this.errorSignal.set(null);
     this.vehiclesApi
       .updateVehicle(vehicle)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (updated) => {
           this.vehiclesSignal.update((list) =>
@@ -100,7 +99,7 @@ export class VehicleCredentialStore {
     this.errorSignal.set(null);
     this.vehiclesApi
       .deleteVehicle(id)
-      .pipe(retry(2))
+      
       .subscribe({
         next: () => {
           this.vehiclesSignal.update((list) => list.filter((v) => v.id !== id));
