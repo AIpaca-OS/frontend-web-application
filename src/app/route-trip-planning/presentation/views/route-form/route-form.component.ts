@@ -373,11 +373,11 @@ export class RouteFormComponent {
       // Student assignments are a separate protected application operation.
       // A denied assignment leaves the route configurable and shows the error.
       const assignmentsSaved = await this.store.saveAssignments(saved, route.stops);
-      if (assignmentsSaved) await this.router.navigate(['/routes']);
+      if (assignmentsSaved) await this.router.navigate(['/driver/routes']);
     } finally {
       this.saving = false;
     }
   }
 
-  cancel(): void { void this.router.navigate(['/routes']); }
+  cancel(): void { void this.router.navigate(['/driver/routes']); }
 }
