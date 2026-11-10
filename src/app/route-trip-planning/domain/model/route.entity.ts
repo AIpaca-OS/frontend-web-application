@@ -9,6 +9,7 @@ export class Route {
   #code: string;
   #departureTime: string;
   #status: string;
+  #vehicleId: string | null;
   #shift: RouteShift;
   #stops: RouteStop[];
   #legacyStopsCount: number;
@@ -21,6 +22,7 @@ export class Route {
     code: string;
     departureTime: string;
     status: string;
+    vehicleId?: string | null;
     stopsCount?: number;
     shift?: RouteShift;
     stops?: RouteStop[];
@@ -32,6 +34,7 @@ export class Route {
     this.#code = props.code;
     this.#departureTime = props.departureTime;
     this.#status = props.status;
+    this.#vehicleId = props.vehicleId ?? null;
     this.#shift = props.shift ?? 'MORNING';
     this.#stops = [...(props.stops ?? [])].sort((a, b) => a.position - b.position);
     this.#legacyStopsCount = props.stopsCount ?? 0;
@@ -49,6 +52,8 @@ export class Route {
   set departureTime(value: string) { this.#departureTime = value; }
   get status(): string { return this.#status; }
   set status(value: string) { this.#status = value; }
+  get vehicleId(): string | null { return this.#vehicleId; }
+  set vehicleId(value: string | null) { this.#vehicleId = value; }
   get shift(): RouteShift { return this.#shift; }
   set shift(value: RouteShift) { this.#shift = value; }
 
