@@ -48,7 +48,13 @@
               <mat-form-field appearance="outline" class="span-two">
                 <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
                 <input matInput formControlName="vehicleId" [placeholder]="'routes.form.vehiclePlaceholder' | translate" />
+                <mat-hint>{{ 'routes.form.vehicleIdHint' | translate }}</mat-hint>
               </mat-form-field>
+              <div class="inline-tip span-two">
+                <mat-icon>directions_bus</mat-icon>
+                <span>{{ 'routes.form.vehicleRegistryNotice' | translate }}</span>
+                <a routerLink="/driver/vehicles">{{ 'routes.form.openVehicles' | translate }}</a>
+              </div>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'routes.form.departureLabel' | translate }}</mat-label>
                 <input matInput type="time" formControlName="departureTime" />
