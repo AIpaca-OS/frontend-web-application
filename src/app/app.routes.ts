@@ -31,7 +31,6 @@ export const routes: Routes = [
       { path: 'home', loadComponent: tutorHome, title: `${baseTitle} - Home` },
       { path: 'current-trip', loadComponent: tutorCurrentTrip, title: `${baseTitle} - Current trip` },
       { path: 'configuration', loadComponent: tutorSettings, title: `${baseTitle} - Tutor settings` },
-      { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
       { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
       {
         path: 'notifications',
