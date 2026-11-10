@@ -13,10 +13,10 @@ export class TutorLayout {
   sidebarOptions = signal([
     { link: '/tutor/home', label: 'nav.home', icon: 'home' },
     { link: '/tutor/current-trip', label: 'nav.trip', icon: 'route' },
-    { link: '/tutor/record', label: 'nav.record', icon: 'pie_chart_outline' },
+    
     { link: '/tutor/notifications', label: 'nav.notifications', icon: 'notifications' },
-    { link: '/tutor/student', label: 'nav.student', icon: 'person' },
-    { link: '/tutor/documents', label: 'nav.documents', icon: 'article' },
+    { link: '/tutor/students', label: 'nav.students', icon: 'person' },
+    
     { link: '/tutor/configuration', label: 'nav.configuration', icon: 'settings' },
   ]);
 }
