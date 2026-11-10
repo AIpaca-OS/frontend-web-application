@@ -64,8 +64,8 @@ export class RouteListComponent {
       && route.schedule.length > 0 && route.stops.some(stop => Boolean(stop.studentId));
   }
 
-  navigateToNew(): void { void this.router.navigate(['/routes/new']); }
-  editRoute(id: string): void { void this.router.navigate(['/routes', id, 'edit']); }
+  navigateToNew(): void { void this.router.navigate(['/driver/routes/new']); }
+  editRoute(id: string): void { void this.router.navigate(['/driver/routes', id, 'edit']); }
 
   deleteRoute(id: string): void {
     if (window.confirm(this.translate.instant('routes.list.confirmDelete'))) {
