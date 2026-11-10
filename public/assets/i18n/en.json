@@ -4,6 +4,9 @@
     "content": "Manage the main frontend CRUD modules from this dashboard."
   },
   "workspace": {
+    "previewWelcome": "ROLE PREVIEW",
+    "previewAccessTitle": "Explore Rumbo",
+    "previewAccessDescription": "Choose the experience you want to review. Verified login will be added through IAM.",
     "tutorStudentsHint": "Review linked student records and approved relationships.",
     "tutorAlertsHint": "Consult notices relevant to your school trip.",
     "demoLoginNotice": "Role preview only: no password is checked yet. Real sign-in requires the IAM service (RMO-49/RMO-53).",
