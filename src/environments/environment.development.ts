@@ -10,7 +10,7 @@ export const environment = {
   routePlanningApiBaseUrl:'/api/v1',
   routePlanningRoutesEndpointPath:'/routes',
   routePlanningApiMode:'backend',
-  routePlanningUseLocalDemoStudents:true,
+  routePlanningUseLocalDemoStudents:false,
   billingBasePath:'https://6ac54a6d54a61668c5f7141c.mockapi.io/api/v1',
   billingPlansEndpointPath:'/plans',
   billingSubscriptionsEndpointPath:'/subscriptions',
