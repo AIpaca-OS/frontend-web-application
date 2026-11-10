@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { Home } from './shared/presentation/views/home/home';
 
 const pageNotFound=()=>import('./shared/presentation/views/page-not-found/page-not-found').then(m=>m.PageNotFound);
 const notificationRoutes=()=>import('./alerting/presentation/views/alerting.routes').then(m=>m.alertingRoutes);
