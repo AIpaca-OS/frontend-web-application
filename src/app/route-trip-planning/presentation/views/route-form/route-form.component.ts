@@ -72,6 +72,7 @@ export class RouteFormComponent {
   );
   readonly form = this.fb.group({
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)]),
+    vehicleId: this.fb.nonNullable.control(''),
     departureTime: this.fb.nonNullable.control('07:30', Validators.required),
     shift: this.fb.nonNullable.control<RouteShift>('MORNING', Validators.required),
     stops: this.stops,
@@ -113,6 +114,7 @@ export class RouteFormComponent {
       this.routeStatus = existing.status;
       this.form.patchValue({
         name: existing.name,
+        vehicleId: existing.vehicleId ?? '',
         departureTime: existing.departureTime || '07:30',
         shift: existing.shift,
       });
@@ -336,6 +338,7 @@ export class RouteFormComponent {
       id: this.routeId ?? '',
       code: current?.code || '',
       name: values.name.trim(),
+      vehicleId: values.vehicleId.trim() || null,
       departureTime: values.departureTime,
       shift: values.shift,
       status: current?.status ?? 'CONFIGURABLE',
