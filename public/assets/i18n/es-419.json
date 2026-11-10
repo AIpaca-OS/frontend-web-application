@@ -4,6 +4,8 @@
     "content": "Gestiona los principales módulos CRUD del frontend desde este panel."
   },
   "workspace": {
+    "tutorStudentsHint": "Consulta los estudiantes vinculados y las relaciones autorizadas.",
+    "tutorAlertsHint": "Revisa los avisos correspondientes al traslado escolar.",
     "demoLoginNotice": "Solo vista previa por rol: aún no se comprueban contraseñas. El inicio de sesión real necesita IAM (RMO-49/RMO-53).",
     "previewAsTutor": "Explorar como tutor",
     "previewAsDriver": "Explorar como conductor",
