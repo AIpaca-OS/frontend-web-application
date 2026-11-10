@@ -3,7 +3,7 @@ import {
   AbstractControl, FormArray, FormBuilder, FormControl, FormGroup,
   ReactiveFormsModule, ValidationErrors, Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -47,7 +47,7 @@ function validateServiceDay(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [
     MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
-    MatInputModule, MatSelectModule, ReactiveFormsModule, TranslatePipe,
+    MatInputModule, MatSelectModule, ReactiveFormsModule, TranslatePipe, RouterLink,
   ],
   templateUrl: './route-form.component.html',
   styleUrls: ['./route-form.component.css', './route-students.component.css'],
