@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 import { Student, StudentStatus } from '../../../domain/model/student.entity';
+import { environment } from '../../../../../../environments/environment';
 
 /**
  * Form view used to create or update a student.
@@ -40,7 +41,7 @@ export class StudentForm {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     birthDate: ['', Validators.required],
-    schoolName: ['', Validators.required],
+    schoolName: [environment.production ? '' : 'Colegio Demostración', Validators.required],
     status: this.fb.nonNullable.control<StudentStatus>(StudentStatus.ACTIVE, Validators.required),
   });
 
@@ -95,10 +96,10 @@ export class StudentForm {
       this.store.addStudent(student);
     }
 
-    this.router.navigate(['/students']).then();
+    this.router.navigate(['/tutor/students']).then();
   }
 
   cancel(): void {
-    this.router.navigate(['/students']).then();
+    this.router.navigate(['/tutor/students']).then();
   }
 }
