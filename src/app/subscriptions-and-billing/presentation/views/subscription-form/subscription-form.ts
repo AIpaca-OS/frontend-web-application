@@ -80,7 +80,7 @@ export class SubscriptionForm {
     return this.store.plans().find((plan) => plan.id === planId);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -107,15 +107,16 @@ export class SubscriptionForm {
     });
 
     if (this.isEdit) {
+      // Backend does not support changing a subscription after activation.
       this.store.updateSubscription(subscription);
-    } else {
-      this.store.addSubscription(subscription);
+      return;
     }
 
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions']).then();
+    const saved = await this.store.addSubscription(subscription);
+    if (saved) await this.router.navigateByUrl('/driver/plans/subscriptions');
   }
 
   cancel(): void {
-    this.router.navigate(['subscriptions-and-billing', 'plans']).then();
+    void this.router.navigateByUrl('/driver/plans');
   }
 }
