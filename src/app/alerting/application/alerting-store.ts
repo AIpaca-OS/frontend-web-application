@@ -22,6 +22,8 @@ export class AlertingStore {
 
   private readonly errorSignal = signal<string | null>(null);
   readonly error = this.errorSignal.asReadonly();
+  private readonly settingsErrorSignal = signal<string | null>(null);
+  readonly settingsError = this.settingsErrorSignal.asReadonly();
 
   readonly notificationsCount = computed(() => this.notifications().length);
 
@@ -68,7 +70,7 @@ export class AlertingStore {
       .subscribe({
         next: (settings) => this.settingsSignal.set(settings),
         error: (error) =>
-          this.errorSignal.set(this.formatError(error, 'Failed to load notification settings')),
+          this.settingsErrorSignal.set(this.formatError(error, 'Failed to load notification settings')),
       });
   }
 
