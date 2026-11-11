@@ -8,3 +8,15 @@
 .stop-student-status{white-space:nowrap}
 .review-student{display:block;padding-left:34px;font-size:11px;color:#6d8476;margin-top:3px}
 @media(max-width:600px){.stop-student{flex-wrap:wrap}.student-picker{flex-basis:calc(100% - 34px)}.stop-student-status{margin-left:27px}}
+
+.pending-enrollment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #d8e6dd;
+}
+.pending-enrollment-row span { font-weight: 650; }
+.pending-enrollment-row button { flex-shrink: 0; }
