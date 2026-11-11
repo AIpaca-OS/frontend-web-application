@@ -338,6 +338,19 @@ export class RouteFormComponent {
     }
 
     const current = this.store.routes().find(route => route.id === this.routeId);
+    const published = current?.status.toUpperCase() === 'PUBLISHED';
+    // Published routes may adjust their name, schedule and stop addresses.
+    // Existing student assignments must not be replaced after publication.
+    if (published && current) {
+      const previouslyAssigned = new Map(current.stops.map(stop => [stop.id, stop.studentId ?? '']));
+      const assignmentsChanged = values.stops.some(stop =>
+        (stop.id ? previouslyAssigned.get(stop.id) : '') !== (stop.studentId || ''));
+      if (assignmentsChanged) {
+        this.assignmentMessage = this.translate.instant('routes.form.publishedAssignmentsLocked');
+        this.activeStep = 1;
+        return;
+      }
+    }
     const scheduleUnchanged = current !== undefined &&
       JSON.stringify(current.schedule) === JSON.stringify(schedule);
     const route = new Route({
@@ -378,7 +391,8 @@ export class RouteFormComponent {
 
       // Student assignments are a separate protected application operation.
       // A denied assignment leaves the route configurable and shows the error.
-      const assignmentsSaved = await this.store.saveAssignments(saved, route.stops);
+      const assignmentsSaved = published ? true
+        : await this.store.saveAssignments(saved, route.stops);
       if (assignmentsSaved) await this.router.navigate(['/driver/routes']);
     } finally {
       this.saving = false;

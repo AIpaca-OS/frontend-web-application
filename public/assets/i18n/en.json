@@ -242,7 +242,9 @@
       "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first.",
       "enrollmentNeeded": "A tutor must request transport service, and the driver must accept the enrollment before assignment.",
       "reviewEnrollments": "Review enrollments",
-      "refreshEligibleStudents": "Refresh available students"
+      "refreshEligibleStudents": "Refresh available students",
+      "publishedAssignmentsLocked": "Published routes retain their student assignments. Replan to change the assigned students.",
+      "publishedVehicleLocked": "The vehicle cannot be changed after a route is published."
     },
     "days": {
       "MONDAY": "Monday",

@@ -242,7 +242,9 @@
       "vehicleEmpty": "No hay vehículos registrados. Agrega uno desde Gestionar vehículos.",
       "enrollmentNeeded": "Para asignar un estudiante, el tutor debe solicitar el servicio y el conductor debe aceptar la afiliación.",
       "reviewEnrollments": "Revisar afiliaciones",
-      "refreshEligibleStudents": "Actualizar estudiantes disponibles"
+      "refreshEligibleStudents": "Actualizar estudiantes disponibles",
+      "publishedAssignmentsLocked": "Una ruta publicada conserva sus estudiantes asignados. Para cambiar asignaciones, realiza una nueva planificación.",
+      "publishedVehicleLocked": "No se puede cambiar el vehículo de una ruta ya publicada."
     },
     "days": {
       "MONDAY": "Lunes",

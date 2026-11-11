@@ -47,7 +47,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-two">
                 <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
-                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading()">
+                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading() || routeStatus === 'PUBLISHED'">
                   <mat-option value="">{{ 'routes.form.vehicleUnassigned' | translate }}</mat-option>
                   @for (vehicle of vehicleStore.vehicles(); track vehicle.id) {
                     <mat-option [value]="'' + vehicle.id">
@@ -61,7 +61,8 @@
                     </mat-option>
                   }
                 </mat-select>
-                <mat-hint>{{ 'routes.form.vehicleIdHint' | translate }}</mat-hint>
+                <mat-hint>{{ (routeStatus === 'PUBLISHED'
+                  ? 'routes.form.publishedVehicleLocked' : 'routes.form.vehicleIdHint') | translate }}</mat-hint>
               </mat-form-field>
               @if (vehicleStore.loading()) {
                 <p class="span-two" role="status">{{ 'routes.form.vehicleLoading' | translate }}</p>
@@ -176,7 +177,7 @@
                       <mat-form-field appearance="outline" class="student-picker">
                         <mat-label>{{ 'routes.form.studentAtStop' | translate }}</mat-label>
                         <mat-select formControlName="studentId" (selectionChange)="changeStudent(i)"
-                                    [disabled]="saving || !studentsLoaded()">
+                                    [disabled]="saving || routeStatus === 'PUBLISHED' || !studentsLoaded()">
                           <mat-option value="">{{ 'routes.form.unassigned' | translate }}</mat-option>
                           @for (student of availableStudents(i); track student.id) {
                             <mat-option [value]="student.id">{{ student.fullName }}</mat-option>
