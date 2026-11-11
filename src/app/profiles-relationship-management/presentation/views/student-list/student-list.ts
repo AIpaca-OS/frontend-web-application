@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslatePipe } from '@ngx-translate/core';
-import { environment } from '../../../../../../environments/environment';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Displays the students managed by the current tutor.
