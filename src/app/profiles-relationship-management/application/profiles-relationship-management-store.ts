@@ -1,7 +1,7 @@
 import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { retry } from 'rxjs';
+import { firstValueFrom, retry } from 'rxjs';
 
 import { ProfilesRelationshipApi } from '../infrastructure/profiles-relationship-management-api';
 
@@ -257,23 +257,18 @@ export class ProfilesRelationshipStore {
    *
    * @param student - Student to create.
    */
-  addStudent = (student: Student): void => {
+  addStudent = async (student: Student): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createStudent(student)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdStudent) => {
-          this.studentsSignal.update((students) => [...students, createdStudent]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create student');
-        },
-      });
+    try {
+      // A POST must not be retried automatically: it may have persisted already.
+      const created = await firstValueFrom(this.profilesRelationshipApi.createStudent(student));
+      this.studentsSignal.update(rows => [...rows, created]);
+      this.endRequest();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'Failed to create student');
+      return false;
+    }
   };
 
   /**
@@ -281,25 +276,17 @@ export class ProfilesRelationshipStore {
    *
    * @param updatedStudent - Student to update.
    */
-  updateStudent = (updatedStudent: Student): void => {
+  updateStudent = async (updatedStudent: Student): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .updateStudent(updatedStudent)
-      .pipe(retry(2))
-      .subscribe({
-        next: (student) => {
-          this.studentsSignal.update((students) =>
-            students.map((current) => (current.id === student.id ? student : current)),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to update student');
-        },
-      });
+    try {
+      const saved = await firstValueFrom(this.profilesRelationshipApi.updateStudent(updatedStudent));
+      this.studentsSignal.update(rows => rows.map(r => r.id === saved.id ? saved : r));
+      this.endRequest();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'Failed to update student');
+      return false;
+    }
   };
 
   /**
@@ -413,26 +400,17 @@ export class ProfilesRelationshipStore {
    *
    * @param relationship - Relationship to create.
    */
-  addRelationship = (relationship: TutorStudentRelationship): void => {
+  addRelationship = async (relationship: TutorStudentRelationship): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createTutorStudentRelationship(relationship)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdRelationship) => {
-          this.relationshipsSignal.update((relationships) => [
-            ...relationships,
-            createdRelationship,
-          ]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create tutor-student relationship');
-        },
-      });
+    try {
+      const created = await firstValueFrom(this.profilesRelationshipApi.createTutorStudentRelationship(relationship));
+      this.relationshipsSignal.update(rows => [...rows, created]);
+      this.endRequest();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'Failed to create tutor-student relationship');
+      return false;
+    }
   };
 
   /**
