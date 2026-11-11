@@ -282,7 +282,9 @@
       "noPending": "No hay solicitudes pendientes.",
       "acceptedTitle": "Estudiantes afiliados",
       "end": "Finalizar afiliación",
-      "noAccepted": "No hay estudiantes afiliados."
+      "noAccepted": "No hay estudiantes afiliados.",
+      "tutorListHint": "Para que un estudiante aparezca en las rutas del conductor, abre su perfil y solicita el servicio de transporte. El conductor debe aceptar la solicitud.",
+      "manage": "Servicio de transporte"
     }
   }
 }

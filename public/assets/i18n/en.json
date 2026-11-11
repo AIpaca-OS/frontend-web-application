@@ -282,7 +282,9 @@
       "noPending": "No pending requests.",
       "acceptedTitle": "Enrolled students",
       "end": "End enrollment",
-      "noAccepted": "No enrolled students."
+      "noAccepted": "No enrolled students.",
+      "tutorListHint": "To make a student available for the driver's routes, open their profile and request transport service. The driver must approve the request first.",
+      "manage": "Transport service"
     }
   }
 }
