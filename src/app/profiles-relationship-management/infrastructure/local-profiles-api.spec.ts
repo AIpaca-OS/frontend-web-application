@@ -23,7 +23,8 @@ describe('Local Spring Profiles REST adapter', () => {
   it('loads persisted students and resolves school catalog names', () => {
     let result: Student[] = [];
     api.getStudents().subscribe(students => { result = students; });
-    const studentsReq = http.expectOne('/api/v1/students');
+    http.expectOne('/api/v1/profiles/by-account/10001').flush({ id: 4 });
+    const studentsReq = http.expectOne('/api/v1/students?tutorProfileId=4');
     const schoolsReq = http.expectOne('/api/v1/schools');
     expect(studentsReq.request.method).toBe('GET');
     expect(schoolsReq.request.method).toBe('GET');
@@ -47,11 +48,12 @@ describe('Local Spring Profiles REST adapter', () => {
     api.createStudent(student).subscribe(result => { created = result; });
     const schoolCatalog = http.expectOne('/api/v1/schools');
     schoolCatalog.flush([{ id: 3, name: 'Colegio Demostración', address: 'Av. Demo 123', district: 'Lima' }]);
+    http.expectOne('/api/v1/profiles/by-account/10001').flush({ id: 4 });
     const post = http.expectOne('/api/v1/students');
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual({
       firstName: 'Estudiante', lastName: 'Ficticio', birthDate: '2018-04-12',
-      schoolId: 3, relationshipType: 'OTHER',
+      schoolId: 3, tutorProfileId: 4, relationshipType: 'OTHER',
     });
     post.flush({ id: 9 });
     const get = http.expectOne('/api/v1/students/9');

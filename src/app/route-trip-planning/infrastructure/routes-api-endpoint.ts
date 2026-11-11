@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Route } from '../domain/model/route.entity';
 import { RouteSchedule } from '../domain/model/route-schedule.entity';
 import { RouteAssembler } from './route-assembler';
@@ -32,10 +33,17 @@ export class RoutesApiEndpoint {
   constructor(
     private readonly http: HttpClient,
     private readonly currentLanguage: () => string,
+    private readonly profiles: DemoProfilesApi,
   ) {}
 
   getAll(): Observable<Route[]> {
-    return this.http.get<RoutesResponse | RouteResource[]>(this.endpointUrl, this.requestOptions()).pipe(
+    const request: Observable<RoutesResponse | RouteResource[]> = this.backendMode
+      ? this.profiles.id('driver').pipe(switchMap(driverProfileId =>
+        this.http.get<RouteResource[]>(this.endpointUrl, {
+          ...this.requestOptions(), params: { driverProfileId },
+        })))
+      : this.http.get<RoutesResponse>(this.endpointUrl, this.requestOptions());
+    return request.pipe(
       map(response => {
         const resources = Array.isArray(response) ? response : response.routes ?? [];
         return resources.map(resource => this.assembler.toEntityFromResource(resource));
@@ -54,15 +62,20 @@ export class RoutesApiEndpoint {
   }
 
   create(entity: Route): Observable<Route> {
-    const payload = this.backendMode ? this.toBackendPayload(entity) : this.toMockPayload(entity);
-    return this.http.post<RouteResource>(this.endpointUrl, payload, this.requestOptions()).pipe(
+    const request = this.backendMode
+      ? this.profiles.id('driver').pipe(switchMap(driverProfileId =>
+        this.http.post<RouteResource>(this.endpointUrl, {
+          ...this.toBackendPayload(entity, false), driverProfileId,
+        }, this.requestOptions())))
+      : this.http.post<RouteResource>(this.endpointUrl, this.toMockPayload(entity), this.requestOptions());
+    return request.pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Unable to create route')),
     );
   }
 
   update(entity: Route, id: string): Observable<Route> {
-    const payload = this.backendMode ? this.toBackendPayload(entity) : this.assembler.toResourceFromEntity(entity);
+    const payload = this.backendMode ? this.toBackendPayload(entity, true) : this.assembler.toResourceFromEntity(entity);
     return this.http.put<RouteResource>(
       this.endpointUrl + '/' + encodeURIComponent(id), payload, this.requestOptions(),
     ).pipe(
@@ -83,15 +96,20 @@ export class RoutesApiEndpoint {
   }
 
   getEligibleStudents(): Observable<EligibleStudentResource[]> {
-    return this.http.get<EligibleStudentResource[]>(
-      this.endpointUrl + '/eligible-students', this.requestOptions(),
-    ).pipe(catchError(this.handleError('Unable to load eligible students')));
+    return this.profiles.id('driver').pipe(
+      switchMap(id => this.http.get<{ id: number; firstName: string; lastName: string }[]>(
+        '/api/v1/service-enrollments/drivers/' + id + '/students', this.requestOptions(),
+      )),
+      map(rows => rows.map(row => ({ id: String(row.id), fullName: row.firstName + ' ' + row.lastName }))),
+      catchError(this.handleError('Unable to load eligible students')),
+    );
   }
 
   replaceAssignments(id: string, assignments: AssignmentInputResource[]): Observable<Route> {
     return this.http.put<RouteResource>(
       this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments',
-      assignments, this.requestOptions(),
+      assignments.map(({ stopId, studentId }) => ({ stopId: Number(stopId), studentId: Number(studentId) })),
+      this.requestOptions(),
     ).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Unable to save route assignments')),
@@ -107,7 +125,7 @@ export class RoutesApiEndpoint {
   assignStudent(id: string, studentId: string, stopId: string): Observable<RouteAssignmentResource> {
     return this.http.post<RouteAssignmentResource>(
       this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments',
-      { studentId, stopId },
+      { studentId: Number(studentId), stopId: Number(stopId) },
       this.requestOptions(),
     ).pipe(catchError(this.handleError('Unable to assign student')));
   }
@@ -129,16 +147,15 @@ export class RoutesApiEndpoint {
     ).pipe(catchError(this.handleError('Unable to delete route')));
   }
 
-  private toBackendPayload(entity: Route): object {
+  private toBackendPayload(entity: Route, update: boolean) {
     return {
       name: entity.name,
       shift: entity.shift,
-      departureTime: entity.departureTime,
-      vehicleId: entity.vehicleId,
+      vehicleId: entity.vehicleId === null ? null : Number(entity.vehicleId),
       stops: entity.stops.map(stop => ({
-        id: stop.id,
+        ...(update && stop.id !== null ? { id: Number(stop.id) } : {}),
         address: stop.address,
-        studentId: stop.studentId ?? null,
+        schoolId: stop.schoolId ?? null,
       })),
       schedule: entity.schedule,
       scheduleConfirmed: entity.scheduleConfirmed,

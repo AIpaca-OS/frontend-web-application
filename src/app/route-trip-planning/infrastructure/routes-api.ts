@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
@@ -15,7 +16,7 @@ export class RoutesApi extends BaseApi {
 
   constructor(http: HttpClient, translate: TranslateService) {
     super();
-    this.endpoint = new RoutesApiEndpoint(http, () => translate.getCurrentLang() ?? 'en');
+    this.endpoint = new RoutesApiEndpoint(http, () => translate.getCurrentLang() ?? 'en', inject(DemoProfilesApi));
   }
 
   getRoutes(): Observable<Route[]> {

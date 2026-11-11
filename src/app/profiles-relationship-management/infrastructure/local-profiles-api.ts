@@ -1,4 +1,6 @@
 import { inject, Injectable } from '@angular/core';
+import { DemoRoleSession } from '../../identity-and-access-management/application/demo-role-session.service';
+import { DEMO_ACCOUNTS, DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, map, of, shareReplay, switchMap, throwError } from 'rxjs';
 import { Student, StudentStatus } from '../domain/model/student.entity';
@@ -21,6 +23,8 @@ interface CreatedIdDto { id: number; }
 @Injectable({ providedIn: 'root' })
 export class LocalProfilesApi {
   private readonly http = inject(HttpClient);
+  private readonly profiles = inject(DemoProfilesApi);
+  private readonly session = inject(DemoRoleSession);
   private readonly base = '/api/v1';
   private readonly schools = this.http.get<SchoolDto[]>(this.base + '/schools')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
@@ -76,8 +80,13 @@ export class LocalProfilesApi {
     };
   }
 
+  private studentsForTutor(): Observable<StudentDto[]> {
+    return this.profiles.id('tutor').pipe(switchMap(tutorProfileId =>
+      this.http.get<StudentDto[]>(this.base + '/students', { params: { tutorProfileId } })));
+  }
+
   getStudents(): Observable<Student[]> {
-    return forkJoin([this.http.get<StudentDto[]>(this.base + '/students'), this.schools])
+    return forkJoin([this.studentsForTutor(), this.schools])
       .pipe(map(([students,schools]) => students.map(s=>this.student(s,schools))));
   }
   getStudent(id: number): Observable<Student> {
@@ -85,9 +94,10 @@ export class LocalProfilesApi {
       .pipe(map(([s,schools])=>this.student(s,schools)));
   }
   createStudent(s: Student): Observable<Student> {
-    return this.schools.pipe(switchMap(schools => this.http.post<CreatedIdDto>(
+    return forkJoin([this.schools, this.profiles.id('tutor')]).pipe(
+      switchMap(([schools, tutorProfileId]) => this.http.post<CreatedIdDto>(
       this.base + '/students',
-      { ...this.studentBody(s,schools), relationshipType: 'OTHER' },
+      { ...this.studentBody(s,schools), tutorProfileId, relationshipType: 'OTHER' },
     )), switchMap(created => this.getStudent(created.id)));
   }
   updateStudent(s: Student): Observable<Student> {
@@ -99,7 +109,7 @@ export class LocalProfilesApi {
     return throwError(() => new Error('La eliminación requiere una solicitud de supresión de datos; no se elimina directamente al estudiante'));
   }
   getProfiles(): Observable<(Tutor|Driver)[]> {
-    return this.http.get<ProfileDto>(this.base + '/profiles/me')
+    return this.profiles.get(this.session.role() ?? 'tutor')
       .pipe(map(profile => [this.profile(profile)]));
   }
   getProfile(id: number): Observable<Tutor|Driver> {
@@ -107,18 +117,19 @@ export class LocalProfilesApi {
   }
   createProfile(p: Tutor|Driver): Observable<Tutor|Driver> {
     return this.http.post<CreatedIdDto>(this.base + '/profiles',{
+      accountId: p.accountId || DEMO_ACCOUNTS[p instanceof Driver ? 'driver' : 'tutor'],
       profileType: p instanceof Driver ? 'DRIVER':'TUTOR',
       firstName:p.firstName,lastName:p.lastName,phoneNumber:p.phoneNumber ?? '900000000',
     }).pipe(switchMap(created=>this.getProfile(created.id)));
   }
   updateProfile(_p: Tutor|Driver): Observable<Tutor|Driver> {
-    return throwError(()=>new Error('El backend permite actualizar el teléfono mediante /profiles/me/contact, no reemplazar el perfil completo'));
+    return throwError(()=>new Error('El backend permite actualizar el teléfono mediante /profiles/{id}/contact, no reemplazar el perfil completo'));
   }
   deleteProfile(_id:number): Observable<void> {
     return throwError(()=>new Error('Eliminar directamente un perfil no está habilitado'));
   }
   getRelationships(): Observable<TutorStudentRelationship[]> {
-    return this.http.get<StudentDto[]>(this.base + '/students').pipe(
+    return this.studentsForTutor().pipe(
       switchMap(students => {
         if (students.length === 0) return of([] as TutorStudentRelationship[]);
         const requests = students.map(s =>
@@ -154,7 +165,8 @@ export class LocalProfilesApi {
     );
   }
   getDeletionRequests(): Observable<DataDeletionRequest[]> {
-    return this.http.get<DeletionDto[]>(this.base+'/data-deletion-requests/mine')
+    return this.profiles.id('tutor').pipe(switchMap(id =>
+      this.http.get<DeletionDto[]>(this.base+'/data-deletion-requests/by-requester/'+id)))
       .pipe(map(rows=>rows.map(d=>this.deletion(d))));
   }
   getDeletionRequest(id:number): Observable<DataDeletionRequest> {
@@ -162,9 +174,10 @@ export class LocalProfilesApi {
       .pipe(map(d=>this.deletion(d)));
   }
   createDeletionRequest(request:DataDeletionRequest): Observable<DataDeletionRequest> {
-    return this.http.post<CreatedIdDto>(this.base+'/data-deletion-requests',{
-      studentId:request.studentId,
-    }).pipe(switchMap(created=>this.getDeletionRequest(created.id)));
+    return this.profiles.id('tutor').pipe(switchMap(requestedByProfileId =>
+      this.http.post<CreatedIdDto>(this.base+'/data-deletion-requests', {
+        studentId: request.studentId, requestedByProfileId,
+      })), switchMap(created => this.getDeletionRequest(created.id)));
   }
   updateDeletionRequest(_r:DataDeletionRequest): Observable<DataDeletionRequest> {
     return throwError(()=>new Error('La resolución de supresión se realiza exclusivamente mediante el procedimiento autorizado'));

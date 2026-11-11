@@ -6,6 +6,7 @@ import { DriverDemoNoticesApi } from './driver-demo-notices-api';
 describe('DriverDemoNoticesApi', () => {
   let api: DriverDemoNoticesApi;
   let http: HttpTestingController;
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -13,17 +14,28 @@ describe('DriverDemoNoticesApi', () => {
     api = TestBed.inject(DriverDemoNoticesApi);
     http = TestBed.inject(HttpTestingController);
   });
+
   afterEach(() => http.verify());
 
-  it('sends a delay only through a specific route endpoint', () => {
-    const routeId = '09fab5eb-16af-43c7-8907-81ae328ce152';
-    let title = '';
-    api.send(routeId, 'DELAY', 'Heavy traffic').subscribe(r => title = r.title);
-
-    const request = http.expectOne('/api/v1/routes/' + routeId + '/notices');
+  it('reports a delay against a specific trip with the resolved driver profile', () => {
+    api.send(12, 'DELAY', 'Heavy traffic', 20).subscribe();
+    http.expectOne('/api/v1/profiles/by-account/10002').flush({ id: 7 });
+    const request = http.expectOne('/api/v1/delays');
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ kind: 'DELAY', message: 'Heavy traffic' });
-    request.flush({ id: 12, title: 'Retraso comunicado', message: 'Heavy traffic' });
-    expect(title).toContain('Retraso');
+    expect(request.request.body).toEqual({
+      tripId: 12, reportedByProfileId: 7, cause: 'Heavy traffic', estimatedMinutes: 20,
+    });
+    request.flush({ id: 1 });
+  });
+
+  it('reports an incident through the Incidents bounded context', () => {
+    api.send(12, 'INCIDENT', 'Road obstructed', 0).subscribe();
+    http.expectOne('/api/v1/profiles/by-account/10002').flush({ id: 7 });
+    const request = http.expectOne('/api/v1/incidents');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      tripId: 12, reportedByProfileId: 7, category: 'OTHER', description: 'Road obstructed',
+    });
+    request.flush({ id: 1 });
   });
 });

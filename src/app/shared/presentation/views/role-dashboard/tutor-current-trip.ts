@@ -126,7 +126,7 @@ export class TutorCurrentTrip implements OnInit {
         ? 'No se puede conectar al backend. Comprueba que Spring Boot esté ejecutándose.'
         : response.status === 401 || response.status === 403 || response.status === 503
           ? 'No se pudo acceder a las rutas del estudiante con la sesión actual.'
-          : response.error?.detail || 'No se pudieron consultar las rutas. Vuelve a actualizar.');
+          : response.error?.detail || (e instanceof Error ? e.message : 'No se pudieron consultar las rutas.'));
     } finally {
       this.loading.set(false);
     }

@@ -84,9 +84,13 @@ export class RouteTripStore {
       const assignments: AssignmentInputResource[] = [];
       for (const stop of savedRoute.stops) {
         const selected = selectedStops[stop.position - 1];
-        if (selected?.studentId) {
+        const studentIds = new Set([
+          ...(selected?.studentId ? [selected.studentId] : []),
+          ...(stop.additionalStudentIds ?? []),
+        ]);
+        for (const studentId of studentIds) {
           if (!stop.id) throw new Error('The server did not return a stop ID');
-          assignments.push({ stopId: stop.id, studentId: selected.studentId });
+          assignments.push({ stopId: stop.id, studentId });
         }
       }
 

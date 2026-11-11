@@ -1,4 +1,5 @@
-﻿import { Injectable } from '@angular/core';
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
@@ -13,7 +14,7 @@ export class VehiclesApi extends BaseApi {
 
   constructor(http: HttpClient) {
     super();
-    this.endpoint = new VehiclesApiEndpoint(http);
+    this.endpoint = new VehiclesApiEndpoint(http, inject(DemoProfilesApi));
   }
 
   getVehicles(): Observable<Vehicle[]> {

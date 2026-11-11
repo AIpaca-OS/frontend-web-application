@@ -1,3 +1,4 @@
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -21,7 +22,7 @@ describe('RoutesApiEndpoint', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
 
-    endpoint = new RoutesApiEndpoint(TestBed.inject(HttpClient), () => 'es-419');
+    endpoint = new RoutesApiEndpoint(TestBed.inject(HttpClient), () => 'es-419', TestBed.inject(DemoProfilesApi));
     httpTesting = TestBed.inject(HttpTestingController);
   });
 
@@ -32,7 +33,7 @@ describe('RoutesApiEndpoint', () => {
   });
 
   it('sends a localized PATCH to publish a route', () => {
-    const id = 'f36da68a-4343-4717-97ab-00e821b76522';
+    const id = '42';
     let received: Route | undefined;
 
     endpoint.publish(id).subscribe(route => (received = route));
@@ -51,7 +52,7 @@ describe('RoutesApiEndpoint', () => {
       shift: 'MORNING',
       departureTime: '07:00',
       status: 'PUBLISHED',
-      stops: [{ id: 'c87c45d4-a049-47a0-8a16-e34919c28b13', address: 'Main Street 10', position: 1 }],
+      stops: [{ id: '14', address: 'Main Street 10', position: 1 }],
       schedule: [{ dayOfWeek: 'MONDAY', departureTime: '07:00' }],
       scheduleConfirmed: true,
     });
@@ -63,43 +64,44 @@ describe('RoutesApiEndpoint', () => {
     let candidates: { id: string; fullName: string }[] = [];
     endpoint.getEligibleStudents().subscribe(rows => (candidates = rows));
 
-    const request = httpTesting.expectOne(
-      'http://localhost:8080/api/v1/routes/eligible-students',
-    );
+    httpTesting.expectOne('/api/v1/profiles/by-account/10002').flush({ id: 7 });
+    const request = httpTesting.expectOne('/api/v1/service-enrollments/drivers/7/students');
     expect(request.request.method).toBe('GET');
     expect(request.request.headers.get('Accept-Language')).toBe('es-419');
-    request.flush([{ id: 'student-1', fullName: 'Example Student' }]);
+    request.flush([{ id: 21, firstName: 'Example', lastName: 'Student' }]);
 
     expect(candidates.length).toBe(1);
-    expect(candidates[0].id).toBe('student-1');
+    expect(candidates[0].id).toBe('21');
   });
 
   it('sends selected student assignments as one REST request', () => {
-    const id = 'f36da68a-4343-4717-97ab-00e821b76522';
-    const stopId = 'c87c45d4-a049-47a0-8a16-e34919c28b13';
+    const id = '42';
+    const stopId = '14';
     let result: Route | undefined;
-    endpoint.replaceAssignments(id, [{ stopId, studentId: 'student-1' }])
+    endpoint.replaceAssignments(id, [{ stopId, studentId: '21' }])
       .subscribe(route => (result = route));
 
     const request = httpTesting.expectOne(
       'http://localhost:8080/api/v1/routes/' + id + '/assignments',
     );
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual([{ stopId, studentId: 'student-1' }]);
+    expect(request.request.body).toEqual([{ stopId: 14, studentId: 21 }]);
     request.flush({
       id,
       name: 'Morning Route',
       code: 'R-12345678',
       status: 'CONFIGURABLE',
       shift: 'MORNING',
-      vehicleId: 'vehicle-1',
+      vehicleId: 16,
       stops: [{
-        id: stopId, position: 1, address: 'Av. Primavera 123', studentId: 'student-1',
+        id: 14, position: 1, address: 'Av. Primavera 123', studentIds: [21, 22],
       }],
       schedule: [{ dayOfWeek: 'MONDAY', departureTime: '07:00' }],
       scheduleConfirmed: true,
     });
-    expect(result?.stops[0].studentId).toBe('student-1');
+    expect(result?.stops[0].studentId).toBe('21');
+    expect(result?.stops[0].additionalStudentIds).toEqual(['22']);
+    expect(result?.vehicleId).toBe('16');
   });
 
 });

@@ -9,8 +9,7 @@ export interface RouteStudentOption {
 }
 
 /**
- * Routes only consumes student candidates authorized by Profiles for the
- * authenticated driver. No unprotected GET /students is used in backend mode.
+ * Reads candidates from accepted Profiles enrollments for the demo driver.
  */
 @Injectable({ providedIn: 'root' })
 export class RouteStudentCatalog {

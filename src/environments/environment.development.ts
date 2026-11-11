@@ -1,4 +1,5 @@
 export const environment = {
+  apiOrigin: 'http://localhost:8080',
   production:false,
   platformProviderApiBaseUrl:'https://6a4ec144e785c9ef536d1e99.mockapi.io/api/v1',
   platformProviderDelaysEndpointPath:'/delays',

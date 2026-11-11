@@ -18,7 +18,9 @@ export class RouteAssembler {
           id: stop.id == null ? null : String(stop.id),
           address: String(stop.address ?? ''),
           position: Number(stop.position ?? index + 1),
-          studentId: stop.studentId == null ? null : String(stop.studentId),
+          schoolId: stop.schoolId ?? null,
+          studentId: String(stop.studentIds?.[0] ?? stop.studentId ?? '') || null,
+          additionalStudentIds: stop.studentIds?.slice(1).map(String) ?? [],
           studentName: stop.studentName == null ? null : String(stop.studentName),
         }))
       : [];
@@ -38,7 +40,7 @@ export class RouteAssembler {
       code: String(resource.code ?? ''),
       departureTime: String(resource.departureTime ?? ''),
       status: String(resource.status ?? 'CONFIGURABLE'),
-      vehicleId: resource.vehicleId ?? null,
+      vehicleId: resource.vehicleId == null ? null : String(resource.vehicleId),
       stopsCount: Number(resource.stopsCount ?? stops.length),
       shift: resource.shift === 'AFTERNOON' ? 'AFTERNOON' : 'MORNING',
       stops,

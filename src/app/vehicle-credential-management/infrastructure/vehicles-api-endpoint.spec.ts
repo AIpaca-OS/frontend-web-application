@@ -1,3 +1,4 @@
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -12,7 +13,7 @@ describe('Vehicles REST API', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-    endpoint = new VehiclesApiEndpoint(TestBed.inject(HttpClient));
+    endpoint = new VehiclesApiEndpoint(TestBed.inject(HttpClient), TestBed.inject(DemoProfilesApi));
     testing = TestBed.inject(HttpTestingController);
   });
 
@@ -22,7 +23,8 @@ describe('Vehicles REST API', () => {
     let plate = '';
     endpoint.getAll().subscribe(vehicles => plate = vehicles[0].licensePlate);
 
-    const request = testing.expectOne('/api/v1/vehicles');
+    testing.expectOne('/api/v1/profiles/by-account/10002').flush({ id: 7 });
+    const request = testing.expectOne('/api/v1/vehicles?driverProfileId=7');
     expect(request.request.method).toBe('GET');
     request.flush([{
       id: 1, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789',
@@ -39,9 +41,11 @@ describe('Vehicles REST API', () => {
     let savedStatus = '';
     endpoint.create(draft).subscribe(vehicle => savedStatus = vehicle.status);
 
+    testing.expectOne('/api/v1/profiles/by-account/10002').flush({ id: 7 });
     const request = testing.expectOne('/api/v1/vehicles');
     expect(request.request.method).toBe('POST');
     expect(request.request.body.licensePlate).toBe('XYZ-789');
+    expect(request.request.body.driverProfileId).toBe(7);
     request.flush({
       id: 1, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789',
       capacity: 15, year: 2023, status: 'PENDING_VERIFICATION',

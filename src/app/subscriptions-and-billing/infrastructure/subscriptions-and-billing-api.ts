@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable, throwError } from 'rxjs';
+import { map, Observable, switchMap, throwError } from 'rxjs';
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
@@ -33,8 +34,7 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   private readonly subscriptionsEndpoint = new SubscriptionsApiEndpoint(this.http);
   private readonly backendMode = !environment.production;
 
-  // Only for local Sprint 3 demo. Without IAM there is no verified driver identity.
-  private readonly demoDriverId = 1;
+  private readonly profiles = inject(DemoProfilesApi);
 
   private fromBackendPlan(resource: BackendPlan): Plan {
     return new Plan({
@@ -56,16 +56,12 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   }
 
   getPlans(): Observable<Plan[]> {
-    return this.backendMode
-      ? this.http.get<BackendPlan[]>('/api/v1/plans')
-          .pipe(map(items => items.map(item => this.fromBackendPlan(item))))
-      : this.plansEndpoint.getAll();
+    return this.http.get<BackendPlan[]>('/api/v1/plans')
+      .pipe(map(items => items.map(item => this.fromBackendPlan(item))));
   }
   getPlan(id: number): Observable<Plan> {
-    return this.backendMode
-      ? this.http.get<BackendPlan>('/api/v1/plans/' + id)
-          .pipe(map(item => this.fromBackendPlan(item)))
-      : this.plansEndpoint.getById(id);
+    return this.http.get<BackendPlan>('/api/v1/plans/' + id)
+      .pipe(map(item => this.fromBackendPlan(item)));
   }
   createPlan(plan: Plan): Observable<Plan> {
     return this.backendMode
@@ -85,9 +81,12 @@ export class SubscriptionsAndBillingApi extends BaseApi {
 
   getSubscriptions(): Observable<Subscription[]> {
     return this.backendMode
-      ? this.http.get<BackendSubscription[]>(
-          '/api/v1/subscriptions?driverId=' + this.demoDriverId,
-        ).pipe(map(items => items.map(item => this.fromBackendSubscription(item))))
+      ? this.profiles.id('driver').pipe(
+          switchMap(driverId => this.http.get<BackendSubscription[]>('/api/v1/subscriptions', {
+            params: { driverId },
+          })),
+          map(items => items.map(item => this.fromBackendSubscription(item))),
+        )
       : this.subscriptionsEndpoint.getAll();
   }
   getSubscription(id: number): Observable<Subscription> {
@@ -101,9 +100,12 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   }
   createSubscription(subscription: Subscription): Observable<Subscription> {
     return this.backendMode
-      ? this.http.post<BackendSubscription>('/api/v1/subscriptions', {
-          driverId: this.demoDriverId, planId: Number(subscription.planId),
-        }).pipe(map(item => this.fromBackendSubscription(item)))
+      ? this.profiles.id('driver').pipe(
+          switchMap(driverId => this.http.post<BackendSubscription>('/api/v1/subscriptions', {
+            driverId, planId: Number(subscription.planId),
+          })),
+          map(item => this.fromBackendSubscription(item)),
+        )
       : this.subscriptionsEndpoint.create(subscription);
   }
   updateSubscription(subscription: Subscription): Observable<Subscription> {

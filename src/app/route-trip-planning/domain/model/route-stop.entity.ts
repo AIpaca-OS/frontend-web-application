@@ -8,6 +8,8 @@ export interface RouteStop {
   address: string;
   position: number;
   studentId?: string | null;
+  schoolId?: number | null;
+  additionalStudentIds?: string[];
   studentName?: string | null;
 }
 

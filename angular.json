@@ -69,8 +69,7 @@
               "buildTarget": "Rumbo-frontend:build:production"
             },
             "development": {
-              "buildTarget": "Rumbo-frontend:build:development",
-              "proxyConfig": "src/proxy.conf.cjs"
+              "buildTarget": "Rumbo-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

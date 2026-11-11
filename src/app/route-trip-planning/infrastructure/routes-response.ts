@@ -6,14 +6,14 @@ import { RouteStop } from '../domain/model/route-stop.entity';
 /** Route resource accepted by the backend and legacy MockAPI records. */
 export interface RouteResource extends BaseResource {
   id: string | number;
-  vehicleId?: string | null;
+  vehicleId?: number | string | null;
   name: string;
   code?: string;
   departureTime?: string;
   status?: string;
   stopsCount?: number;
   shift?: RouteShift;
-  stops?: RouteStop[];
+  stops?: (Omit<RouteStop, 'id'> & { id: number | string | null; studentIds?: number[] })[];
   schedule?: RouteSchedule[];
   scheduleConfirmed?: boolean;
 }

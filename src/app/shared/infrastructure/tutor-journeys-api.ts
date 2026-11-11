@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, switchMap, throwError } from 'rxjs';
+import { DemoProfilesApi } from '../../identity-and-access-management/infrastructure/demo-profiles-api';
 
-/** These endpoints return only routes and events belonging to the current guardian. */
 export interface TutorJourney {
   studentId: number;
   studentName: string;
@@ -23,7 +23,7 @@ export interface TutorJourney {
 export interface TutorJourneyNotice {
   id: number;
   studentId: number;
-  routeId: string;
+  routeId: string | null;
   tripId: string | null;
   kind: string;
   title: string;
@@ -31,18 +31,43 @@ export interface TutorJourneyNotice {
   createdAt: string;
   read: boolean;
 }
+type JourneyNotificationResource = Omit<TutorJourneyNotice, 'routeId' | 'tripId' | 'kind'> & {
+  routeId: number | null;
+  tripId: number | null;
+  journeyEvent: string;
+  category: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class TutorJourneysApi {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/v1/tutor';
+  private readonly profiles = inject(DemoProfilesApi);
+  private readonly base = '/api/v1/notifications';
 
   journeys(): Observable<TutorJourney[]> {
-    return this.http.get<TutorJourney[]>(this.base + '/journeys');
+    return throwError(() => new Error('La consulta del traslado actual está pendiente.'));
   }
+
   notifications(): Observable<TutorJourneyNotice[]> {
-    return this.http.get<TutorJourneyNotice[]>(this.base + '/notifications');
+    return this.profiles.id('tutor').pipe(
+      switchMap(recipientProfileId => this.http.get<JourneyNotificationResource[]>(this.base, {
+        params: { recipientProfileId },
+      })),
+      map(rows => rows.filter(row => row.category === 'STUDENT_JOURNEY').map(row => this.toNotice(row))),
+    );
   }
+
   markAsRead(id: number): Observable<TutorJourneyNotice> {
-    return this.http.patch<TutorJourneyNotice>(this.base + '/notifications/' + id + '/read', {});
+    return this.http.patch<JourneyNotificationResource>(this.base + '/' + id + '/read', {})
+      .pipe(map(row => this.toNotice(row)));
+  }
+
+  private toNotice(row: JourneyNotificationResource): TutorJourneyNotice {
+    return {
+      id: row.id, studentId: row.studentId, title: row.title, message: row.message,
+      createdAt: row.createdAt, read: row.read, kind: row.journeyEvent,
+      routeId: row.routeId === null ? null : String(row.routeId),
+      tripId: row.tripId === null ? null : String(row.tripId),
+    };
   }
 }

@@ -432,6 +432,7 @@ export class RouteFormComponent {
         id: stop.id,
         address: stop.address.trim(),
         position: index + 1,
+        schoolId: current?.stops.find(row => row.id === stop.id)?.schoolId,
         studentId: stop.studentId || null,
         // Los nombres pertenecen a Profiles; en la ruta se persiste solo la referencia.
         studentName: null,

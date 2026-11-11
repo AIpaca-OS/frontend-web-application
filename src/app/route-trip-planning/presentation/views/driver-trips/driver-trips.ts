@@ -2,21 +2,22 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+import { RoutesApi } from '../../../infrastructure/routes-api';
 
-interface Stop { id: string; address: string; position: number; studentId: string | null; }
+interface Stop { id: number; address: string; position: number; schoolId: number | null; studentIds: number[]; }
 interface RouteData {
-  id: string; name: string; code: string; status: string;
+  id: number; name: string; code: string; status: string;
+  driverProfileId: number; vehicleId: number | null; shift: string;
   schedule: Array<{ dayOfWeek: string; departureTime: string }>; stops: Stop[];
 }
 interface Passenger {
-  studentId: string; stopId: string; stopPosition: number; stopAddress: string;
+  studentId: number; stopId: number; stopPosition: number; stopAddress: string;
   absent: boolean; stopServed: boolean; arrived: boolean;
 }
 interface TripData {
   id: string; serviceDate: string; status: string; students: Passenger[];
 }
-interface EligibleStudent { id: string; fullName: string; }
 
 @Component({
   selector: 'app-driver-trips',
@@ -120,6 +121,7 @@ export class DriverTrips implements OnInit {
   readonly message = signal('');
   serviceDate = new Date().toLocaleDateString('en-CA');
   private routeId = '';
+  private readonly routesApi = inject(RoutesApi);
 
   ngOnInit(): void {
     this.routeId = this.activated.snapshot.paramMap.get('id') || '';
@@ -132,7 +134,7 @@ export class DriverTrips implements OnInit {
     return ({ SCHEDULED:'Programado', IN_PROGRESS:'En recorrido',
               COMPLETED:'Finalizado', CANCELLED:'Cancelado' } as Record<string,string>)[s] || s;
   }
-  studentName(id: string): string { return this.studentNames()[id] || 'Estudiante #' + id; }
+  studentName(id: number): string { return this.studentNames()[id] || 'Estudiante #' + id; }
   private errorText(e: unknown): string {
     const x = e as { status?: number; error?: {detail?:string;message?:string} };
     if (x.status === 0) return 'No se puede conectar al backend.';
@@ -145,41 +147,59 @@ export class DriverTrips implements OnInit {
       const base = '/api/v1/routes/' + this.routeId;
       const [route, trips] = await Promise.all([
         firstValueFrom(this.http.get<RouteData>(base)),
-        firstValueFrom(this.http.get<TripData[]>(base + '/trips')),
+        firstValueFrom(this.http.get<TripData[]>('/api/v1/trips', { params: { routeId: this.routeId } })),
       ]);
       this.route.set(route); this.trips.set(trips);
       try {
-        const students = await firstValueFrom(this.http.get<EligibleStudent[]>('/api/v1/routes/eligible-students'));
+        const students = await firstValueFrom(this.routesApi.getEligibleStudents());
         this.studentNames.set(Object.fromEntries(students.map(s => [s.id,s.fullName])));
       } catch { /* Route/trip details remain usable without the optional name catalog. */ }
     } catch (e) { this.error.set(this.errorText(e)); }
     finally { this.loading.set(false); }
   }
-  private async update(request: Promise<unknown>, done: string): Promise<void> {
+  private async update(request: Observable<unknown>, done: string): Promise<void> {
     if (this.saving()) return;
     this.saving.set(true); this.error.set(''); this.message.set('');
-    try { await request; this.message.set(done); await this.reload(); }
+    try { await firstValueFrom(request); this.message.set(done); await this.reload(); }
     catch (e) { this.error.set(this.errorText(e)); }
     finally { this.saving.set(false); }
   }
   async plan(): Promise<void> {
-    if (!this.serviceDate) return;
-    await this.update(firstValueFrom(this.http.post('/api/v1/routes/' + this.routeId + '/trips',
-      { date:this.serviceDate })), 'Viaje programado.');
+    const route = this.route();
+    if (!route || !this.serviceDate) return;
+    const selectedDate = new Date(this.serviceDate + 'T00:00:00');
+    const weekday = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+    if (route.status !== 'PUBLISHED' || !route.vehicleId ||
+        !route.schedule.some(day => day.dayOfWeek === weekday)) {
+      this.error.set('Selecciona un día del horario de una ruta publicada con vehículo.');
+      return;
+    }
+    const passengers = route.stops.flatMap(stop => stop.studentIds.map(studentId => ({
+      studentId, stopId: stop.id, stopPosition: stop.position,
+      stopAddress: stop.address, schoolId: stop.schoolId,
+    })));
+    if (!passengers.length) {
+      this.error.set('La ruta debe tener estudiantes asignados.');
+      return;
+    }
+    await this.update(this.http.post('/api/v1/trips', {
+      routeId: route.id, driverProfileId: route.driverProfileId, vehicleId: route.vehicleId,
+      shift: route.shift, date: this.serviceDate, passengers,
+    }), 'Viaje programado.');
   }
   async action(trip: TripData, kind: 'start'|'complete'): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch('/api/v1/trips/' + trip.id + '/' + kind, {})),
+    await this.update(this.http.patch('/api/v1/trips/' + trip.id + '/' + kind, {}),
       kind === 'start' ? 'Recorrido iniciado.' : 'Viaje finalizado.');
   }
   async serve(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
-      '/api/v1/trips/' + trip.id + '/stops/' + passenger.stopId + '/served', {})),
+    await this.update(this.http.patch(
+      '/api/v1/trips/' + trip.id + '/stops/' + passenger.stopId + '/served', {}),
       'Parada atendida. Confirma la llegada cuando corresponda.');
   }
   async confirmArrival(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
+    await this.update(this.http.patch(
       '/api/v1/trips/' + trip.id + '/passengers/' +
-        encodeURIComponent(passenger.studentId) + '/arrived', {})),
-      'Llegada confirmada y aviso enviado al tutor.');
+        encodeURIComponent(passenger.studentId) + '/arrived', {}),
+      'Llegada confirmada.');
   }
 }
