@@ -14,7 +14,7 @@ export class NotificationsApiEndpoint extends BaseApiEndpoint<
 
   constructor(http: HttpClient) {
     super(http,
-      (this.demoBackend ? environment.routePlanningApiBaseUrl : environment.platformProviderApiBaseUrl)
+      (environment.routePlanningApiMode === 'backend' ? environment.routePlanningApiBaseUrl : environment.platformProviderApiBaseUrl)
         + environment.platformProviderNotificationsEndpointPath,
       new NotificationAssembler());
   }
