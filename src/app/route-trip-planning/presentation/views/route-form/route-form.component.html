@@ -47,9 +47,31 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-two">
                 <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
-                <input matInput formControlName="vehicleId" [placeholder]="'routes.form.vehiclePlaceholder' | translate" />
+                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading()">
+                  <mat-option value="">{{ 'routes.form.vehicleUnassigned' | translate }}</mat-option>
+                  @for (vehicle of vehicleStore.vehicles(); track vehicle.id) {
+                    <mat-option [value]="'' + vehicle.id">
+                      {{ vehicle.licensePlate }} — {{ vehicle.brand }} {{ vehicle.model }}
+                      ({{ vehicle.capacity }} {{ 'routes.form.vehicleSeats' | translate }})
+                    </mat-option>
+                  }
+                  @if (form.controls.vehicleId.value && !vehicleIsAvailable(form.controls.vehicleId.value)) {
+                    <mat-option [value]="form.controls.vehicleId.value" disabled>
+                      {{ 'routes.form.vehicleNotFound' | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
                 <mat-hint>{{ 'routes.form.vehicleIdHint' | translate }}</mat-hint>
               </mat-form-field>
+              @if (vehicleStore.loading()) {
+                <p class="span-two" role="status">{{ 'routes.form.vehicleLoading' | translate }}</p>
+              }
+              @if (vehicleStore.error()) {
+                <p class="span-two" role="alert">{{ 'routes.form.vehicleLoadError' | translate }}</p>
+              }
+              @if (!vehicleStore.loading() && !vehicleStore.error() && vehicleStore.vehicles().length === 0) {
+                <p class="span-two" role="status">{{ 'routes.form.vehicleEmpty' | translate }}</p>
+              }
               <div class="inline-tip span-two">
                 <mat-icon>directions_bus</mat-icon>
                 <span>{{ 'routes.form.vehicleRegistryNotice' | translate }}</span>
