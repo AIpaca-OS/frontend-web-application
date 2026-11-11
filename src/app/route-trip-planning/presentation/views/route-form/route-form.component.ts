@@ -15,6 +15,7 @@ import { RouteTripStore } from '../../../application/route-trip.store';
 import { Route, RouteShift } from '../../../domain/model/route.entity';
 import { RouteStop } from '../../../domain/model/route-stop.entity';
 import { RouteStudentCatalog, RouteStudentOption } from '../../../infrastructure/route-student-catalog';
+import { VehicleCredentialStore } from '../../../../vehicle-credential-management/application/vehicle-credential.store';
 import { firstValueFrom } from 'rxjs';
 import {
   ROUTE_WEEKDAY_LABELS, ROUTE_WEEKDAYS, RouteSchedule, RouteWeekday,
@@ -59,6 +60,7 @@ export class RouteFormComponent {
   private readonly translate = inject(TranslateService);
   readonly store = inject(RouteTripStore);
   private readonly studentCatalog = inject(RouteStudentCatalog);
+  readonly vehicleStore = inject(VehicleCredentialStore);
   readonly students = signal<RouteStudentOption[]>([]);
   readonly studentsLoading = signal(false);
   readonly studentsLoaded = signal(false);
@@ -161,6 +163,10 @@ export class RouteFormComponent {
     } finally {
       this.studentsLoading.set(false);
     }
+  }
+
+  vehicleIsAvailable(id: string): boolean {
+    return this.vehicleStore.vehicles().some(vehicle => String(vehicle.id) === id);
   }
 
   studentIsAvailable(id: string): boolean {
