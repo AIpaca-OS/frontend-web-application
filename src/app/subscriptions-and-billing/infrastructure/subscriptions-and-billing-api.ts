@@ -1,20 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, throwError } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
 import { PlansApiEndpoint } from './plans-api-endpoint';
 import { SubscriptionsApiEndpoint } from './subscriptions-api-endpoint';
-import { environment } from '../../../environments/environment';
 
-interface BackendPlan {
-  id: number;
-  name: string;
-  description: string;
-  referencePrice: number;
-  active: boolean;
-}
 interface BackendSubscription {
   id: number;
   driverId: number;
@@ -33,16 +27,104 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   private readonly subscriptionsEndpoint = new SubscriptionsApiEndpoint(this.http);
   private readonly backendMode = !environment.production;
 
-  // Only for local Sprint 3 demo. Without IAM there is no verified driver identity.
+  // Local demo driver until IAM provides the authenticated identity.
   private readonly demoDriverId = 1;
 
-  private fromBackendPlan(resource: BackendPlan): Plan {
-    return new Plan({
-      id: resource.id, name: resource.name,
-      description: resource.description,
-      referencePrice: Number(resource.referencePrice), active: resource.active,
-    });
+  getPlans(): Observable<Plan[]> {
+    return this.plansEndpoint.getAll();
   }
+
+  getPlan(id: number): Observable<Plan> {
+    return this.plansEndpoint.getById(id);
+  }
+
+  createPlan(plan: Plan): Observable<Plan> {
+    if (this.backendMode) {
+      return throwError(() => new Error('Plan creation from this screen is not available yet.'));
+    }
+
+    return this.plansEndpoint.create(plan);
+  }
+
+  updatePlan(plan: Plan): Observable<Plan> {
+    if (this.backendMode) {
+      return throwError(() => new Error('The backend does not support editing plans.'));
+    }
+
+    return this.plansEndpoint.update(plan, plan.id);
+  }
+
+  deletePlan(id: number): Observable<void> {
+    if (this.backendMode) {
+      return throwError(() => new Error('The backend does not support deleting plans.'));
+    }
+
+    return this.plansEndpoint.delete(id);
+  }
+
+  getSubscriptions(): Observable<Subscription[]> {
+    if (!this.backendMode) {
+      return this.subscriptionsEndpoint.getAll();
+    }
+
+    return this.http
+      .get<BackendSubscription[]>('/api/v1/subscriptions', {
+        params: { driverId: this.demoDriverId },
+      })
+      .pipe(
+        map((resources) => resources.map((resource) => this.fromBackendSubscription(resource))),
+      );
+  }
+
+  getSubscription(id: number): Observable<Subscription> {
+    if (!this.backendMode) {
+      return this.subscriptionsEndpoint.getById(id);
+    }
+
+    return this.getSubscriptions().pipe(
+      map((subscriptions) => {
+        const subscription = subscriptions.find((item) => item.id === id);
+
+        if (!subscription) {
+          throw new Error('Subscription not found.');
+        }
+
+        return subscription;
+      }),
+    );
+  }
+
+  createSubscription(subscription: Subscription): Observable<Subscription> {
+    if (!this.backendMode) {
+      return this.subscriptionsEndpoint.create(subscription);
+    }
+
+    const resource = {
+      driverId: this.demoDriverId,
+      planId: Number(subscription.planId),
+    };
+
+    return this.http
+      .post<BackendSubscription>('/api/v1/subscriptions', resource)
+      .pipe(map((created) => this.fromBackendSubscription(created)));
+  }
+
+  updateSubscription(subscription: Subscription): Observable<Subscription> {
+    if (this.backendMode) {
+      return throwError(() => new Error('The backend does not support editing subscriptions.'));
+    }
+
+    return this.subscriptionsEndpoint.update(subscription, subscription.id);
+  }
+
+  deleteSubscription(id: number): Observable<void> {
+    if (this.backendMode) {
+      return throwError(() => new Error('The backend does not support cancelling subscriptions.'));
+    }
+
+    return this.subscriptionsEndpoint.delete(id);
+  }
+
   private fromBackendSubscription(resource: BackendSubscription): Subscription {
     return new Subscription({
       id: resource.id,
@@ -50,70 +132,10 @@ export class SubscriptionsAndBillingApi extends BaseApi {
       planId: String(resource.planId),
       status: resource.status,
       startDate: resource.startDate,
+      endDate: resource.endDate,
+      vehicleLimit: resource.vehicleLimit,
       paymentStatus: 'NOT_APPLICABLE',
       paymentAmount: 0,
     });
-  }
-
-  getPlans(): Observable<Plan[]> {
-    return this.backendMode
-      ? this.http.get<BackendPlan[]>('/api/v1/plans')
-          .pipe(map(items => items.map(item => this.fromBackendPlan(item))))
-      : this.plansEndpoint.getAll();
-  }
-  getPlan(id: number): Observable<Plan> {
-    return this.backendMode
-      ? this.http.get<BackendPlan>('/api/v1/plans/' + id)
-          .pipe(map(item => this.fromBackendPlan(item)))
-      : this.plansEndpoint.getById(id);
-  }
-  createPlan(plan: Plan): Observable<Plan> {
-    return this.backendMode
-      ? throwError(() => new Error('Plan creation is not part of the local driver demo'))
-      : this.plansEndpoint.create(plan);
-  }
-  updatePlan(plan: Plan): Observable<Plan> {
-    return this.backendMode
-      ? throwError(() => new Error('Plan editing is not supported by the Spring API'))
-      : this.plansEndpoint.update(plan, plan.id);
-  }
-  deletePlan(id: number): Observable<void> {
-    return this.backendMode
-      ? throwError(() => new Error('Plan deletion is not supported by the Spring API'))
-      : this.plansEndpoint.delete(id);
-  }
-
-  getSubscriptions(): Observable<Subscription[]> {
-    return this.backendMode
-      ? this.http.get<BackendSubscription[]>(
-          '/api/v1/subscriptions?driverId=' + this.demoDriverId,
-        ).pipe(map(items => items.map(item => this.fromBackendSubscription(item))))
-      : this.subscriptionsEndpoint.getAll();
-  }
-  getSubscription(id: number): Observable<Subscription> {
-    return this.backendMode
-      ? this.getSubscriptions().pipe(map(rows => {
-          const found = rows.find(row => row.id === id);
-          if (!found) throw new Error('Subscription not found');
-          return found;
-        }))
-      : this.subscriptionsEndpoint.getById(id);
-  }
-  createSubscription(subscription: Subscription): Observable<Subscription> {
-    return this.backendMode
-      ? this.http.post<BackendSubscription>('/api/v1/subscriptions', {
-          driverId: this.demoDriverId, planId: Number(subscription.planId),
-        }).pipe(map(item => this.fromBackendSubscription(item)))
-      : this.subscriptionsEndpoint.create(subscription);
-  }
-  updateSubscription(subscription: Subscription): Observable<Subscription> {
-    return this.backendMode
-      ? throwError(() => new Error('Subscription editing is not supported by the Spring API'))
-      : this.subscriptionsEndpoint.update(subscription, subscription.id);
-  }
-  deleteSubscription(id: number): Observable<void> {
-    return this.backendMode
-      ? throwError(() => new Error('Subscription cancellation is not implemented in Spring yet'))
-      : this.subscriptionsEndpoint.delete(id);
   }
 }
