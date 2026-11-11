@@ -58,6 +58,6 @@ export class RelationshipForm {
   }
 
   cancel(): void {
-    this.router.navigate(['/students', this.studentId]).then();
+    this.router.navigate(['/tutor/students', this.studentId]).then();
   }
 }
