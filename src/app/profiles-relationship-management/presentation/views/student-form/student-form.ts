@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 import { Student, StudentStatus } from '../../../domain/model/student.entity';
-import { environment } from '../../../../../../environments/environment';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Form view used to create or update a student.
