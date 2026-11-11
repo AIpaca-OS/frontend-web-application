@@ -5,6 +5,10 @@
       <p class="page-subtitle">Los eventos operativos de tu ruta se centralizan aquí.</p>
     </div>
 
+    @if (showDriverDemo()) {
+      <app-driver-demo-notices />
+    }
+
     <div class="dashboard-grid">
       <mat-card class="custom-card">
         <div class="card-header-row">
