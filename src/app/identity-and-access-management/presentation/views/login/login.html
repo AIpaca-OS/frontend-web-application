@@ -80,11 +80,6 @@
 
       </div>
 
-      <!-- Role preview until an authenticated IAM service is available. -->
-      <div class="demo-access" role="note">
-        <p>{{ 'workspace.demoLoginNotice' | translate }}</p>
-      </div>
-
       <button type="button" class="login-button" (click)="redirect()">
         {{ (selectedRole === 'tutor'
           ? 'workspace.previewAsTutor'
