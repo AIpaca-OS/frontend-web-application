@@ -30,7 +30,7 @@ import {
           @if (enrollment.status === 'PENDING') {
             <div class="entry">
               <div>
-                <strong>{{ 'profiles.enrollments.studentReference' | translate }} #{{ enrollment.studentId }}</strong>
+                <strong>{{ studentLabel(enrollment.studentId) }}</strong>
                 <p>{{ 'profiles.enrollments.pendingHint' | translate }}</p>
               </div>
               <button type="button" class="primary" [disabled]="saving()" (click)="accept(enrollment.id)">
@@ -40,7 +40,8 @@ import {
           }
         }
         @if (!loading() && !pendingCount()) {
-          <p>{{ 'profiles.enrollments.noPending' | translate }}</p>
+          <p>No hay solicitudes pendientes. El tutor debe registrar al estudiante
+             y pulsar «Solicitar transporte» para enviarte la solicitud.</p>
         }
       </section>
       <section class="panel">
@@ -126,6 +127,7 @@ export class DriverEnrollmentsComponent implements OnInit {
         this.students.set(await firstValueFrom(this.api.driverStudents()));
       } catch {
         this.students.set([]);
+        this.error.set('Las solicitudes se cargaron, pero no fue posible consultar los nombres de los estudiantes.');
       }
     } catch (e) {
       this.error.set(this.errorDescription(e));

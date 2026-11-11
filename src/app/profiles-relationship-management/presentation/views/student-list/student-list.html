@@ -21,8 +21,16 @@
 
   @if (localTransportDemo) {
     <p class="catalog-feedback" role="note">
-      {{ 'profiles.enrollments.tutorListHint' | translate }}
+      Registrar al estudiante no envía sus datos a ningún conductor.
+      Pulsa <strong>Solicitar transporte</strong> para enviar una solicitud al conductor;
+      cuando la acepte, podrá incluirlo en una ruta escolar.
     </p>
+    @if (enrollmentNotice()) {
+      <p class="catalog-feedback" role="status">{{ enrollmentNotice() }}</p>
+    }
+    @if (enrollmentError()) {
+      <p class="error" role="alert">{{ enrollmentError() }}</p>
+    }
   }
 
   @if (store.error()) {
@@ -47,6 +55,7 @@
           <th>{{'students.data.birthdate' | translate}}</th>
           <th>{{'students.data.school' | translate}}</th>
           <th>{{'students.data.state' | translate}}</th>
+          @if (localTransportDemo) { <th>Servicio de transporte</th> }
           <th>{{'students.data.actions' | translate}}</th>
         </tr>
         </thead>
@@ -70,10 +79,27 @@
               {{ student.status }}
             </td>
 
+            @if (localTransportDemo) {
+              <td class="transport-status">
+                @if (enrollmentLoading() && !enrollmentStates()[student.id]) {
+                  <span>Consultando...</span>
+                } @else if (statusFor(student.id) === 'PENDING') {
+                  <span class="pending">Solicitud pendiente de aprobación</span>
+                } @else if (statusFor(student.id) === 'ACCEPTED') {
+                  <span class="accepted">Afiliado al conductor</span>
+                } @else {
+                  <button mat-stroked-button type="button"
+                          [disabled]="enrollmentLoading() || enrollmentBusyId() !== null"
+                          (click)="requestTransport(student.id)">
+                    {{ enrollmentBusyId() === student.id ? 'Enviando...' : 'Solicitar transporte' }}
+                  </button>
+                }
+              </td>
+            }
             <td class="actions">
               @if (localTransportDemo) {
                 <button mat-button type="button" (click)="viewStudent(student.id)">
-                  {{ 'profiles.enrollments.manage' | translate }}
+                  Ver servicio
                 </button>
               }
               <button
@@ -95,7 +121,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="5">
+            <td [attr.colspan]="localTransportDemo ? 6 : 5">
               {{ 'students.main.noStudents' | translate }}
             </td>
           </tr>
