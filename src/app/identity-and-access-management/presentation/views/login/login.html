@@ -1,98 +1,58 @@
 <main class="login-container">
-
-  <!-- LEFT PANEL -->
-  <section class="brand-panel">
-
-    <header class="brand-header">
-      <div class="brand-logo">
-        <span class="logo-icon"></span>
-        <span>Rumbo</span>
-      </div>
-    </header>
-
-    <div class="decoration decoration-top">
-      <span class="circle circle-one"></span>
-      <span class="circle circle-two"></span>
-    </div>
-
-    <div class="brand-content">
-      <h1>
-        Tranquilidad<br>
-        en cada<br>
-        trayecto.
-      </h1>
-    </div>
-
-    <div class="decoration decoration-bottom">
-      <span class="bottom-ring"></span>
-    </div>
-
-    <footer class="brand-footer">
-      Copyright © 2026 Rumbo. Todos los derechos reservados.
-    </footer>
-
+  <section class="brand-panel" aria-label="Rumbo">
+    <header class="brand-header"><div class="brand-logo"><span class="logo-icon"></span><span>Rumbo</span></div></header>
+    <div class="decoration decoration-top" aria-hidden="true"><span class="circle circle-one"></span><span class="circle circle-two"></span></div>
+    <div class="brand-content"><h1>{{ 'auth.tagline' | translate }}</h1></div>
+    <div class="decoration decoration-bottom" aria-hidden="true"><span class="bottom-ring"></span></div>
+    <footer class="brand-footer">© 2026 Rumbo</footer>
   </section>
-
-  <!-- RIGHT PANEL -->
   <section class="form-panel">
-
-    <button
-      class="language-button"
-      type="button"
-      (click)="toggleLanguage()">
-
-      <span>◎</span>
-      {{ language }}
-    </button>
-
+    <button class="language-button" type="button" (click)="toggleLanguage()" [attr.aria-label]="'auth.language' | translate">{{ language }}</button>
     <div class="form-content">
-
       <div class="welcome-text">
-        <span class="eyebrow">{{ 'workspace.previewWelcome' | translate }}</span>
-        <h2>{{ 'workspace.previewAccessTitle' | translate }}</h2>
-        <p>{{ 'workspace.previewAccessDescription' | translate }}</p>
+        <span class="eyebrow">RUMBO</span>
+        <h2>{{ (mode === 'signup' ? 'auth.signUpTitle' : mode === 'forgot' ? 'auth.forgotTitle' : mode === 'reset' ? 'auth.resetTitle' : 'auth.signInTitle') | translate }}</h2>
+        <p>{{ 'auth.description' | translate }}</p>
       </div>
-
-      <!-- ROLE SELECTOR -->
-      <div class="role-selector">
-
-        <button
-          type="button"
-          class="role-option"
-          [class.active]="selectedRole === 'tutor'"
-          [attr.aria-pressed]="selectedRole === 'tutor'"
-          (click)="selectRole('tutor')">
-
-          <span class="role-dot"></span>
-          {{ 'workspace.tutorRole' | translate }}
+      @if (mode === 'signup') {
+        <div class="role-selector" [attr.aria-label]="'auth.roleLabel' | translate">
+          <button type="button" class="role-option" [class.active]="selectedRole === 'tutor'" [attr.aria-pressed]="selectedRole === 'tutor'" (click)="selectRole('tutor')">{{ 'workspace.tutorRole' | translate }}</button>
+          <button type="button" class="role-option" [class.active]="selectedRole === 'driver'" [attr.aria-pressed]="selectedRole === 'driver'" (click)="selectRole('driver')">{{ 'workspace.driverRole' | translate }}</button>
+        </div>
+      }
+      <form class="login-form" (ngSubmit)="submit()" #authForm="ngForm">
+        @if (mode !== 'reset') {
+          <div class="form-group">
+            <label for="authEmail">{{ 'auth.email' | translate }}</label>
+            <input id="authEmail" name="email" type="email" [(ngModel)]="email" required email autocomplete="email" maxlength="254" />
+          </div>
+        }
+        @if (mode === 'login' || mode === 'signup' || mode === 'reset') {
+          <div class="form-group">
+            <label for="authPassword">{{ (mode === 'reset' ? 'auth.newPassword' : 'auth.password') | translate }}</label>
+            <input id="authPassword" name="password" type="password" [(ngModel)]="password" required [minlength]="mode === 'login' ? 1 : 8" maxlength="72" [autocomplete]="mode === 'login' ? 'current-password' : 'new-password'" />
+          </div>
+        }
+        @if (mode === 'signup' || mode === 'reset') {
+          <div class="form-group">
+            <label for="authConfirm">{{ 'auth.confirmPassword' | translate }}</label>
+            <input id="authConfirm" name="confirmPassword" type="password" [(ngModel)]="confirmPassword" required minlength="8" maxlength="72" autocomplete="new-password" />
+          </div>
+        }
+        @if (error) { <p class="auth-feedback auth-error" role="alert">{{ error }}</p> }
+        @if (message) { <p class="auth-feedback" role="status">{{ message }}</p> }
+        <button type="submit" class="login-button" [disabled]="busy || authForm.invalid">
+          {{ (busy ? 'auth.working' : mode === 'signup' ? 'auth.signUp' : mode === 'forgot' ? 'auth.sendReset' : mode === 'reset' ? 'auth.savePassword' : 'auth.signIn') | translate }}
         </button>
-
-        <button
-          type="button"
-          class="role-option"
-          [class.active]="selectedRole === 'driver'"
-          [attr.aria-pressed]="selectedRole === 'driver'"
-          (click)="selectRole('driver')">
-
-          <span class="role-dot"></span>
-          {{ 'workspace.driverRole' | translate }}
-        </button>
-
+      </form>
+      <div class="auth-switch">
+        @if (mode === 'login') {
+          <button type="button" (click)="setMode('signup')">{{ 'auth.createAccount' | translate }}</button>
+          <button type="button" (click)="setMode('forgot')">{{ 'auth.forgotPassword' | translate }}</button>
+        } @else {
+          <button type="button" (click)="setMode('login')">{{ 'auth.backToLogin' | translate }}</button>
+        }
       </div>
-
-      <!-- Role preview until an authenticated IAM service is available. -->
-      <div class="demo-access" role="note">
-        <p>{{ 'workspace.demoLoginNotice' | translate }}</p>
-      </div>
-
-      <button type="button" class="login-button" (click)="redirect()">
-        {{ (selectedRole === 'tutor'
-          ? 'workspace.previewAsTutor'
-          : 'workspace.previewAsDriver') | translate }}
-      </button>
-
     </div>
-
   </section>
-
 </main>
