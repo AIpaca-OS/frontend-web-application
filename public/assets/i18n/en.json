@@ -229,7 +229,7 @@
       "requiredFields": "Review the required fields before saving.",
       "scheduleIncomplete": "Choose a service day and enter its departure time.",
       "scheduleSaved": "Recurring schedule confirmed in the saved configuration.",
-      "vehicleLabel": "Vehicle ID",
+      "vehicleLabel": "Vehicle",
       "vehiclePlaceholder": "Enter registered vehicle ID",
       "vehicleIdHint": "Choose a vehicle from your registered fleet. Verification of ownership requires IAM.",
       "vehicleRegistryNotice": "Vehicle registration is a prototype. Driver ownership and credentials must be verified by the backend before publication.",
