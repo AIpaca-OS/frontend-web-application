@@ -62,7 +62,6 @@ import {
           <p>{{ 'profiles.enrollments.noAccepted' | translate }}</p>
         }
       </section>
-      <small>{{ 'profiles.enrollments.demoDisclaimer' | translate }}</small>
     </main>
   `,
   styles: [`
@@ -93,6 +92,15 @@ export class DriverEnrollmentsComponent implements OnInit {
   readonly error = signal('');
   readonly message = signal('');
 
+  private errorDescription(error: unknown): string {
+    const response = error as { status?: number; error?: { detail?: string; message?: string } };
+    const detail = response.error?.detail ?? response.error?.message;
+    if (response.status === 0) return 'No se puede conectar al servidor. Comprueba que Spring Boot esté ejecutándose en el puerto 8080.';
+    if (response.status === 401 || response.status === 403)
+      return 'No se pudo validar el acceso del conductor. Vuelve a ingresar como conductor y comprueba que el backend local esté habilitado.';
+    if (response.status === 404) return 'El endpoint de afiliaciones no está disponible. Actualiza y reinicia el backend.';
+    return detail || 'No se pudieron consultar las solicitudes. Comprueba la API de afiliaciones.';
+  }
   ngOnInit(): void { void this.reload(); }
 
   pendingCount(): number {
@@ -111,14 +119,16 @@ export class DriverEnrollmentsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     try {
-      const [enrollments, students] = await Promise.all([
-        firstValueFrom(this.api.forDriver()),
-        firstValueFrom(this.api.driverStudents()),
-      ]);
+      const enrollments = await firstValueFrom(this.api.forDriver());
       this.enrollments.set(enrollments);
-      this.students.set(students);
+      // A student-name lookup must not hide the enrollment requests.
+      try {
+        this.students.set(await firstValueFrom(this.api.driverStudents()));
+      } catch {
+        this.students.set([]);
+      }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudieron consultar las solicitudes');
+      this.error.set(this.errorDescription(e));
     } finally {
       this.loading.set(false);
     }
