@@ -229,7 +229,7 @@
       "requiredFields": "Revisa los campos obligatorios antes de guardar.",
       "scheduleIncomplete": "Selecciona un día de servicio y completa su hora de salida.",
       "scheduleSaved": "Horario recurrente confirmado en la configuración guardada.",
-      "vehicleLabel": "ID del vehículo",
+      "vehicleLabel": "Vehículo",
       "vehiclePlaceholder": "Ingrese el ID del vehículo registrado",
       "vehicleIdHint": "Elige un vehículo de tu registro. La titularidad se verificará al integrar IAM.",
       "vehicleRegistryNotice": "El registro de vehículos es un prototipo. Antes de publicar, el backend debe verificar el titular y las credenciales del vehículo.",
