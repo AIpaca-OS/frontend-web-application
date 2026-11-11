@@ -1,7 +1,7 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, retry } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
@@ -12,6 +12,7 @@ import { SubscriptionsAndBillingApi } from '../infrastructure/subscriptions-and-
 })
 export class SubscriptionsAndBillingStore {
   private readonly api = inject(SubscriptionsAndBillingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly plansSignal = signal<Plan[]>([]);
   readonly plans = this.plansSignal.asReadonly();
@@ -20,10 +21,16 @@ export class SubscriptionsAndBillingStore {
   readonly subscriptions = this.subscriptionsSignal.asReadonly();
 
   private readonly loadingSignal = signal<boolean>(false);
-  readonly loading = this.loadingSignal.asReadonly();
+  private readonly plansLoadingSignal = signal<boolean>(false);
+  readonly plansLoading = this.plansLoadingSignal.asReadonly();
+  private readonly subscriptionsLoadingSignal = signal<boolean>(false);
+  readonly subscriptionsLoading = this.subscriptionsLoadingSignal.asReadonly();
+  readonly loading = computed(() => this.loadingSignal() || this.plansLoading() || this.subscriptionsLoading());
 
   private readonly errorSignal = signal<string | null>(null);
   readonly error = this.errorSignal.asReadonly();
+  private readonly plansErrorSignal = signal<string | null>(null);
+  readonly plansError = this.plansErrorSignal.asReadonly();
 
   readonly planCount = computed(() => this.plans().length);
 
@@ -48,7 +55,6 @@ export class SubscriptionsAndBillingStore {
 
     this.api
       .createPlan(plan)
-      .pipe(retry(2))
       .subscribe({
         next: (createdPlan) => {
           this.plansSignal.update((plans) => [...plans, createdPlan]);
@@ -69,7 +75,6 @@ export class SubscriptionsAndBillingStore {
 
     this.api
       .updatePlan(plan)
-      .pipe(retry(2))
       .subscribe({
         next: (updatedPlan) => {
           this.plansSignal.update((plans) =>
@@ -92,7 +97,6 @@ export class SubscriptionsAndBillingStore {
 
     this.api
       .deletePlan(id)
-      .pipe(retry(2))
       .subscribe({
         next: () => {
           this.plansSignal.update((plans) => plans.filter((plan) => plan.id !== id));
@@ -131,7 +135,6 @@ export class SubscriptionsAndBillingStore {
 
     this.api
       .updateSubscription(subscription)
-      .pipe(retry(2))
       .subscribe({
         next: (updatedSubscription) => {
           this.subscriptionsSignal.update((subscriptions) =>
@@ -156,7 +159,6 @@ export class SubscriptionsAndBillingStore {
 
     this.api
       .deleteSubscription(id)
-      .pipe(retry(2))
       .subscribe({
         next: () => {
           this.subscriptionsSignal.update((subscriptions) =>
@@ -173,42 +175,42 @@ export class SubscriptionsAndBillingStore {
       });
   }
 
+  reloadPlans(): void { this.loadPlans(); }
+
   private loadPlans(): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
+    this.plansLoadingSignal.set(true);
+    this.plansErrorSignal.set(null);
 
     this.api
       .getPlans()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (plans) => {
           this.plansSignal.set(plans);
-          this.loadingSignal.set(false);
+          this.plansLoadingSignal.set(false);
         },
         error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to load plans'));
-
-          this.loadingSignal.set(false);
+          this.plansErrorSignal.set(this.formatError(error, 'Failed to load plans'));
+          this.plansLoadingSignal.set(false);
         },
       });
   }
 
   private loadSubscriptions(): void {
-    this.loadingSignal.set(true);
+    this.subscriptionsLoadingSignal.set(true);
     this.errorSignal.set(null);
 
     this.api
       .getSubscriptions()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (subscriptions) => {
           this.subscriptionsSignal.set(subscriptions);
-          this.loadingSignal.set(false);
+          this.subscriptionsLoadingSignal.set(false);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to load subscriptions'));
-
-          this.loadingSignal.set(false);
+          this.subscriptionsLoadingSignal.set(false);
         },
       });
   }
