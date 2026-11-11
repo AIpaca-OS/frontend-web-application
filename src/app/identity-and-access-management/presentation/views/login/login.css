@@ -449,7 +449,4 @@
   }
 }
 
-/* The current role selection is a preview, not credential authentication. */
-.demo-access { padding: 14px 16px; border: 1px solid #c7e6dd; background: #eaf7f3; border-radius: 12px; color: #2e6357; }
-.demo-access p { font-size: 13px; line-height: 1.6; margin: 0; }
 .login-button:focus-visible { outline: 3px solid #137d61; outline-offset: 3px; }
