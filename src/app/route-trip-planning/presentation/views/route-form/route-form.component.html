@@ -128,7 +128,22 @@
               </div>
             }
             @if (studentsLoaded() && students().length === 0) {
-              <p class="catalog-feedback" role="status">{{ 'routes.form.noStudents' | translate }}</p>
+              <div class="catalog-feedback" role="status">
+                <p>{{ 'routes.form.noStudents' | translate }}</p>
+                <p>{{ 'routes.form.enrollmentNeeded' | translate }}</p>
+                <a mat-stroked-button routerLink="/driver/students" target="_blank" rel="noopener">
+                  {{ 'routes.form.reviewEnrollments' | translate }}
+                </a>
+                <button mat-button type="button" (click)="loadStudentCandidates(true)">
+                  {{ 'routes.form.refreshEligibleStudents' | translate }}
+                </button>
+              </div>
+            }
+            @if (studentsLoaded() && students().length > 0) {
+              <button mat-button type="button" (click)="loadStudentCandidates(true)"
+                      [disabled]="studentsLoading()">
+                {{ 'routes.form.refreshEligibleStudents' | translate }}
+              </button>
             }
             <div formArrayName="stops" class="stops-list">
               @for (stop of stops.controls; track i; let i = $index) {

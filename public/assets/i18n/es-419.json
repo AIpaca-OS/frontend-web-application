@@ -239,7 +239,10 @@
       "vehicleNotFound": "El vehículo anteriormente seleccionado no está disponible en el registro",
       "vehicleLoading": "Cargando vehículos registrados...",
       "vehicleLoadError": "No se pudieron cargar los vehículos. Comprueba el servicio y vuelve a intentarlo.",
-      "vehicleEmpty": "No hay vehículos registrados. Agrega uno desde Gestionar vehículos."
+      "vehicleEmpty": "No hay vehículos registrados. Agrega uno desde Gestionar vehículos.",
+      "enrollmentNeeded": "Para asignar un estudiante, el tutor debe solicitar el servicio y el conductor debe aceptar la afiliación.",
+      "reviewEnrollments": "Revisar afiliaciones",
+      "refreshEligibleStudents": "Actualizar estudiantes disponibles"
     },
     "days": {
       "MONDAY": "Lunes",
@@ -255,5 +258,31 @@
     "rights": "Todos los derechos reservados.",
     "terms": "Términos y condiciones",
     "privacy": "Privacidad"
+  },
+  "profiles": {
+    "enrollments": {
+      "tutorTitle": "Afiliación al transporte",
+      "tutorDescription": "Registra una solicitud al conductor de demostración. El estudiante aparecerá en Routes cuando el conductor la acepte.",
+      "loading": "Cargando afiliaciones...",
+      "driverLabel": "Conductor",
+      "status": "Estado",
+      "cancel": "Cancelar solicitud",
+      "requestExplanation": "Esta solicitud requiere aceptación del conductor.",
+      "request": "Solicitar servicio",
+      "noDrivers": "No hay un conductor de demostración disponible.",
+      "refresh": "Actualizar",
+      "demoDisclaimer": "Solo demostración local con datos ficticios. IAM se implementará en la siguiente entrega.",
+      "driverTitle": "Estudiantes y solicitudes",
+      "driverDescription": "Acepta las solicitudes del tutor antes de asignar estudiantes a una ruta.",
+      "createRoute": "Crear ruta",
+      "pendingTitle": "Solicitudes pendientes",
+      "studentReference": "Estudiante",
+      "pendingHint": "El tutor solicitó la afiliación. Acepta para habilitar su asignación a rutas.",
+      "accept": "Aceptar",
+      "noPending": "No hay solicitudes pendientes.",
+      "acceptedTitle": "Estudiantes afiliados",
+      "end": "Finalizar afiliación",
+      "noAccepted": "No hay estudiantes afiliados."
+    }
   }
 }

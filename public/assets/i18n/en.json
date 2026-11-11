@@ -239,7 +239,10 @@
       "vehicleNotFound": "Previously selected vehicle is not available in the registry",
       "vehicleLoading": "Loading registered vehicles...",
       "vehicleLoadError": "Could not load registered vehicles. Verify the vehicle service and try again.",
-      "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first."
+      "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first.",
+      "enrollmentNeeded": "A tutor must request transport service, and the driver must accept the enrollment before assignment.",
+      "reviewEnrollments": "Review enrollments",
+      "refreshEligibleStudents": "Refresh available students"
     },
     "days": {
       "MONDAY": "Monday",
@@ -255,5 +258,31 @@
     "rights": "All rights reserved.",
     "terms": "Terms and Conditions",
     "privacy": "Privacy"
+  },
+  "profiles": {
+    "enrollments": {
+      "tutorTitle": "School transport enrollment",
+      "tutorDescription": "Request service from the demo driver. The student will appear in Routes once the driver accepts.",
+      "loading": "Loading enrollments...",
+      "driverLabel": "Driver",
+      "status": "Status",
+      "cancel": "Cancel request",
+      "requestExplanation": "Driver approval is required before route assignment.",
+      "request": "Request service",
+      "noDrivers": "No demo driver is available.",
+      "refresh": "Refresh",
+      "demoDisclaimer": "Local demo with fictional data only. IAM is scheduled for a later delivery.",
+      "driverTitle": "Students and enrollments",
+      "driverDescription": "Accept a tutor's request before assigning the student to a route.",
+      "createRoute": "Create route",
+      "pendingTitle": "Pending requests",
+      "studentReference": "Student",
+      "pendingHint": "The tutor requested enrollment. Accept to enable route assignment.",
+      "accept": "Accept",
+      "noPending": "No pending requests.",
+      "acceptedTitle": "Enrolled students",
+      "end": "End enrollment",
+      "noAccepted": "No enrolled students."
+    }
   }
 }
