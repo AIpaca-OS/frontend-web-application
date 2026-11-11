@@ -124,8 +124,21 @@ export class AlertingStore {
   }
 
   markNotificationAsRead(notification: Notification): void {
-    notification.markAsRead();
-    this.updateNotification(notification);
+    if (notification.read) return;
+    // Do not mutate a displayed item before the REST API confirms the change.
+    const pending = new Notification({
+      id: notification.id,
+      type: notification.type,
+      priority: notification.priority,
+      title: notification.title,
+      message: notification.message,
+      createdAt: notification.createdAt,
+      readAt: new Date().toISOString(),
+      read: true,
+      routeId: notification.routeId,
+      studentId: notification.studentId,
+    });
+    this.updateNotification(pending);
   }
 
   deleteNotification(id: number): void {
