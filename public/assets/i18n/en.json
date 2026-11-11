@@ -231,9 +231,15 @@
       "scheduleSaved": "Recurring schedule confirmed in the saved configuration.",
       "vehicleLabel": "Vehicle ID",
       "vehiclePlaceholder": "Enter registered vehicle ID",
-      "vehicleIdHint": "Use the ID shown in your vehicle registry.",
+      "vehicleIdHint": "Choose a vehicle from your registered fleet. Verification of ownership requires IAM.",
       "vehicleRegistryNotice": "Vehicle registration is a prototype. Driver ownership and credentials must be verified by the backend before publication.",
-      "openVehicles": "Manage vehicles"
+      "openVehicles": "Manage vehicles",
+      "vehicleUnassigned": "Select a registered vehicle (optional for draft)",
+      "vehicleSeats": "seats",
+      "vehicleNotFound": "Previously selected vehicle is not available in the registry",
+      "vehicleLoading": "Loading registered vehicles...",
+      "vehicleLoadError": "Could not load registered vehicles. Verify the vehicle service and try again.",
+      "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first."
     },
     "days": {
       "MONDAY": "Monday",
