@@ -74,7 +74,7 @@ export class StudentForm {
     });
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -90,13 +90,10 @@ export class StudentForm {
       status: value.status,
     });
 
-    if (this.isEdit) {
-      this.store.updateStudent(student);
-    } else {
-      this.store.addStudent(student);
-    }
-
-    this.router.navigate(['/tutor/students']).then();
+    const saved = this.isEdit
+      ? await this.store.updateStudent(student)
+      : await this.store.addStudent(student);
+    if (saved) await this.router.navigateByUrl('/tutor/students');
   }
 
   cancel(): void {
