@@ -1,15 +1,15 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
 import { AlertingApi } from '../infrastructure/alerting-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Notification } from '../domain/model/notification.entity';
 import { Settings } from '../domain/model/settings.entity';
-import { retry } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AlertingStore {
   private readonly alertingApi = inject(AlertingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly notificationsSignal = signal<Notification[]>([]);
   readonly notifications = this.notificationsSignal.asReadonly();
@@ -39,12 +39,16 @@ export class AlertingStore {
     return fallback;
   }
 
+  refreshNotifications(): void {
+    this.loadNotifications();
+  }
+
   private loadNotifications(): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
       .getNotifications()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (notifications) => {
           this.notificationsSignal.set(notifications);
@@ -60,7 +64,7 @@ export class AlertingStore {
   private loadSettings(): void {
     this.alertingApi
       .getSettings()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => this.settingsSignal.set(settings),
         error: (error) =>
@@ -79,7 +83,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .createNotification(notification)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (createdNotification) => {
           this.notificationsSignal.update((notifications) => [
@@ -100,7 +104,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .updateNotification(notification)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (updatedNotification) => {
           this.notificationsSignal.update((notifications) =>
@@ -127,7 +131,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .deleteNotification(id)
-      .pipe(retry(2))
+      
       .subscribe({
         next: () => {
           this.notificationsSignal.update((notifications) =>
@@ -158,7 +162,7 @@ export class AlertingStore {
 
     this.alertingApi
       .updateSettings(updated)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (settings) => this.settingsSignal.set(settings),
         error: (error) =>
