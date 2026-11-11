@@ -50,6 +50,6 @@ export class SubscriptionList {
   }
 
   goToPlans(): void {
-    this.router.navigate(['subscriptions-and-billing', 'plans']).then();
+    void this.router.navigateByUrl('/driver/plans');
   }
 }
