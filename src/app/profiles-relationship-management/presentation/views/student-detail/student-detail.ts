@@ -101,7 +101,7 @@ export class StudentDetail {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'edit'
       ])
@@ -112,7 +112,7 @@ export class StudentDetail {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'tutors',
         'new'
