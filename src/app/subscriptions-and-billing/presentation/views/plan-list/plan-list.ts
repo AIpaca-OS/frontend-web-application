@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -14,17 +14,18 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
 })
 export class PlanList {
   readonly store = inject(SubscriptionsAndBillingStore);
+  readonly availablePlans = computed(() => this.store.plans().filter(plan => plan.active));
+
+  reload(): void { this.store.reloadPlans(); }
   private readonly router = inject(Router);
 
   selectPlan(planId: number): void {
-    this.router
-      .navigate(['subscriptions-and-billing', 'subscriptions', 'new'], {
-        queryParams: { planId },
-      })
-      .then();
+    void this.router.navigate(['/driver/plans/subscriptions/new'], {
+      queryParams: { planId },
+    });
   }
 
   goToSubscriptions(): void {
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions']).then();
+    this.router.navigate(['driver', 'plans', 'subscriptions']).then();
   }
 }

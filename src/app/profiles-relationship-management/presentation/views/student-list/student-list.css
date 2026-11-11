@@ -67,3 +67,10 @@ td {
     flex-direction: column;
   }
 }
+
+.catalog-feedback { padding: 12px 16px; margin: 0 0 18px; background: #eef7f2;
+  color: #1c604e; border: 1px solid #d3e8dc; border-radius: 10px; line-height: 1.5; }
+.transport-status { min-width: 210px; }
+.transport-status button { border-radius: 9px; }
+.transport-status .pending { color: #946018; font-weight: 650; }
+.transport-status .accepted { color: #167157; font-weight: 700; }

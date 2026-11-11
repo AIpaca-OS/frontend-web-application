@@ -100,3 +100,7 @@
   font-size: 18px;
   color: #9ca3af;
 }
+
+/* Header actions are now navigation links, not simulated status indicators. */
+.icon-notification, .user-profile-top { text-decoration: none; color: inherit; }
+.icon-notification:focus-visible, .user-profile-top:focus-visible { outline: 2px solid #168c6f; outline-offset: 2px; }

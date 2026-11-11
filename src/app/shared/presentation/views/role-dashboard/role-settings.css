@@ -1,0 +1,18 @@
+
+:host { display: block; min-height: 100%; }
+.settings { max-width: 960px; margin: 0 auto; padding: 34px 28px 60px; color: #193d37; }
+.eyebrow { color: #129374; letter-spacing: .11em; font-size: 12px; font-weight: 800; }
+h1 { margin: 8px 0; font-size: 30px; letter-spacing: -.03em; }
+.description { color: #62746f; font-size: 14px; margin-bottom: 24px; }
+.panel { border: 1px solid #dbe8e2; background: #fff; padding: 22px 24px; margin-bottom: 14px; border-radius: 14px; }
+.panel h2 { margin: 0 0 9px; font-size: 17px; }
+.panel p { color: #657970; line-height: 1.5; margin: 8px 0; font-size: 13px; }
+.panel .notice { color: #845e22; }
+.links { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+a { color: #126b52; font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.logout-panel { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #fff; }
+.logout-panel div { flex: 1; }
+.logout { background: #fff; border: 1px solid #b44141; color: #9b2d2d; padding: 11px 20px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.logout:hover { background: #fff0f0; }
+.logout:focus-visible, a:focus-visible { outline: 2px solid #148c70; outline-offset: 3px; }
+@media (max-width: 600px) { .settings { padding: 24px 14px 40px; } .panel { padding: 18px; } .logout-panel { flex-direction: column; align-items: stretch; } }

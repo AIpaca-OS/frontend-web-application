@@ -1,15 +1,15 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
 import { AlertingApi } from '../infrastructure/alerting-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Notification } from '../domain/model/notification.entity';
 import { Settings } from '../domain/model/settings.entity';
-import { retry } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AlertingStore {
   private readonly alertingApi = inject(AlertingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly notificationsSignal = signal<Notification[]>([]);
   readonly notifications = this.notificationsSignal.asReadonly();
@@ -22,6 +22,8 @@ export class AlertingStore {
 
   private readonly errorSignal = signal<string | null>(null);
   readonly error = this.errorSignal.asReadonly();
+  private readonly settingsErrorSignal = signal<string | null>(null);
+  readonly settingsError = this.settingsErrorSignal.asReadonly();
 
   readonly notificationsCount = computed(() => this.notifications().length);
 
@@ -39,12 +41,16 @@ export class AlertingStore {
     return fallback;
   }
 
+  refreshNotifications(): void {
+    this.loadNotifications();
+  }
+
   private loadNotifications(): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     this.alertingApi
       .getNotifications()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (notifications) => {
           this.notificationsSignal.set(notifications);
@@ -60,11 +66,11 @@ export class AlertingStore {
   private loadSettings(): void {
     this.alertingApi
       .getSettings()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => this.settingsSignal.set(settings),
         error: (error) =>
-          this.errorSignal.set(this.formatError(error, 'Failed to load notification settings')),
+          this.settingsErrorSignal.set(this.formatError(error, 'Failed to load notification settings')),
       });
   }
 
@@ -79,7 +85,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .createNotification(notification)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (createdNotification) => {
           this.notificationsSignal.update((notifications) => [
@@ -100,7 +106,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .updateNotification(notification)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (updatedNotification) => {
           this.notificationsSignal.update((notifications) =>
@@ -118,8 +124,21 @@ export class AlertingStore {
   }
 
   markNotificationAsRead(notification: Notification): void {
-    notification.markAsRead();
-    this.updateNotification(notification);
+    if (notification.read) return;
+    // Do not mutate a displayed item before the REST API confirms the change.
+    const pending = new Notification({
+      id: notification.id,
+      type: notification.type,
+      priority: notification.priority,
+      title: notification.title,
+      message: notification.message,
+      createdAt: notification.createdAt,
+      readAt: new Date().toISOString(),
+      read: true,
+      routeId: notification.routeId,
+      studentId: notification.studentId,
+    });
+    this.updateNotification(pending);
   }
 
   deleteNotification(id: number): void {
@@ -127,7 +146,7 @@ export class AlertingStore {
     this.errorSignal.set(null);
     this.alertingApi
       .deleteNotification(id)
-      .pipe(retry(2))
+      
       .subscribe({
         next: () => {
           this.notificationsSignal.update((notifications) =>
@@ -158,7 +177,7 @@ export class AlertingStore {
 
     this.alertingApi
       .updateSettings(updated)
-      .pipe(retry(2))
+      
       .subscribe({
         next: (settings) => this.settingsSignal.set(settings),
         error: (error) =>

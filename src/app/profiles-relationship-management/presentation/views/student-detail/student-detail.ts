@@ -25,6 +25,7 @@ import {
   DataDeletionRequest,
   DeletionRequestStatus
 } from '../../../domain/model/data-deletion-request.entity';
+import { StudentEnrollmentsComponent } from '../student-enrollments/student-enrollments';
 
 /**
  * Displays a student's profile, authorized tutors,
@@ -35,7 +36,8 @@ import {
   standalone: true,
   imports: [
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    StudentEnrollmentsComponent
   ],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.css'
@@ -101,7 +103,7 @@ export class StudentDetail {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'edit'
       ])
@@ -112,7 +114,7 @@ export class StudentDetail {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'tutors',
         'new'

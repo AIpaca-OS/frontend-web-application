@@ -49,9 +49,16 @@
         <mat-icon matSuffix>calendar_today</mat-icon>
       </mat-form-field>
 
+      @if (error()) {
+        <p class="full-width" role="alert" style="color: #a32525; font-size: 13px;">
+          No se pudo guardar el vehículo. Verifica la placa, los datos y la conexión con el backend.
+          {{ error() }}
+        </p>
+      }
+
       <!-- Grupo de Botones -->
       <div class="button-group">
-        <button mat-flat-button class="btn-primary-custom" type="submit" [disabled]="form.invalid">
+        <button mat-flat-button class="btn-primary-custom" type="submit" [disabled]="form.invalid || saving()">
           <mat-icon>{{ isEdit ? 'save' : 'add_circle' }}</mat-icon>
           {{ isEdit ? 'Update Vehicle' : 'Create Vehicle' }}
         </button>
