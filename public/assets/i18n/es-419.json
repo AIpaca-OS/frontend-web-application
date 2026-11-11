@@ -231,9 +231,15 @@
       "scheduleSaved": "Horario recurrente confirmado en la configuración guardada.",
       "vehicleLabel": "ID del vehículo",
       "vehiclePlaceholder": "Ingrese el ID del vehículo registrado",
-      "vehicleIdHint": "Usa el ID mostrado en tu registro de vehículos.",
+      "vehicleIdHint": "Elige un vehículo de tu registro. La titularidad se verificará al integrar IAM.",
       "vehicleRegistryNotice": "El registro de vehículos es un prototipo. Antes de publicar, el backend debe verificar el titular y las credenciales del vehículo.",
-      "openVehicles": "Gestionar vehículos"
+      "openVehicles": "Gestionar vehículos",
+      "vehicleUnassigned": "Seleccionar vehículo registrado (opcional para borrador)",
+      "vehicleSeats": "asientos",
+      "vehicleNotFound": "El vehículo anteriormente seleccionado no está disponible en el registro",
+      "vehicleLoading": "Cargando vehículos registrados...",
+      "vehicleLoadError": "No se pudieron cargar los vehículos. Comprueba el servicio y vuelve a intentarlo.",
+      "vehicleEmpty": "No hay vehículos registrados. Agrega uno desde Gestionar vehículos."
     },
     "days": {
       "MONDAY": "Lunes",
