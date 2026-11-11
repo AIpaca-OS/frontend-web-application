@@ -562,3 +562,8 @@
   height: 32px !important;
   line-height: 30px !important;
 }
+
+
+.notification-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notification-feedback { margin: 14px 4px; padding: 15px; color: #4e6761; background: #f2f7f4; border-radius: 10px; font-size: 13px; }
+.notification-error { background: #fff3f0; color: #8c3434; }
