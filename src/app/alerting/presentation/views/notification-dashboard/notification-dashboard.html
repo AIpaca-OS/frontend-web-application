@@ -9,16 +9,30 @@
       <mat-card class="custom-card">
         <div class="card-header-row">
           <h4 class="card-title">Actualizaciones recientes</h4>
-          <button
-            mat-button
-            color="primary"
-            class="action-text-btn"
-            (click)="markAllAsRead()"
-          >
-            Marcar todo como leído
-          </button>
+          <div class="notification-toolbar">
+            <button mat-button type="button" class="action-text-btn"
+                    (click)="refreshNotifications()" [disabled]="alertingStore.loading()">
+              Actualizar
+            </button>
+            <button mat-button type="button" color="primary" class="action-text-btn"
+                    [disabled]="alertingStore.loading() || notifications().length === 0"
+                    (click)="markAllAsRead()">
+              Marcar todo como leído
+            </button>
+          </div>
         </div>
 
+        @if (alertingStore.loading()) {
+          <p class="notification-feedback" role="status">Cargando notificaciones...</p>
+        } @else if (alertingStore.error()) {
+          <p class="notification-feedback notification-error" role="alert">
+            No se pudieron cargar las notificaciones. Verifica que la API esté disponible.
+          </p>
+        } @else if (notifications().length === 0) {
+          <p class="notification-feedback" role="status">
+            No hay notificaciones por el momento. Puedes actualizar para consultar nuevos avisos.
+          </p>
+        }
         <div class="notifications-list">
           @for (notification of notifications(); track notification.id) {
             <div class="notification-item" [class.unread-item]="!notification.read">
