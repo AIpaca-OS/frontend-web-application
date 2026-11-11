@@ -28,6 +28,8 @@ export class VehicleFormComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private store = inject(VehicleCredentialStore);
+  readonly saving = this.store.loading;
+  readonly error = this.store.error;
 
   form = this.fb.group({
     brand: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -85,7 +87,7 @@ export class VehicleFormComponent {
     });
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) return;
 
     const vehicle = new Vehicle({
@@ -98,13 +100,11 @@ export class VehicleFormComponent {
       status: 'ACTIVE',
     });
 
-    if (this.isEdit) {
-      this.store.updateVehicle(vehicle);
-    } else {
-      this.store.addVehicle(vehicle);
-    }
+    const saved = this.isEdit
+      ? await this.store.updateVehicle(vehicle)
+      : await this.store.addVehicle(vehicle);
 
-    this.router.navigate(['/driver/vehicles']);
+    if (saved) await this.router.navigate(['/driver/vehicles']);
   }
 
   cancel(): void {
