@@ -23,14 +23,14 @@ export class StudentList {
   private readonly router = inject(Router);
 
   createStudent(): void {
-    this.router.navigate(['/students/new']).then();
+    this.router.navigate(['/tutor/students/new']).then();
   }
 
   viewStudent(id: number): void {
-    this.router.navigate(['/students', id]).then();
+    this.router.navigate(['/tutor/students', id]).then();
   }
 
   editStudent(id: number): void {
-    this.router.navigate(['/students', id, 'edit']).then();
+    this.router.navigate(['/tutor/students', id, 'edit']).then();
   }
 }
