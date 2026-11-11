@@ -1,90 +1,106 @@
-<div class="plans-page">
-
-  <header class="page-header">
-
+<main class="billing-page" [attr.aria-busy]="store.loading()">
+  <header class="page-head">
     <div>
-      <p class="eyebrow">
-        SUSCRIPCIONES
-      </p>
-
-      <h1>Planes disponibles</h1>
-
-      <p>
-        Elige el plan que mejor se adapte a tu servicio.
-      </p>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
+      <h1>{{ 'billing.plansTitle' | translate }}</h1>
+      <p class="description">{{ 'billing.plansDescription' | translate }}</p>
     </div>
-
-    <button
-      mat-stroked-button
-      type="button"
-      class="secondary-action"
-      (click)="goToSubscriptions()">
-      Ver mi suscripción
-    </button>
-
+    <a mat-stroked-button routerLink="/driver/plans/subscriptions" class="secondary-action">
+      <mat-icon>receipt_long</mat-icon>{{ 'billing.mySubscription' | translate }}
+    </a>
   </header>
 
+  <section class="intro-banner" aria-labelledby="plans-banner-title">
+    <div class="banner-icon"><mat-icon>route</mat-icon></div>
+    <div>
+      <h2 id="plans-banner-title">{{ 'billing.bannerTitle' | translate }}</h2>
+      <p>{{ 'billing.bannerDescription' | translate }}</p>
+    </div>
+    <span class="banner-label"
+      ><mat-icon>verified</mat-icon>{{ 'billing.clearValidity' | translate }}</span
+    >
+  </section>
+
   @if (store.loading()) {
-    <div class="loading">
-      <mat-spinner></mat-spinner>
+    <div class="state-panel" role="status">
+      <mat-spinner diameter="36" />
+      <p>{{ 'billing.loading' | translate }}</p>
     </div>
-  }
-
-  @if (store.error()) {
-    <div class="error">
-      {{ store.error() }}
-    </div>
-  }
-
-  @if (!store.loading()) {
-
-    <section class="plans-grid">
-
-      @for (plan of store.plans(); track plan.id) {
-
-        @if (plan.active) {
-
-          <article class="plan-card">
-
-            <div>
-              <span class="available">
-                Disponible
-              </span>
-
-              <h2>
-                {{ plan.name }}
-              </h2>
-              <p class="plan-description">
-                {{ plan.description }}
-              </p>
-
-              <p class="price">
-                <span>S/</span>
-                {{ plan.referencePrice }}
-              </p>
-
-            </div>
-
-            <button
-              mat-raised-button
-              type="button"
-              class="primary-action"
-              (click)="selectPlan(plan.id)">
-              Seleccionar plan
-            </button>
-
-          </article>
-
-        }
-
-      } @empty {
-
-        <p>No hay planes disponibles.</p>
-
-      }
-
+  } @else if (store.plansError(); as error) {
+    <section class="state-panel error-panel" role="alert">
+      <mat-icon>cloud_off</mat-icon>
+      <h2>{{ 'billing.loadError' | translate }}</h2>
+      <p>{{ error | translate }}</p>
+      <button mat-stroked-button (click)="store.reload()">{{ 'billing.retry' | translate }}</button>
     </section>
-
+  } @else {
+    <section class="plans-grid" [attr.aria-label]="'billing.availablePlans' | translate">
+      @for (plan of store.availablePlans(); track plan.id) {
+        <article class="plan-card" [class.current-plan]="isCurrentPlan(plan.id)">
+          <div class="plan-topline">
+            <span class="badge"
+              ><span class="status-dot"></span
+              >{{
+                (isCurrentPlan(plan.id) ? 'billing.currentPlan' : 'billing.available') | translate
+              }}</span
+            >
+            <mat-icon>directions_bus</mat-icon>
+          </div>
+          <h2>{{ plan.name }}</h2>
+          <p class="plan-description">{{ plan.description }}</p>
+          <div class="plan-price">
+            <strong>{{
+              plan.referencePrice | currency: plan.currency : 'symbol' : '1.2-2'
+            }}</strong>
+            <span>{{
+              'billing.periodMonths' | translate: { count: plan.billingPeriodMonths }
+            }}</span>
+          </div>
+          <p class="reference-label">{{ 'billing.referencePrice' | translate }}</p>
+          <ul class="plan-features">
+            <li>
+              <mat-icon>check_circle</mat-icon
+              >{{
+                plan.vehicleLimit === null
+                  ? ('billing.limitUnspecified' | translate)
+                  : ('billing.vehicleAllowance' | translate: { count: plan.vehicleLimit })
+              }}
+            </li>
+            <li><mat-icon>check_circle</mat-icon>{{ 'billing.validityIncluded' | translate }}</li>
+            <li>
+              <mat-icon>check_circle</mat-icon>{{ 'billing.subscriptionOverview' | translate }}
+            </li>
+          </ul>
+          @if (isCurrentPlan(plan.id)) {
+            <a
+              mat-stroked-button
+              routerLink="/driver/plans/subscriptions"
+              class="secondary-action card-action"
+              >{{ 'billing.viewSubscription' | translate
+              }}<mat-icon iconPositionEnd>arrow_forward</mat-icon></a
+            >
+          } @else {
+            <button
+              mat-flat-button
+              class="primary-action card-action"
+              (click)="selectPlan(plan.id)"
+            >
+              {{ 'billing.selectPlan' | translate
+              }}<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            </button>
+          }
+        </article>
+      } @empty {
+        <section class="state-panel empty-state">
+          <mat-icon>inventory_2</mat-icon>
+          <h2>{{ 'billing.noPlansTitle' | translate }}</h2>
+          <p>{{ 'billing.noPlansDescription' | translate }}</p>
+          <button mat-stroked-button (click)="store.reload()">
+            {{ 'billing.refresh' | translate }}
+          </button>
+        </section>
+      }
+    </section>
+    <p class="page-footnote"><mat-icon>info</mat-icon>{{ 'billing.planFootnote' | translate }}</p>
   }
-
-</div>
+</main>

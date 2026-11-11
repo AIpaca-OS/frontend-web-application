@@ -104,3 +104,13 @@
 /* Header actions are now navigation links, not simulated status indicators. */
 .icon-notification, .user-profile-top { text-decoration: none; color: inherit; }
 .icon-notification:focus-visible, .user-profile-top:focus-visible { outline: 2px solid #168c6f; outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .top-header {
+    padding: 12px 16px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+}

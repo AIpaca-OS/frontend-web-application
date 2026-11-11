@@ -2,12 +2,13 @@ import { BaseResource, BaseResponse } from '../../shared/infrastructure/base-res
 
 export interface SubscriptionResource extends BaseResource {
   id: number;
-  driverId: string;
-  planId: string;
+  driverId: number;
+  planId: number;
   status: string;
   startDate: string;
-  paymentStatus: string;
-  paymentAmount: number;
+  endDate: string;
+  active: boolean;
+  vehicleLimit: number | null;
 }
 
 export interface SubscriptionsResponse extends BaseResponse {

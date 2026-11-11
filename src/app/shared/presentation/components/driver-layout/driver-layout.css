@@ -14,3 +14,21 @@
   height: 100vh;
   overflow-y: auto; /* Permite hacer scroll en la vista sin mover el sidebar */
 }
+
+@media (max-width: 760px) {
+  .app-container {
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  app-side-menu {
+    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  .main-content {
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+  }
+}

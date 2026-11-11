@@ -9,11 +9,9 @@ export class PlanAssembler implements BaseAssembler<Plan, PlanResource, PlansRes
 
   toEntityFromResource(resource: PlanResource): Plan {
     return new Plan({
+      ...resource,
       id: Number(resource.id),
-      name: resource.name,
-      description: resource.description,
       referencePrice: Number(resource.referencePrice),
-      active: resource.active,
     });
   }
 
@@ -23,6 +21,9 @@ export class PlanAssembler implements BaseAssembler<Plan, PlanResource, PlansRes
       name: entity.name,
       description: entity.description,
       referencePrice: entity.referencePrice,
+      currency: entity.currency,
+      billingPeriodMonths: entity.billingPeriodMonths,
+      vehicleLimit: entity.vehicleLimit,
       active: entity.active,
     };
   }

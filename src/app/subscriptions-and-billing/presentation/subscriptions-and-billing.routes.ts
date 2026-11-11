@@ -23,7 +23,7 @@ export const subscriptionsAndBillingRoutes: Routes = [
   },
   {
     path: 'subscriptions/:id/edit',
-    loadComponent: subscriptionForm,
+    redirectTo: 'subscriptions',
   },
   {
     path: '',

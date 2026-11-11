@@ -1,225 +1,128 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, retry } from 'rxjs';
-
+import { HttpErrorResponse } from '@angular/common/http';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import {
+  catchError,
+  finalize,
+  firstValueFrom,
+  forkJoin,
+  of,
+  Subscription as RxSubscription,
+} from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { DemoRoleSession } from '../../identity-and-access-management/application/demo-role-session.service';
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
 import { SubscriptionsAndBillingApi } from '../infrastructure/subscriptions-and-billing-api';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class SubscriptionsAndBillingStore {
   private readonly api = inject(SubscriptionsAndBillingApi);
-
+  private readonly session = inject(DemoRoleSession);
   private readonly plansSignal = signal<Plan[]>([]);
-  readonly plans = this.plansSignal.asReadonly();
-
   private readonly subscriptionsSignal = signal<Subscription[]>([]);
+  private refreshSubscription?: RxSubscription;
+
+  readonly plans = this.plansSignal.asReadonly();
   readonly subscriptions = this.subscriptionsSignal.asReadonly();
-
-  private readonly loadingSignal = signal<boolean>(false);
-  readonly loading = this.loadingSignal.asReadonly();
-
-  private readonly errorSignal = signal<string | null>(null);
-  readonly error = this.errorSignal.asReadonly();
-
-  readonly planCount = computed(() => this.plans().length);
-
-  readonly subscriptionCount = computed(() => this.subscriptions().length);
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly plansError = signal<string | null>(null);
+  readonly subscriptionsError = signal<string | null>(null);
+  readonly activationError = signal<string | null>(null);
+  readonly notice = signal<string | null>(null);
+  readonly driverId = computed(() =>
+    this.session.role() === 'driver' ? environment.billingDemoDriverId : null,
+  );
+  readonly availablePlans = computed(() =>
+    this.plans().filter(
+      (plan) => plan.active && plan.billingPeriodMonths !== null && plan.billingPeriodMonths > 0,
+    ),
+  );
+  readonly currentSubscription = computed(() =>
+    this.subscriptions().find((subscription) => subscription.active),
+  );
 
   constructor() {
-    this.loadPlans();
-    this.loadSubscriptions();
+    effect((onCleanup) => {
+      this.driverId();
+      this.plansSignal.set([]);
+      this.subscriptionsSignal.set([]);
+      this.notice.set(null);
+      this.activationError.set(null);
+      this.saving.set(false);
+      this.reload();
+      onCleanup(() => this.refreshSubscription?.unsubscribe());
+    });
   }
 
-  getPlanById(id: number): Signal<Plan | undefined> {
-    return computed(() => this.plans().find((plan) => plan.id === id));
-  }
-
-  getSubscriptionById(id: number): Signal<Subscription | undefined> {
-    return computed(() => this.subscriptions().find((subscription) => subscription.id === id));
-  }
-
-  addPlan(plan: Plan): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .createPlan(plan)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdPlan) => {
-          this.plansSignal.update((plans) => [...plans, createdPlan]);
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to create plan'));
-
-          this.loadingSignal.set(false);
-        },
+  reload(): void {
+    this.refreshSubscription?.unsubscribe();
+    this.plansError.set(null);
+    this.subscriptionsError.set(null);
+    const driverId = this.driverId();
+    if (driverId === null) {
+      this.loading.set(false);
+      this.subscriptionsError.set('billing.errors.session');
+      return;
+    }
+    this.loading.set(true);
+    this.refreshSubscription = forkJoin({
+      plans: this.api.getPlans().pipe(
+        catchError((error) => {
+          this.plansError.set(this.errorKey(error));
+          return of([] as Plan[]);
+        }),
+      ),
+      subscriptions: this.api.getSubscriptions(driverId).pipe(
+        catchError((error) => {
+          this.subscriptionsError.set(this.errorKey(error));
+          return of([] as Subscription[]);
+        }),
+      ),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe(({ plans, subscriptions }) => {
+        this.plansSignal.set(plans);
+        this.subscriptionsSignal.set(subscriptions);
       });
   }
 
-  updatePlan(plan: Plan): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .updatePlan(plan)
-      .pipe(retry(2))
-      .subscribe({
-        next: (updatedPlan) => {
-          this.plansSignal.update((plans) =>
-            plans.map((current) => (current.id === updatedPlan.id ? updatedPlan : current)),
-          );
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to update plan'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  deletePlan(id: number): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .deletePlan(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.plansSignal.update((plans) => plans.filter((plan) => plan.id !== id));
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to delete plan'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  async addSubscription(subscription: Subscription): Promise<boolean> {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
+  async activatePlan(planId: number): Promise<boolean> {
+    const driverId = this.driverId();
+    if (this.saving() || driverId === null) return false;
+    this.saving.set(true);
+    this.activationError.set(null);
+    this.notice.set(null);
     try {
-      // Do not retry POST: an activation could have been persisted already.
-      const created = await firstValueFrom(this.api.createSubscription(subscription));
-      this.subscriptionsSignal.update(rows => [
-        ...rows.filter(row => row.id !== created.id), created,
-      ]);
+      const result = await firstValueFrom(this.api.activateSubscription(driverId, planId));
+      if (this.driverId() !== driverId) return false;
+      this.subscriptionsSignal.update((subscriptions) =>
+        [
+          result.subscription,
+          ...subscriptions.filter((subscription) => subscription.id !== result.subscription.id),
+        ].sort((first, second) => second.id - first.id),
+      );
+      this.notice.set(result.created ? 'billing.activationCreated' : 'billing.activationExisting');
       return true;
     } catch (error) {
-      this.errorSignal.set(this.formatError(error, 'Failed to activate subscription'));
+      if (this.driverId() === driverId) this.activationError.set(this.errorKey(error));
       return false;
     } finally {
-      this.loadingSignal.set(false);
+      if (this.driverId() === driverId) this.saving.set(false);
     }
   }
 
-  updateSubscription(subscription: Subscription): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .updateSubscription(subscription)
-      .pipe(retry(2))
-      .subscribe({
-        next: (updatedSubscription) => {
-          this.subscriptionsSignal.update((subscriptions) =>
-            subscriptions.map((current) =>
-              current.id === updatedSubscription.id ? updatedSubscription : current,
-            ),
-          );
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to update subscription'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  deleteSubscription(id: number): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .deleteSubscription(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.subscriptionsSignal.update((subscriptions) =>
-            subscriptions.filter((subscription) => subscription.id !== id),
-          );
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to delete subscription'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  private loadPlans(): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .getPlans()
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (plans) => {
-          this.plansSignal.set(plans);
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to load plans'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  private loadSubscriptions(): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.api
-      .getSubscriptions()
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (subscriptions) => {
-          this.subscriptionsSignal.set(subscriptions);
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to load subscriptions'));
-
-          this.loadingSignal.set(false);
-        },
-      });
-  }
-
-  private formatError(error: unknown, fallback: string): string {
-    if (error instanceof Error) {
-      return error.message.includes('Resource not found')
-        ? `${fallback}: Not found`
-        : error.message;
-    }
-
-    return fallback;
+  private errorKey(error: unknown): string {
+    const messages: Record<number, string> = {
+      0: 'billing.errors.connection',
+      400: 'billing.errors.invalid',
+      401: 'billing.errors.session',
+      403: 'billing.errors.permission',
+      404: 'billing.errors.missing',
+      409: 'billing.errors.unavailable',
+    };
+    return error instanceof HttpErrorResponse
+      ? (messages[error.status] ?? 'billing.errors.unexpected')
+      : 'billing.errors.unexpected';
   }
 }

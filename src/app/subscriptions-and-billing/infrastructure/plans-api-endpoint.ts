@@ -1,4 +1,5 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { throwError } from 'rxjs';
 import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { Plan } from '../domain/model/plan.entity';
 import { PlanResource, PlansResponse } from './plans-response';
@@ -17,5 +18,9 @@ export class PlansApiEndpoint extends BaseApiEndpoint<
       `${environment.billingBasePath}${environment.billingPlansEndpointPath}`,
       new PlanAssembler(),
     );
+  }
+
+  protected override handleError(_operation: string) {
+    return (error: HttpErrorResponse) => throwError(() => error);
   }
 }

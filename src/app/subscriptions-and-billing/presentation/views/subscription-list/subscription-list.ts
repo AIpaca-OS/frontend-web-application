@@ -1,55 +1,40 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
+import { TranslatePipe } from '@ngx-translate/core';
 import { SubscriptionsAndBillingStore } from '../../../application/subscriptions-and-billing.store';
 
 @Component({
   selector: 'app-subscription-list',
-  imports: [MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    DatePipe,
+    RouterLink,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    TranslatePipe,
+  ],
   templateUrl: './subscription-list.html',
-  styleUrl: './subscription-list.css',
+  styleUrls: ['../../billing.css', './subscription-list.css'],
 })
 export class SubscriptionList {
   readonly store = inject(SubscriptionsAndBillingStore);
-  private readonly router = inject(Router);
 
-  showCancelConfirmation = false;
-  pendingCancellationId: number | null = null;
-
-  getPlanName(planId: string): string {
-    const plan = this.store.plans().find((plan) => plan.id === Number(planId));
-
-    return plan?.name ?? 'Plan no disponible';
+  getPlanName(planId: number): string {
+    return this.store.plans().find((plan) => plan.id === planId)?.name ?? `#${planId}`;
   }
 
-  editSubscription(id: number): void {
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions', id, 'edit']).then();
-  }
-
-  requestCancellation(id: number): void {
-    this.pendingCancellationId = id;
-    this.showCancelConfirmation = true;
-  }
-
-  confirmCancellation(): void {
-    if (this.pendingCancellationId === null) {
-      return;
-    }
-
-    this.store.deleteSubscription(this.pendingCancellationId);
-
-    this.closeCancellation();
-  }
-
-  closeCancellation(): void {
-    this.showCancelConfirmation = false;
-    this.pendingCancellationId = null;
-  }
-
-  goToPlans(): void {
-    void this.router.navigateByUrl('/driver/plans');
+  statusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      ACTIVE: 'billing.status.active',
+      EXPIRED: 'billing.status.expired',
+      PENDING: 'billing.status.pending',
+      SUSPENDED: 'billing.status.suspended',
+      CANCELLED: 'billing.status.cancelled',
+    };
+    return labels[status] ?? status;
   }
 }

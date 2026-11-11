@@ -5,6 +5,9 @@ export interface PlanResource extends BaseResource {
   name: string;
   description: string;
   referencePrice: number;
+  currency: string;
+  billingPeriodMonths: number | null;
+  vehicleLimit: number | null;
   active: boolean;
 }
 

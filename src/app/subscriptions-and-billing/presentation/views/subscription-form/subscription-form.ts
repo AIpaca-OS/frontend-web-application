@@ -1,122 +1,54 @@
-import { Component, effect, inject } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-
-import { ActivatedRoute, Router } from '@angular/router';
-
+import { CurrencyPipe } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-
-import { Subscription } from '../../../domain/model/subscription.entity';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SubscriptionsAndBillingStore } from '../../../application/subscriptions-and-billing.store';
 
 @Component({
   selector: 'app-subscription-form',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
+  imports: [
+    CurrencyPipe,
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    TranslatePipe,
+  ],
   templateUrl: './subscription-form.html',
-  styleUrl: './subscription-form.css',
+  styleUrls: ['../../billing.css', './subscription-form.css'],
 })
 export class SubscriptionForm {
   readonly store = inject(SubscriptionsAndBillingStore);
-
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-
-  subscriptionId: number | null = null;
-  isEdit = false;
-
-  form = this.fb.group({
-    planId: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-
-    status: new FormControl('ACTIVE', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-  });
+  readonly planControl = new FormControl<number | null>(null, Validators.required);
+  private readonly selectedId = toSignal(this.planControl.valueChanges, { initialValue: null });
+  readonly selectedPlan = computed(() =>
+    this.store.availablePlans().find((plan) => plan.id === this.selectedId()),
+  );
 
   constructor() {
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-
-      this.subscriptionId = id ? Number(id) : null;
-      this.isEdit = this.subscriptionId !== null;
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const planId = Number(params.get('planId'));
+      if (Number.isSafeInteger(planId) && planId > 0) this.planControl.setValue(planId);
     });
-
-    this.route.queryParamMap.subscribe((params) => {
-      const planId = params.get('planId');
-
-      if (planId && !this.isEdit) {
-        this.form.patchValue({
-          planId,
-        });
-      }
-    });
-
-    effect(() => {
-      if (!this.isEdit || this.subscriptionId === null) {
-        return;
-      }
-
-      const subscription = this.store
-        .subscriptions()
-        .find((item) => item.id === this.subscriptionId);
-
-      if (subscription) {
-        this.form.patchValue({
-          planId: subscription.planId,
-          status: subscription.status,
-        });
-      }
-    });
-  }
-
-  getSelectedPlan() {
-    const planId = Number(this.form.controls.planId.value);
-
-    return this.store.plans().find((plan) => plan.id === planId);
   }
 
   async submit(): Promise<void> {
-    if (this.form.invalid) {
-      return;
+    const plan = this.selectedPlan();
+    if (this.planControl.invalid || !plan || this.store.loading()) return;
+    if (await this.store.activatePlan(plan.id)) {
+      await this.router.navigate(['/driver/plans/subscriptions']);
     }
-
-    const selectedPlan = this.getSelectedPlan();
-
-    if (!selectedPlan) {
-      return;
-    }
-
-    const currentSubscription =
-      this.subscriptionId !== null
-        ? this.store.subscriptions().find((item) => item.id === this.subscriptionId)
-        : undefined;
-
-    const subscription = new Subscription({
-      id: this.subscriptionId ?? 0,
-      driverId: currentSubscription?.driverId ?? '101',
-      planId: this.form.controls.planId.value,
-      status: this.form.controls.status.value,
-      startDate: currentSubscription?.startDate ?? new Date().toISOString().slice(0, 10),
-      paymentStatus: currentSubscription?.paymentStatus ?? 'PENDING',
-      paymentAmount: selectedPlan.referencePrice,
-    });
-
-    if (this.isEdit) {
-      // Backend does not support changing a subscription after activation.
-      this.store.updateSubscription(subscription);
-      return;
-    }
-
-    const saved = await this.store.addSubscription(subscription);
-    if (saved) await this.router.navigateByUrl('/driver/plans/subscriptions');
-  }
-
-  cancel(): void {
-    void this.router.navigateByUrl('/driver/plans');
   }
 }

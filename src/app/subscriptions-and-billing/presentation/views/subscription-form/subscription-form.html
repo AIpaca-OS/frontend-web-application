@@ -1,122 +1,107 @@
-<div class="subscription-page">
+<main class="billing-page confirmation-page">
+  <a class="back-link" routerLink="/driver/plans/plans"
+    ><mat-icon>arrow_back</mat-icon>{{ 'billing.backToPlans' | translate }}</a
+  >
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
+      <h1>{{ 'billing.confirmTitle' | translate }}</h1>
+      <p class="description">{{ 'billing.confirmDescription' | translate }}</p>
+    </div>
+  </header>
 
-  <section class="subscription-panel">
-
-    <p class="eyebrow">
-      SUSCRIPCIONES
-    </p>
-
-    <h1>
-      {{ isEdit ? 'Gestionar mi suscripción' : 'Confirmar suscripción' }}
-    </h1>
-
-    <p class="description">
-      {{
-        isEdit
-          ? 'Actualiza el plan o estado de tu suscripción.'
-          : 'Revisa el plan seleccionado antes de confirmar.'
-      }}
-    </p>
-
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()">
-
-      <mat-form-field appearance="outline">
-        <mat-label>Plan</mat-label>
-
-        <mat-select formControlName="planId">
-
-          @for (plan of store.plans(); track plan.id) {
-            @if (plan.active) {
-              <mat-option [value]="plan.id.toString()">
-                {{ plan.name }} - S/ {{ plan.referencePrice }}
-              </mat-option>
-            }
-          }
-
-        </mat-select>
-      </mat-form-field>
-
-      @if (getSelectedPlan(); as plan) {
-
-        <div class="plan-summary">
-
-          <div>
-            <span class="summary-label">
-              Plan seleccionado
-            </span>
-
-            <strong>
-              {{ plan.name }}
-            </strong>
-          </div>
-
-          <div class="summary-price">
-            S/ {{ plan.referencePrice }}
-          </div>
-
+  @if (store.loading()) {
+    <div class="state-panel" role="status">
+      <mat-spinner diameter="36" />
+      <p>{{ 'billing.loading' | translate }}</p>
+    </div>
+  } @else if (store.plansError(); as error) {
+    <section class="state-panel error-panel" role="alert">
+      <mat-icon>cloud_off</mat-icon>
+      <p>{{ error | translate }}</p>
+      <button mat-stroked-button (click)="store.reload()">{{ 'billing.retry' | translate }}</button>
+    </section>
+  } @else {
+    <div class="confirmation-grid">
+      <section class="surface confirmation-panel">
+        <div class="section-heading">
+          <span class="step-number">1</span>
+          <h2>{{ 'billing.reviewPlan' | translate }}</h2>
         </div>
-
-      }
-
-      @if (isEdit) {
-
         <mat-form-field appearance="outline">
-          <mat-label>Estado de la suscripción</mat-label>
-
-          <mat-select formControlName="status">
-            <mat-option value="ACTIVE">
-              Activa
-            </mat-option>
-
-            <mat-option value="PAUSED">
-              Pausada
-            </mat-option>
+          <mat-label>{{ 'billing.planLabel' | translate }}</mat-label>
+          <mat-select [formControl]="planControl" [disabled]="store.saving()">
+            @for (plan of store.availablePlans(); track plan.id) {
+              <mat-option [value]="plan.id">{{ plan.name }}</mat-option>
+            }
           </mat-select>
-
+          @if (planControl.touched && planControl.invalid) {
+            <mat-error>{{ 'billing.choosePlan' | translate }}</mat-error>
+          }
         </mat-form-field>
-
-      }
-
-      <div class="information">
-        <strong>
-          {{ isEdit ? 'Actualización de suscripción' : 'Nueva suscripción' }}
-        </strong>
-
-        <p>
-          Los datos se registrarán en Rumbo al confirmar la operación.
-        </p>
-      </div>
-
-      <div class="actions">
-
+        @if (selectedPlan(); as plan) {
+          <div class="selected-plan">
+            <mat-icon>directions_bus</mat-icon>
+            <div>
+              <strong>{{ plan.name }}</strong>
+              <p>{{ plan.description }}</p>
+            </div>
+          </div>
+          <dl class="detail-list">
+            <div>
+              <dt>{{ 'billing.duration' | translate }}</dt>
+              <dd>{{ 'billing.periodMonths' | translate: { count: plan.billingPeriodMonths } }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'billing.vehicleLimit' | translate }}</dt>
+              <dd>
+                {{
+                  plan.vehicleLimit === null
+                    ? ('billing.limitUnspecified' | translate)
+                    : plan.vehicleLimit
+                }}
+              </dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="muted">{{ 'billing.choosePlan' | translate }}</p>
+        }
+        <div class="information">
+          <mat-icon>event_available</mat-icon>
+          <p>{{ 'billing.activationInformation' | translate }}</p>
+        </div>
+      </section>
+      <aside class="surface order-summary">
+        <p class="eyebrow">{{ 'billing.summary' | translate }}</p>
+        <h2>{{ selectedPlan()?.name ?? ('billing.planLabel' | translate) }}</h2>
+        @if (selectedPlan(); as plan) {
+          <p class="summary-price">
+            {{ plan.referencePrice | currency: plan.currency : 'symbol' : '1.2-2' }}
+          </p>
+          <p class="muted small">
+            {{ 'billing.referencePrice' | translate }} ·
+            {{ 'billing.periodMonths' | translate: { count: plan.billingPeriodMonths } }}
+          </p>
+        }
+        <p class="summary-description">{{ 'billing.confirmSummary' | translate }}</p>
+        @if (store.activationError(); as error) {
+          <p class="inline-error" role="alert">{{ error | translate }}</p>
+        }
         <button
-          mat-button
-          type="button"
-          class="secondary-action"
-          (click)="cancel()">
-          Volver
-        </button>
-
-        <button
-          mat-raised-button
-          type="submit"
+          mat-flat-button
           class="primary-action"
-          [disabled]="form.invalid">
-
-          {{
-            isEdit
-              ? 'Guardar cambios'
-              : 'Confirmar suscripción'
-          }}
-
+          [disabled]="!selectedPlan() || store.saving()"
+          (click)="submit()"
+        >
+          @if (store.saving()) {
+            <mat-spinner diameter="18" />
+          }
+          {{ (store.saving() ? 'billing.activating' : 'billing.confirmActivation') | translate }}
         </button>
-
-      </div>
-
-    </form>
-
-  </section>
-
-</div>
+        <a mat-button routerLink="/driver/plans/plans" [disabled]="store.saving()">{{
+          'billing.backToPlans' | translate
+        }}</a>
+      </aside>
+    </div>
+  }
+</main>

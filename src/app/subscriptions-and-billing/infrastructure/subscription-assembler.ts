@@ -13,13 +13,10 @@ export class SubscriptionAssembler implements BaseAssembler<
 
   toEntityFromResource(resource: SubscriptionResource): Subscription {
     return new Subscription({
+      ...resource,
       id: Number(resource.id),
-      driverId: resource.driverId,
-      planId: resource.planId,
-      status: resource.status,
-      startDate: resource.startDate,
-      paymentStatus: resource.paymentStatus,
-      paymentAmount: Number(resource.paymentAmount),
+      driverId: Number(resource.driverId),
+      planId: Number(resource.planId),
     });
   }
 
@@ -30,8 +27,9 @@ export class SubscriptionAssembler implements BaseAssembler<
       planId: entity.planId,
       status: entity.status,
       startDate: entity.startDate,
-      paymentStatus: entity.paymentStatus,
-      paymentAmount: entity.paymentAmount,
+      endDate: entity.endDate,
+      active: entity.active,
+      vehicleLimit: entity.vehicleLimit,
     };
   }
 }

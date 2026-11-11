@@ -1,191 +1,116 @@
-<div class="subscriptions-page">
-
-  <header class="page-header">
-
+<main class="billing-page" [attr.aria-busy]="store.loading()">
+  <header class="page-head">
     <div>
-      <p class="eyebrow">
-        SUSCRIPCIONES
-      </p>
-
-      <h1>Mi suscripción</h1>
-
-      <p>
-        Consulta y administra la información de tu suscripción en Rumbo.
-      </p>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
+      <h1>{{ 'billing.subscriptionTitle' | translate }}</h1>
+      <p class="description">{{ 'billing.subscriptionDescription' | translate }}</p>
     </div>
-
-    <button
-      mat-stroked-button
-      type="button"
-      class="secondary-action"
-      (click)="goToPlans()">
-      Ver planes
-    </button>
-
+    <a mat-stroked-button routerLink="/driver/plans/plans" class="secondary-action"
+      ><mat-icon>grid_view</mat-icon>{{ 'billing.viewPlans' | translate }}</a
+    >
   </header>
 
+  @if (store.notice(); as notice) {
+    <div class="success-notice" role="status">
+      <mat-icon>check_circle</mat-icon>{{ notice | translate }}
+    </div>
+  }
   @if (store.loading()) {
-    <div class="loading">
-      <mat-spinner></mat-spinner>
+    <div class="state-panel" role="status">
+      <mat-spinner diameter="36" />
+      <p>{{ 'billing.loading' | translate }}</p>
     </div>
-  }
-
-  @if (store.error()) {
-    <div class="error">
-      {{ store.error() }}
-    </div>
-  }
-
-  @if (!store.loading()) {
-
-    <div class="subscriptions-grid">
-
-      @for (
-        subscription of store.subscriptions();
-        track subscription.id
-        ) {
-
-        <article class="subscription-card">
-
-          <div class="card-header">
-
-            <div>
-              <span class="plan-label">
-                PLAN ACTUAL
-              </span>
-
-              <h2>
-                {{ getPlanName(subscription.planId) }}
-              </h2>
-            </div>
-
-            <span class="status-badge">
-              {{ subscription.status }}
-            </span>
-
+  } @else if (store.subscriptionsError(); as error) {
+    <section class="state-panel error-panel" role="alert">
+      <mat-icon>cloud_off</mat-icon>
+      <h2>{{ 'billing.loadError' | translate }}</h2>
+      <p>{{ error | translate }}</p>
+      <button mat-stroked-button (click)="store.reload()">{{ 'billing.retry' | translate }}</button>
+    </section>
+  } @else {
+    @if (store.currentSubscription(); as subscription) {
+      <section class="current-overview" aria-labelledby="current-plan-title">
+        <div class="current-plan-heading">
+          <div>
+            <p class="eyebrow">{{ 'billing.currentPlan' | translate }}</p>
+            <h2 id="current-plan-title">{{ getPlanName(subscription.planId) }}</h2>
+            <p>{{ 'billing.currentPlanDescription' | translate }}</p>
           </div>
-
-          <div class="detail">
-            <span>Fecha de inicio</span>
-            <strong>
-              {{ subscription.startDate }}
-            </strong>
-          </div>
-
-          <div class="detail">
-            <span>Estado de pago</span>
-            <strong>
-              {{ subscription.paymentStatus }}
-            </strong>
-          </div>
-
-          <div class="detail">
-            <span>Monto</span>
-            <strong class="amount">
-              S/ {{ subscription.paymentAmount }}
-            </strong>
-          </div>
-
-          <div class="actions">
-
-            <button
-              mat-raised-button
-              type="button"
-              class="primary-action"
-              (click)="editSubscription(subscription.id)">
-              Gestionar suscripción
-            </button>
-
-            <button
-              mat-stroked-button
-              type="button"
-              class="secondary-action"
-              (click)="requestCancellation(subscription.id)">
-              Cancelar suscripción
-            </button>
-
-          </div>
-
-        </article>
-
-      } @empty {
-
-        <article class="empty-state">
-
-          <div class="empty-icon">
-            R
-          </div>
-
-          <h2>
-            No tienes una suscripción
-          </h2>
-
-          <p>
-            Consulta los planes disponibles y elige
-            el que mejor se adapte a tu servicio.
-          </p>
-
-          <button
-            mat-raised-button
-            type="button"
-            class="primary-action"
-            (click)="goToPlans()">
-            Ver planes disponibles
-          </button>
-
-        </article>
-
-      }
-
-    </div>
-
-  }
-  @if (showCancelConfirmation) {
-
-    <div class="confirmation-backdrop">
-
-      <section
-        class="confirmation-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cancel-dialog-title">
-
-        <div class="warning-icon">
-          !
+          <span class="badge light"
+            ><span class="status-dot"></span
+            >{{ statusLabel(subscription.status) | translate }}</span
+          >
         </div>
-
-        <h2 id="cancel-dialog-title">
-          ¿Cancelar suscripción?
-        </h2>
-
-        <p>
-          Esta acción eliminará tu suscripción actual.
-          ¿Estás seguro de que deseas continuar?
-        </p>
-
-        <div class="confirmation-actions">
-
-          <button
-            mat-stroked-button
-            type="button"
-            class="keep-action"
-            (click)="closeCancellation()">
-            Mantener suscripción
-          </button>
-
-          <button
-            mat-raised-button
-            type="button"
-            class="danger-action"
-            (click)="confirmCancellation()">
-            Sí, cancelar
-          </button>
-
+        <div class="overview-stats">
+          <div>
+            <mat-icon>event_available</mat-icon><span>{{ 'billing.startDate' | translate }}</span
+            ><strong>{{ subscription.startDate | date: 'mediumDate' }}</strong>
+          </div>
+          <div>
+            <mat-icon>event</mat-icon><span>{{ 'billing.endDate' | translate }}</span
+            ><strong>{{ subscription.endDate | date: 'mediumDate' }}</strong>
+          </div>
+          <div>
+            <mat-icon>directions_bus</mat-icon><span>{{ 'billing.vehicleLimit' | translate }}</span
+            ><strong>{{
+              subscription.vehicleLimit === null
+                ? ('billing.limitUnspecified' | translate)
+                : subscription.vehicleLimit
+            }}</strong>
+          </div>
         </div>
-
       </section>
-
-    </div>
-
+      <p class="page-footnote">
+        <mat-icon>info</mat-icon>{{ 'billing.validityFootnote' | translate }}
+      </p>
+    } @else {
+      <section class="state-panel">
+        <div class="empty-icon"><mat-icon>receipt_long</mat-icon></div>
+        <h2>{{ 'billing.noSubscriptionTitle' | translate }}</h2>
+        <p>{{ 'billing.noSubscriptionDescription' | translate }}</p>
+        <a mat-flat-button routerLink="/driver/plans/plans" class="primary-action">{{
+          'billing.viewPlans' | translate
+        }}</a>
+      </section>
+    }
+    @if (store.subscriptions().length > 0) {
+      <section class="surface history-panel" aria-labelledby="history-title">
+        <div class="history-heading">
+          <h2 id="history-title">{{ 'billing.historyTitle' | translate }}</h2>
+          <span class="muted small">{{
+            'billing.activationCount' | translate: { count: store.subscriptions().length }
+          }}</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ 'billing.planLabel' | translate }}</th>
+                <th>{{ 'billing.startDate' | translate }}</th>
+                <th>{{ 'billing.endDate' | translate }}</th>
+                <th>{{ 'billing.statusLabel' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (subscription of store.subscriptions(); track subscription.id) {
+                <tr>
+                  <td>
+                    <strong>{{ getPlanName(subscription.planId) }}</strong
+                    ><span class="record-id">#{{ subscription.id }}</span>
+                  </td>
+                  <td>{{ subscription.startDate | date: 'mediumDate' }}</td>
+                  <td>{{ subscription.endDate | date: 'mediumDate' }}</td>
+                  <td>
+                    <span class="badge" [class.inactive]="!subscription.active">{{
+                      statusLabel(subscription.status) | translate
+                    }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
   }
-</div>
+</main>

@@ -70,7 +70,7 @@
             },
             "development": {
               "buildTarget": "Rumbo-frontend:build:development",
-              "proxyConfig": "src/proxy.conf.cjs"
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

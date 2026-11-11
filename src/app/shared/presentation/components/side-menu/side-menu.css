@@ -179,3 +179,44 @@
 .logout-btn:hover {
   color: #ffffff;
 }
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    padding: 14px 16px;
+    overflow: hidden;
+  }
+
+  .sidebar-brand {
+    margin-bottom: 12px;
+  }
+
+  .sidebar-brand h1 {
+    font-size: 20px;
+  }
+
+  .sidebar-brand .logo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .nav-link {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 9px 12px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+}
