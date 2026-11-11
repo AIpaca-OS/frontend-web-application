@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { retry } from 'rxjs';
+import { firstValueFrom, retry } from 'rxjs';
 
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
@@ -107,28 +107,22 @@ export class SubscriptionsAndBillingStore {
       });
   }
 
-  addSubscription(subscription: Subscription): void {
+  async addSubscription(subscription: Subscription): Promise<boolean> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-
-    this.api
-      .createSubscription(subscription)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdSubscription) => {
-          this.subscriptionsSignal.update((subscriptions) => [
-            ...subscriptions,
-            createdSubscription,
-          ]);
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to create subscription'));
-
-          this.loadingSignal.set(false);
-        },
-      });
+    try {
+      // Do not retry POST: an activation could have been persisted already.
+      const created = await firstValueFrom(this.api.createSubscription(subscription));
+      this.subscriptionsSignal.update(rows => [
+        ...rows.filter(row => row.id !== created.id), created,
+      ]);
+      return true;
+    } catch (error) {
+      this.errorSignal.set(this.formatError(error, 'Failed to activate subscription'));
+      return false;
+    } finally {
+      this.loadingSignal.set(false);
+    }
   }
 
   updateSubscription(subscription: Subscription): void {
