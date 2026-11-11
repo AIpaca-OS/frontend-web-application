@@ -453,11 +453,3 @@
 .demo-access { padding: 14px 16px; border: 1px solid #c7e6dd; background: #eaf7f3; border-radius: 12px; color: #2e6357; }
 .demo-access p { font-size: 13px; line-height: 1.6; margin: 0; }
 .login-button:focus-visible { outline: 3px solid #137d61; outline-offset: 3px; }
-
-.auth-feedback { padding: 12px 14px; border-radius: 10px; background: #e9f5ef; color: #17634d; font-size: 13px; }
-.auth-error { background: #fdebe8; color: #a0372c; }
-.auth-switch { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-.auth-switch button { border: none; background: transparent; color: #177c64; text-decoration: underline; cursor: pointer; font-weight: 600; }
-.login-button:disabled { opacity: .6; cursor: not-allowed; }
-.brand-content h1 { overflow-wrap: break-word; }
-@media (max-width:700px) { .welcome-text h2 { font-size: 28px; } }
