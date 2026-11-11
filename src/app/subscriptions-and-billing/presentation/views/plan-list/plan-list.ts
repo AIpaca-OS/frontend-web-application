@@ -17,11 +17,9 @@ export class PlanList {
   private readonly router = inject(Router);
 
   selectPlan(planId: number): void {
-    this.router
-      .navigate(['subscriptions-and-billing', 'subscriptions', 'new'], {
-        queryParams: { planId },
-      })
-      .then();
+    void this.router.navigate(['/driver/plans/subscriptions/new'], {
+      queryParams: { planId },
+    });
   }
 
   goToSubscriptions(): void {
