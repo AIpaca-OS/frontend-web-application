@@ -115,10 +115,14 @@ export class LocalProfilesApi {
   }
   getRelationships(): Observable<TutorStudentRelationship[]> {
     return this.http.get<StudentDto[]>(this.base + '/students').pipe(
-      switchMap(students => students.length ? forkJoin(students.map(s =>
-        this.http.get<RelationshipDto[]>(this.base+'/students/'+s.id+'/tutors')
-          .pipe(map(rows => rows.map(r => this.relationship(r,s.id)))))
-      )).pipe(map(rows => rows.flat())) : of([])),
+      switchMap(students => {
+        if (students.length === 0) return of([] as TutorStudentRelationship[]);
+        const requests = students.map(s =>
+          this.http.get<RelationshipDto[]>(this.base + '/students/' + s.id + '/tutors')
+            .pipe(map(rows => rows.map(r => this.relationship(r, s.id))))
+        );
+        return forkJoin(requests).pipe(map(groups => groups.flat()));
+      }),
     );
   }
   getRelationship(id:number): Observable<TutorStudentRelationship> {
