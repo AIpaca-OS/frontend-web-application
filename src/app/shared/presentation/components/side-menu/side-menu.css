@@ -117,50 +117,6 @@
   border-radius: 9999px;
 }
 
-/* Footer del Sidebar */
-.sidebar-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.help-box {
-  background-color: rgba(255, 255, 255, 0.08);
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.help-icon {
-  width: 24px;
-  height: 24px;
-  background-color: #3EA98A; /* Primary Color I */
-  color: #0F172A; /* Neutral Color III */
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.help-title {
-  font-size: 12px;
-  font-weight: 600;
-  margin: 0;
-  color: #ffffff;
-}
-
-.help-desc {
-  font-size: 11px;
-  color: #F3D9A4; /* Secondary Color I / II */
-  margin: 4px 0 0 0;
-  line-height: 1.4;
-}
-
 .logout-btn {
   background: transparent;
   border: none;
