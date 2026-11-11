@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -13,6 +14,7 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
   styleUrl: './plan-list.css',
 })
 export class PlanList {
+  readonly canManageSubscriptions = !environment.production;
   readonly store = inject(SubscriptionsAndBillingStore);
   readonly availablePlans = computed(() => this.store.plans().filter(plan => plan.active));
 

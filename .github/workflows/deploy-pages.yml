@@ -34,7 +34,7 @@ jobs:
 
       - name: Configure Spring Boot origin
         env:
-          RUMBO_API_ORIGIN: ${{ vars.RUMBO_API_ORIGIN }}
+          RUMBO_API_ORIGIN: ${{ vars.RUMBO_API_ORIGIN || 'https://rumbo-team-backend.onrender.com' }}
         run: |
           node --input-type=module - <<'JS'
           import { writeFileSync } from 'node:fs';

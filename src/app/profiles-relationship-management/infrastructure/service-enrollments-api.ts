@@ -39,10 +39,14 @@ export class ServiceEnrollmentsApi {
     return this.http.get<ServiceEnrollment[]>(this.base + '/students/' + studentId);
   }
   request(studentId: number, driverProfileId: number): Observable<{ id: number }> {
-    return this.http.post<{ id: number }>(this.base, { studentId, driverProfileId });
+    return this.profiles.id('tutor').pipe(switchMap(requestedByProfileId =>
+      this.http.post<ServiceEnrollment>(this.base, { studentId, driverProfileId, requestedByProfileId })));
   }
   cancel(id: number): Observable<{ id: number }> {
-    return this.http.post<{ id: number }>(this.base + '/' + id + '/cancel', {});
+    return this.profiles.id('tutor').pipe(switchMap(requestedByProfileId =>
+      this.http.post<ServiceEnrollment>(this.base + '/' + id + '/cancel', null, {
+        params: { requestedByProfileId },
+      })));
   }
   forDriver(): Observable<ServiceEnrollment[]> {
     return this.profiles.id('driver').pipe(switchMap(id =>
@@ -53,9 +57,15 @@ export class ServiceEnrollmentsApi {
       this.http.get<EnrolledStudent[]>(this.base + '/drivers/' + id + '/students')));
   }
   accept(id: number): Observable<{ id: number }> {
-    return this.http.post<{ id: number }>(this.base + '/' + id + '/accept', {});
+    return this.profiles.id('driver').pipe(switchMap(driverProfileId =>
+      this.http.post<ServiceEnrollment>(this.base + '/' + id + '/accept', null, {
+        params: { driverProfileId },
+      })));
   }
   end(id: number): Observable<{ id: number }> {
-    return this.http.post<{ id: number }>(this.base + '/' + id + '/end', {});
+    return this.profiles.id('driver').pipe(switchMap(requestedByProfileId =>
+      this.http.post<ServiceEnrollment>(this.base + '/' + id + '/end', null, {
+        params: { requestedByProfileId },
+      })));
   }
 }
