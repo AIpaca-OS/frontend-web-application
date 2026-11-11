@@ -27,6 +27,10 @@ export class NotificationDashboard {
   readonly alertingStore = inject(AlertingStore);
   protected readonly notifications: Signal<Notification[]> = this.alertingStore.notifications;
 
+  refreshNotifications(): void {
+    this.alertingStore.refreshNotifications();
+  }
+
   markAsRead(notification: Notification): void {
     this.alertingStore.markNotificationAsRead(notification);
   }
