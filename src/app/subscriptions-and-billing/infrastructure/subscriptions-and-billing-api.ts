@@ -31,7 +31,8 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   private readonly http = inject(HttpClient);
   private readonly plansEndpoint = new PlansApiEndpoint(this.http);
   private readonly subscriptionsEndpoint = new SubscriptionsApiEndpoint(this.http);
-  private readonly backendMode = !environment.production;
+  // Use the same Spring Boot REST contracts in development and production.
+  private readonly backendMode = environment.routePlanningApiMode === 'backend';
 
   // Only for local Sprint 3 demo. Without IAM there is no verified driver identity.
   private readonly demoDriverId = 1;
