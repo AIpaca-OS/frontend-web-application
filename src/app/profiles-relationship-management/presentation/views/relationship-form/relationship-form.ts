@@ -39,7 +39,7 @@ export class RelationshipForm {
     ),
   });
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -53,8 +53,8 @@ export class RelationshipForm {
       relationshipType: value.relationshipType,
     });
 
-    this.store.addRelationship(relationship);
-    this.cancel();
+    const saved = await this.store.addRelationship(relationship);
+    if (saved) this.cancel();
   }
 
   cancel(): void {
