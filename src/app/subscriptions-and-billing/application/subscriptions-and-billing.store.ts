@@ -40,7 +40,7 @@ export class SubscriptionsAndBillingStore {
 
   constructor() {
     this.loadPlans();
-    this.loadSubscriptions();
+    // Only driver views request a demo session, not the public plan catalog.
   }
 
   getPlanById(id: number): Signal<Plan | undefined> {

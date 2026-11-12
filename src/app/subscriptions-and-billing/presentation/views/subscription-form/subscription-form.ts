@@ -46,9 +46,7 @@ export class SubscriptionForm {
       this.isEdit = this.subscriptionId !== null;
 
 
-      if (this.isEdit) {
-        this.store.refreshSubscriptions();
-      }
+      this.store.refreshSubscriptions();
 
 
     });
