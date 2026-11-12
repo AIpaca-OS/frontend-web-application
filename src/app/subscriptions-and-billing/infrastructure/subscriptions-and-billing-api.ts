@@ -109,20 +109,32 @@ export class SubscriptionsAndBillingApi extends BaseApi {
       .pipe(map((created) => this.fromBackendSubscription(created)));
   }
 
-  updateSubscription(subscription: Subscription): Observable<Subscription> {
-    if (this.backendMode) {
-      return throwError(() => new Error('The backend does not support editing subscriptions.'));
-    }
 
-    return this.subscriptionsEndpoint.update(subscription, subscription.id);
+  updateSubscription(subscription: Subscription): Observable<Subscription> {
+    return this.backendMode
+      ? this.http.patch<BackendSubscription>(
+        `/api/v1/subscriptions/${subscription.id}/plan`,
+        {
+          driverId: this.demoDriverId,
+          planId: Number(subscription.planId),
+        }
+      ).pipe(
+        map(item => this.fromBackendSubscription(item))
+      )
+      : this.subscriptionsEndpoint.update(subscription, subscription.id);
   }
 
   deleteSubscription(id: number): Observable<void> {
-    if (this.backendMode) {
-      return throwError(() => new Error('The backend does not support cancelling subscriptions.'));
-    }
-
-    return this.subscriptionsEndpoint.delete(id);
+    return this.backendMode
+      ? this.http.patch<BackendSubscription>(
+        `/api/v1/subscriptions/${id}/cancel`,
+        {
+          driverId: this.demoDriverId,
+        }
+      ).pipe(
+        map(() => undefined)
+      )
+      : this.subscriptionsEndpoint.delete(id);
   }
 
   private fromBackendSubscription(resource: BackendSubscription): Subscription {
@@ -138,4 +150,24 @@ export class SubscriptionsAndBillingApi extends BaseApi {
       paymentAmount: 0,
     });
   }
+
+  changeSubscriptionStatus(
+    id: number,
+    status: 'ACTIVE' | 'SUSPENDED'
+  ): Observable<Subscription> {
+    return this.backendMode
+      ? this.http.patch<BackendSubscription>(
+        `/api/v1/subscriptions/${id}/status`,
+        {
+          driverId: this.demoDriverId,
+          status
+        }
+      ).pipe(
+        map(resource => this.fromBackendSubscription(resource))
+      )
+      : throwError(() => new Error(
+        'Subscription status management requires Spring Boot'
+      ));
+  }
+
 }

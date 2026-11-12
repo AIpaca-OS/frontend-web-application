@@ -41,7 +41,7 @@
     <div class="subscriptions-grid">
 
       @for (
-        subscription of store.subscriptions();
+        subscription of currentSubscriptions();
         track subscription.id
         ) {
 
