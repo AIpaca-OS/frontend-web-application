@@ -20,10 +20,10 @@ describe('DriverDemoNoticesApi', () => {
     let title = '';
     api.send(routeId, 'DELAY', 'Heavy traffic').subscribe(r => title = r.title);
 
-    const request = http.expectOne('/api/v1/routes/' + routeId + '/demo-notices');
+    const request = http.expectOne('/api/v1/routes/' + routeId + '/notices');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ kind: 'DELAY', message: 'Heavy traffic' });
-    request.flush({ id: 12, title: 'Retraso comunicado (demo)', message: 'Heavy traffic' });
+    request.flush({ id: 12, title: 'Retraso comunicado', message: 'Heavy traffic' });
     expect(title).toContain('Retraso');
   });
 });

@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-/** Spring Boot REST calls use the deployed origin; other URLs are unchanged. */
+/** Resolve Spring URLs only. External provider calls and frontend assets keep their own origin. */
 export const backendOriginInterceptor: HttpInterceptorFn = (request, next) => {
   if (!request.url.startsWith('/api/v1/')) return next(request);
 

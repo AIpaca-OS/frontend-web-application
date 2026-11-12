@@ -31,7 +31,9 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class ProfilesRelationshipApi extends BaseApi {
   private readonly localApi = inject(LocalProfilesApi);
-  private readonly useLocalBackend = !environment.production;
+  // Spring Boot endpoints are shared across environments; access stays protected
+  // until actual IAM is available (never fall back to unprotected MockAPI).
+  private readonly useLocalBackend = environment.routePlanningApiMode === 'backend';
   /**
    * Angular HTTP client used by the API endpoints.
    */

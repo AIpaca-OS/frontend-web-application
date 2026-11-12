@@ -32,7 +32,7 @@ export const routes: Routes = [
       { path: 'home', loadComponent: tutorHome, title: `${baseTitle} - Home` },
       { path: 'current-trip', loadComponent: tutorCurrentTrip, title: `${baseTitle} - Current trip` },
       { path: 'configuration', loadComponent: tutorSettings, title: `${baseTitle} - Tutor settings` },
-      { path: 'students', loadComponent: driverEnrollments, title: `${baseTitle} - Student Enrollments` },
+      { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
       {
         path: 'notifications',
         loadChildren: notificationRoutes,
@@ -54,7 +54,7 @@ export const routes: Routes = [
       { path: 'configuration', loadComponent: driverSettings, title: `${baseTitle} - Driver settings` },
       { path: 'routes', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
-      { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
+      { path: 'students', loadComponent: driverEnrollments, title: `${baseTitle} - Student Enrollments` },
       {
         path: 'notifications',
         loadChildren: notificationRoutes,
@@ -73,6 +73,13 @@ export const routes: Routes = [
     ],
   },
 
+  {
+    path: 'plans',
+    loadComponent: () => import('./subscriptions-and-billing/presentation/views/plan-list/plan-list')
+      .then(module => module.PlanList),
+    data: { publicCatalog: true },
+    title: `${baseTitle} - Planes disponibles`,
+  },
   { path: 'terms', loadComponent: termsPage, title: `${baseTitle} - Terms` },
   { path: 'privacy', loadComponent: privacyPage, title: `${baseTitle} - Privacy` },
   { path: 'login', loadComponent: loginPage, title: `${baseTitle} - Login` },

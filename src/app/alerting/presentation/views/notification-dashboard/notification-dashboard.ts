@@ -2,6 +2,7 @@ import { Component, inject, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import { DriverDemoNotices } from './driver-demo-notices';
+import { TutorJourneyNotifications } from './tutor-journey-notifications';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,6 +24,7 @@ import { Notification } from '../../../domain/model/notification.entity';
     MatExpansionModule,
     MatSlideToggleModule,
     DriverDemoNotices,
+    TutorJourneyNotifications,
   ],
   templateUrl: './notification-dashboard.html',
   styleUrl: './notification-dashboard.css',
@@ -31,6 +33,7 @@ export class NotificationDashboard {
   readonly alertingStore = inject(AlertingStore);
   private readonly router = inject(Router);
   readonly showDriverDemo = () => !environment.production && this.router.url.startsWith('/driver/');
+  readonly showTutorJourneys = () => !environment.production && this.router.url.startsWith('/tutor/');
   protected readonly notifications: Signal<Notification[]> = this.alertingStore.notifications;
 
   refreshNotifications(): void {

@@ -9,11 +9,12 @@ import { environment } from '../../../environments/environment';
 export class NotificationsApiEndpoint extends BaseApiEndpoint<
   Notification, NotificationResource, NotificationsResponse, NotificationAssembler
 > {
-  private readonly demoBackend = !environment.production;
+  // The generic Notifications controller is intentionally available in demo mode only.
+  private readonly demoBackend = environment.routePlanningApiMode === 'backend';
 
   constructor(http: HttpClient) {
     super(http,
-      (environment.production ? environment.platformProviderApiBaseUrl : '/api/v1')
+      (environment.routePlanningApiMode === 'backend' ? environment.routePlanningApiBaseUrl : environment.platformProviderApiBaseUrl)
         + environment.platformProviderNotificationsEndpointPath,
       new NotificationAssembler());
   }

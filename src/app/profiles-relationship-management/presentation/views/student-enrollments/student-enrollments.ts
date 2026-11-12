@@ -51,7 +51,6 @@ import {
       <button type="button" class="refresh" [disabled]="loading() || saving()" (click)="reload()">
         {{ 'profiles.enrollments.refresh' | translate }}
       </button>
-      <small>{{ 'profiles.enrollments.demoDisclaimer' | translate }}</small>
     </section>
   `,
   styles: [`

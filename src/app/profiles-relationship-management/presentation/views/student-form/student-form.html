@@ -49,11 +49,20 @@
       <mat-form-field appearance="outline">
         <mat-label>Colegio</mat-label>
 
-        <input
-          matInput
-          formControlName="schoolName"
-        />
+        @if (isLocalBackend) {
+          <mat-select formControlName="schoolName" placeholder="Selecciona un colegio">
+            @for (school of schoolOptions(); track school) {
+              <mat-option [value]="school">{{ school }}</mat-option>
+            }
+          </mat-select>
+        } @else {
+          <input matInput formControlName="schoolName" />
+        }
       </mat-form-field>
+
+      @if (schoolCatalogError()) {
+        <p class="error" role="alert">{{ schoolCatalogError() }}</p>
+      }
 
       <mat-form-field appearance="outline">
         <mat-label>Estado</mat-label>

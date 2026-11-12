@@ -69,9 +69,14 @@
             </p>
           }
           <div class="route-actions">
-            <button mat-stroked-button type="button" (click)="editRoute(route.id)" [disabled]="isPublished(route)">
+            <button mat-stroked-button type="button" (click)="editRoute(route.id)">
               <mat-icon>edit</mat-icon> {{ 'routes.list.configure' | translate }}
             </button>
+            @if (isPublished(route)) {
+              <button mat-stroked-button type="button" (click)="manageTrips(route.id)">
+                <mat-icon>directions_bus</mat-icon> Gestionar viajes
+              </button>
+            }
             @if (!isPublished(route)) {
               <button mat-stroked-button type="button" (click)="publishRoute(route.id)"
                       [disabled]="!canPublish(route)"

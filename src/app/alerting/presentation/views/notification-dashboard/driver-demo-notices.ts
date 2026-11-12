@@ -11,8 +11,8 @@ import { DemoNoticeKind, DriverDemoNoticesApi } from '../../../infrastructure/dr
     <section class="demo-composer">
       <h4>Informar retraso o incidencia</h4>
       <p class="hint">
-        Solo pruebas locales: los avisos son generales y aparecen en las vistas de notificaciones
-        de demostración. No escribas nombres de estudiantes ni información personal.
+        Describe la situación de la ruta. Los tutores de los estudiantes asignados
+        recibirán el aviso. Evita incluir datos personales en el mensaje.
       </p>
 
       @if (publishedRoutes().length === 0) {
@@ -42,7 +42,7 @@ import { DemoNoticeKind, DriverDemoNoticesApi } from '../../../infrastructure/dr
           </label>
         </div>
         <button type="button" (click)="send()" [disabled]="sending() || !routeId() || message().trim().length < 4">
-          {{ sending() ? 'Enviando...' : 'Enviar aviso de prueba' }}
+          {{ sending() ? 'Enviando...' : 'Enviar aviso' }}
         </button>
       }
 
@@ -98,7 +98,7 @@ export class DriverDemoNotices {
       this.message.set('');
       this.notificationStore.refreshNotifications();
     } catch {
-      this.error.set('No se pudo enviar. Comprueba que el backend tenga APP_DEMO_ENABLED=true y la ruta esté publicada.');
+      this.error.set('No se pudo enviar. Comprueba que el backend esté ejecutándose y la ruta esté publicada.');
     } finally {
       this.sending.set(false);
     }

@@ -1,4 +1,5 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -10,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 import { Student, StudentStatus } from '../../../domain/model/student.entity';
 import { environment } from '../../../../../environments/environment';
+import { LocalProfilesApi } from '../../../infrastructure/local-profiles-api';
 
 /**
  * Form view used to create or update a student.
@@ -30,6 +32,10 @@ import { environment } from '../../../../../environments/environment';
 export class StudentForm {
   readonly store = inject(ProfilesRelationshipStore);
   readonly StudentStatus = StudentStatus;
+  readonly isLocalBackend = !environment.production;
+  readonly schoolOptions = signal<string[]>([]);
+  readonly schoolCatalogError = signal('');
+  private readonly profilesApi = inject(LocalProfilesApi);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -41,7 +47,7 @@ export class StudentForm {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     birthDate: ['', Validators.required],
-    schoolName: [environment.production ? '' : 'Colegio Demostración', Validators.required],
+    schoolName: ['', Validators.required],
     status: this.fb.nonNullable.control<StudentStatus>(StudentStatus.ACTIVE, Validators.required),
   });
 
@@ -49,6 +55,13 @@ export class StudentForm {
     const id = this.route.snapshot.paramMap.get('id');
     this.studentId = id ? Number(id) : null;
     this.isEdit = this.studentId !== null;
+
+    if (this.isLocalBackend) {
+      void firstValueFrom(this.profilesApi.schoolNames())
+        .then(names => this.schoolOptions.set(names))
+        .catch(() => this.schoolCatalogError.set(
+          'No se pudo cargar el catálogo de colegios. Comprueba la conexión con el backend.'));
+    }
 
     effect(() => {
       if (!this.isEdit || this.studentId === null || this.formInitialized) {

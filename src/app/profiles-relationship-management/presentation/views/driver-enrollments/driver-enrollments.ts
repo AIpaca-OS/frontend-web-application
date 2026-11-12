@@ -30,7 +30,7 @@ import {
           @if (enrollment.status === 'PENDING') {
             <div class="entry">
               <div>
-                <strong>{{ 'profiles.enrollments.studentReference' | translate }} #{{ enrollment.studentId }}</strong>
+                <strong>{{ studentLabel(enrollment.studentId) }}</strong>
                 <p>{{ 'profiles.enrollments.pendingHint' | translate }}</p>
               </div>
               <button type="button" class="primary" [disabled]="saving()" (click)="accept(enrollment.id)">
@@ -40,7 +40,8 @@ import {
           }
         }
         @if (!loading() && !pendingCount()) {
-          <p>{{ 'profiles.enrollments.noPending' | translate }}</p>
+          <p>No hay solicitudes pendientes. El tutor debe registrar al estudiante
+             y pulsar «Solicitar transporte» para enviarte la solicitud.</p>
         }
       </section>
       <section class="panel">
@@ -62,7 +63,6 @@ import {
           <p>{{ 'profiles.enrollments.noAccepted' | translate }}</p>
         }
       </section>
-      <small>{{ 'profiles.enrollments.demoDisclaimer' | translate }}</small>
     </main>
   `,
   styles: [`
@@ -93,6 +93,15 @@ export class DriverEnrollmentsComponent implements OnInit {
   readonly error = signal('');
   readonly message = signal('');
 
+  private errorDescription(error: unknown): string {
+    const response = error as { status?: number; error?: { detail?: string; message?: string } };
+    const detail = response.error?.detail ?? response.error?.message;
+    if (response.status === 0) return 'No se puede conectar al servidor. Comprueba que Spring Boot esté ejecutándose en el puerto 8080.';
+    if (response.status === 401 || response.status === 403)
+      return 'No se pudo validar el acceso del conductor. Vuelve a ingresar como conductor y comprueba que el backend local esté habilitado.';
+    if (response.status === 404) return 'El endpoint de afiliaciones no está disponible. Actualiza y reinicia el backend.';
+    return detail || 'No se pudieron consultar las solicitudes. Comprueba la API de afiliaciones.';
+  }
   ngOnInit(): void { void this.reload(); }
 
   pendingCount(): number {
@@ -111,14 +120,17 @@ export class DriverEnrollmentsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     try {
-      const [enrollments, students] = await Promise.all([
-        firstValueFrom(this.api.forDriver()),
-        firstValueFrom(this.api.driverStudents()),
-      ]);
+      const enrollments = await firstValueFrom(this.api.forDriver());
       this.enrollments.set(enrollments);
-      this.students.set(students);
+      // A student-name lookup must not hide the enrollment requests.
+      try {
+        this.students.set(await firstValueFrom(this.api.driverStudents()));
+      } catch {
+        this.students.set([]);
+        this.error.set('Las solicitudes se cargaron, pero no fue posible consultar los nombres de los estudiantes.');
+      }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudieron consultar las solicitudes');
+      this.error.set(this.errorDescription(e));
     } finally {
       this.loading.set(false);
     }

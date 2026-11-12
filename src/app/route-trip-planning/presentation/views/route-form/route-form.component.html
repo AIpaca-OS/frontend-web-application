@@ -47,7 +47,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-two">
                 <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
-                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading()">
+                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading() || routeStatus === 'PUBLISHED'">
                   <mat-option value="">{{ 'routes.form.vehicleUnassigned' | translate }}</mat-option>
                   @for (vehicle of vehicleStore.vehicles(); track vehicle.id) {
                     <mat-option [value]="'' + vehicle.id">
@@ -61,7 +61,8 @@
                     </mat-option>
                   }
                 </mat-select>
-                <mat-hint>{{ 'routes.form.vehicleIdHint' | translate }}</mat-hint>
+                <mat-hint>{{ (routeStatus === 'PUBLISHED'
+                  ? 'routes.form.publishedVehicleLocked' : 'routes.form.vehicleIdHint') | translate }}</mat-hint>
               </mat-form-field>
               @if (vehicleStore.loading()) {
                 <p class="span-two" role="status">{{ 'routes.form.vehicleLoading' | translate }}</p>
@@ -127,6 +128,36 @@
                 <button mat-button type="button" (click)="loadStudentCandidates(true)">{{ 'routes.form.retry' | translate }}</button>
               </div>
             }
+            @if (routeStatus !== 'PUBLISHED') {
+              @if (pendingLoading()) {
+                <p class="catalog-feedback" role="status">Consultando solicitudes del conductor...</p>
+              }
+              @if (pendingError()) {
+                <div class="catalog-feedback warning" role="alert">
+                  {{ pendingError() }}
+                  <button mat-button type="button" (click)="loadPendingEnrollments()">Reintentar</button>
+                </div>
+              }
+              @if (pendingNotice()) {
+                <p class="catalog-feedback" role="status">{{ pendingNotice() }}</p>
+              }
+              @if (pendingEnrollments().length > 0) {
+                <div class="catalog-feedback">
+                  <strong>Solicitudes de transporte pendientes</strong>
+                  <p>Acepta primero al estudiante para poder asignarlo a una parada.</p>
+                  @for (enrollment of pendingEnrollments(); track enrollment.id) {
+                    <div class="pending-enrollment-row">
+                      <span>{{ pendingStudentName(enrollment.studentId) }}</span>
+                      <button mat-stroked-button type="button"
+                              [disabled]="pendingSavingId() !== null || saving"
+                              (click)="acceptPendingEnrollment(enrollment.id)">
+                        {{ pendingSavingId() === enrollment.id ? 'Aceptando...' : 'Aceptar solicitud' }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            }
             @if (studentsLoaded() && students().length === 0) {
               <div class="catalog-feedback" role="status">
                 <p>{{ 'routes.form.noStudents' | translate }}</p>
@@ -134,7 +165,7 @@
                 <a mat-stroked-button routerLink="/driver/students" target="_blank" rel="noopener">
                   {{ 'routes.form.reviewEnrollments' | translate }}
                 </a>
-                <button mat-button type="button" (click)="loadStudentCandidates(true)">
+                <button mat-button type="button" (click)="loadStudentCandidates(true); loadPendingEnrollments()">
                   {{ 'routes.form.refreshEligibleStudents' | translate }}
                 </button>
               </div>
@@ -176,7 +207,7 @@
                       <mat-form-field appearance="outline" class="student-picker">
                         <mat-label>{{ 'routes.form.studentAtStop' | translate }}</mat-label>
                         <mat-select formControlName="studentId" (selectionChange)="changeStudent(i)"
-                                    [disabled]="saving || !studentsLoaded()">
+                                    [disabled]="saving || routeStatus === 'PUBLISHED' || !studentsLoaded()">
                           <mat-option value="">{{ 'routes.form.unassigned' | translate }}</mat-option>
                           @for (student of availableStudents(i); track student.id) {
                             <mat-option [value]="student.id">{{ student.fullName }}</mat-option>

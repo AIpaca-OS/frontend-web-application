@@ -21,7 +21,7 @@ export class DriverDemoNoticesApi {
 
   send(routeId: string, kind: DemoNoticeKind, message: string): Observable<DemoNoticeReceipt> {
     return this.http.post<DemoNoticeReceipt>(
-      '/api/v1/routes/' + encodeURIComponent(routeId) + '/demo-notices',
+      '/api/v1/routes/' + encodeURIComponent(routeId) + '/notices',
       { kind, message },
     );
   }

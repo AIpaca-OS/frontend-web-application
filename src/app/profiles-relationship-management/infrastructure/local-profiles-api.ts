@@ -25,6 +25,10 @@ export class LocalProfilesApi {
   private readonly schools = this.http.get<SchoolDto[]>(this.base + '/schools')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
 
+  schoolNames(): Observable<string[]> {
+    return this.schools.pipe(map(rows => rows.map(s => s.name)));
+  }
+
   private student(d: StudentDto, schools: SchoolDto[]): Student {
     return new Student({
       id: d.id, firstName: d.firstName, lastName: d.lastName,

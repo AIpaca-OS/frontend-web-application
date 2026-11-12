@@ -1,16 +1,13 @@
-// Only ng serve loads this file. The credential never enters the Angular bundle.
-const localPassword = process.env.RUMBO_LOCAL_PASSWORD;
-
-if (!localPassword) {
-  throw new Error('Set RUMBO_LOCAL_PASSWORD before starting the local Routes proxy.');
-}
+// One Angular development proxy for every Spring Boot bounded context.
+// Each teammate can select a local or deployed API without editing source files.
+const target = process.env.RUMBO_API_URL || 'http://127.0.0.1:8080';
+const previewKey = process.env.RUMBO_PREVIEW_KEY;
 
 module.exports = {
-  '/api/v1/routes/**': {
-    target: 'http://127.0.0.1:8080',
+  '/api': {
+    target,
     changeOrigin: true,
-    headers: {
-      Authorization: `Basic ${Buffer.from(`driver:${localPassword}`).toString('base64')}`,
-    },
+    secure: true,
+    ...(previewKey ? { headers: { 'X-Rumbo-Preview-Key': previewKey } } : {}),
   },
 };

@@ -1,5 +1,5 @@
 export const environment = {
-  apiOrigin: 'https://rumbo-team-backend.onrender.com',
+  apiOrigin: '',
   production:true,
   platformProviderApiBaseUrl:'https://6a4ec144e785c9ef536d1e99.mockapi.io/api/v1',
   platformProviderDelaysEndpointPath:'/delays',

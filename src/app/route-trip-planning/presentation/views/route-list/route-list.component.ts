@@ -74,6 +74,7 @@ export class RouteListComponent {
 
   navigateToNew(): void { void this.router.navigate(['/driver/routes/new']); }
   editRoute(id: string): void { void this.router.navigate(['/driver/routes', id, 'edit']); }
+  manageTrips(id: string): void { void this.router.navigate(['/driver/routes', id, 'trips']); }
 
   deleteRoute(id: string): void {
     if (window.confirm(this.translate.instant('routes.list.confirmDelete'))) {
