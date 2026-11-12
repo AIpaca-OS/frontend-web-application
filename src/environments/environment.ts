@@ -1,4 +1,5 @@
 export const environment = {
+  apiOrigin: 'https://rumbo-team-backend.onrender.com',
   production:true,
   platformProviderApiBaseUrl:'https://6a4ec144e785c9ef536d1e99.mockapi.io/api/v1',
   platformProviderDelaysEndpointPath:'/delays',
@@ -11,7 +12,7 @@ export const environment = {
   routePlanningRoutesEndpointPath:'/routes',
   routePlanningApiMode:'backend',
   routePlanningUseLocalDemoStudents:false,
-  billingBasePath:'https://6ac54a6d54a61668c5f7141c.mockapi.io/api/v1',
+  billingBasePath:'/api/v1',
   billingPlansEndpointPath:'/plans',
   billingSubscriptionsEndpointPath:'/subscriptions',
   profilesApiBaseUrl:'https://6ac53c3d54a61668c5f700f2.mockapi.io/api/v1',
