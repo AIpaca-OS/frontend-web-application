@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, throwError } from 'rxjs';
+import { catchError, map, Observable, switchMap, throwError } from 'rxjs';
 
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
+import { BillingDemoSession } from './billing-demo-session';
 
 interface BackendPlan {
   id: number;
@@ -26,20 +27,16 @@ interface BackendSubscription {
 }
 
 /**
- * Billing always communicates with Spring Boot in development and production.
- * The backend-origin interceptor resolves /api/v1 requests to Render in the
- * deployed Angular site, while ng serve uses the local development proxy.
- *
- * TODO(IAM): replace the fixed demo driver ID with the authenticated driver ID.
- * Render currently protects private APIs with a server-side preview key;
- * do not embed that key in the frontend bundle.
+ * Plans: public Spring Boot catalog backed by Render PostgreSQL.
+ * Demo subscriptions: isolated signed sessions, persisted in the same PostgreSQL.
+ * Real /api/v1/subscriptions remain protected pending verified driver IAM.
  */
 @Injectable({ providedIn: 'root' })
 export class SubscriptionsAndBillingApi extends BaseApi {
   private readonly http = inject(HttpClient);
-  private readonly demoDriverId = 1;
+  private readonly demo = inject(BillingDemoSession);
   private readonly plansUrl = '/api/v1/plans';
-  private readonly subscriptionsUrl = '/api/v1/subscriptions';
+  private readonly subscriptionsUrl = '/api/v1/billing-demo/subscriptions';
 
   getPlans(): Observable<Plan[]> {
     return this.http.get<BackendPlan[]>(this.plansUrl).pipe(
@@ -68,9 +65,10 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   }
 
   getSubscriptions(): Observable<Subscription[]> {
-    return this.http.get<BackendSubscription[]>(this.subscriptionsUrl, {
-      params: { driverId: this.demoDriverId },
-    }).pipe(
+    return this.demo.token().pipe(
+      switchMap(token => this.http.get<BackendSubscription[]>(this.subscriptionsUrl, {
+        headers: this.demo.headers(token),
+      })),
       map(rows => rows.map(row => this.fromBackendSubscription(row))),
       catchError(this.handleBackendError('No se pudieron cargar las suscripciones')),
     );
@@ -87,46 +85,46 @@ export class SubscriptionsAndBillingApi extends BaseApi {
   }
 
   createSubscription(subscription: Subscription): Observable<Subscription> {
-    return this.http.post<BackendSubscription>(this.subscriptionsUrl, {
-      driverId: this.demoDriverId,
-      planId: Number(subscription.planId),
-    }).pipe(
+    return this.demo.token().pipe(
+      switchMap(token => this.http.post<BackendSubscription>(this.subscriptionsUrl, {
+        planId: Number(subscription.planId),
+      }, { headers: this.demo.headers(token) })),
       map(resource => this.fromBackendSubscription(resource)),
       catchError(this.handleBackendError('No se pudo activar la suscripción')),
     );
   }
 
   updateSubscription(subscription: Subscription): Observable<Subscription> {
-    return this.http.patch<BackendSubscription>(
-      `${this.subscriptionsUrl}/${subscription.id}/plan`,
-      {
-        driverId: this.demoDriverId,
-        planId: Number(subscription.planId),
-      },
-    ).pipe(
+    return this.demo.token().pipe(
+      switchMap(token => this.http.patch<BackendSubscription>(
+        `${this.subscriptionsUrl}/${subscription.id}/plan`,
+        { planId: Number(subscription.planId) },
+        { headers: this.demo.headers(token) },
+      )),
       map(resource => this.fromBackendSubscription(resource)),
       catchError(this.handleBackendError('No se pudo cambiar el plan')),
     );
   }
 
-  changeSubscriptionStatus(
-    id: number,
-    status: 'ACTIVE' | 'SUSPENDED',
-  ): Observable<Subscription> {
-    return this.http.patch<BackendSubscription>(
-      `${this.subscriptionsUrl}/${id}/status`,
-      { driverId: this.demoDriverId, status },
-    ).pipe(
+  changeSubscriptionStatus(id: number, status: 'ACTIVE' | 'SUSPENDED'): Observable<Subscription> {
+    return this.demo.token().pipe(
+      switchMap(token => this.http.patch<BackendSubscription>(
+        `${this.subscriptionsUrl}/${id}/status`,
+        { status },
+        { headers: this.demo.headers(token) },
+      )),
       map(resource => this.fromBackendSubscription(resource)),
       catchError(this.handleBackendError('No se pudo cambiar el estado')),
     );
   }
 
   deleteSubscription(id: number): Observable<void> {
-    return this.http.patch<BackendSubscription>(
-      `${this.subscriptionsUrl}/${id}/cancel`,
-      { driverId: this.demoDriverId },
-    ).pipe(
+    return this.demo.token().pipe(
+      switchMap(token => this.http.patch<BackendSubscription>(
+        `${this.subscriptionsUrl}/${id}/cancel`,
+        {},
+        { headers: this.demo.headers(token) },
+      )),
       map(() => undefined),
       catchError(this.handleBackendError('No se pudo cancelar la suscripción')),
     );
@@ -161,16 +159,22 @@ export class SubscriptionsAndBillingApi extends BaseApi {
       if (error instanceof HttpErrorResponse) {
         if (error.status === 0) {
           return throwError(() => new Error(
-            `${operation}: no se pudo conectar con Spring Boot. Verifica Render y CORS.`,
+            `${operation}: problema de conexión o CORS con el backend de Render.`,
           ));
         }
         if (error.status === 401 || error.status === 403) {
+          this.demo.clear();
           return throwError(() => new Error(
-            `${operation}: el backend requiere autorización para esta operación.`,
+            `${operation}: la sesión de demostración venció. Recarga e inténtalo nuevamente.`,
+          ));
+        }
+        if (error.status === 404 || error.status === 503) {
+          return throwError(() => new Error(
+            `${operation}: la demostración de Billing no está habilitada en Render (HTTP ${error.status}).`,
           ));
         }
         return throwError(() => new Error(
-          `${operation}: respuesta HTTP ${error.status} del backend.`,
+          `${operation}: respuesta HTTP ${error.status} de Spring Boot.`,
         ));
       }
       return throwError(() => error);
