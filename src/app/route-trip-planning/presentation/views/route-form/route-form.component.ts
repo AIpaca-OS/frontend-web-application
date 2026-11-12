@@ -15,6 +15,7 @@ import { RouteTripStore } from '../../../application/route-trip.store';
 import { Route, RouteShift } from '../../../domain/model/route.entity';
 import { RouteStop } from '../../../domain/model/route-stop.entity';
 import { RouteStudentCatalog, RouteStudentOption } from '../../../infrastructure/route-student-catalog';
+import { ServiceEnrollmentsApi, ServiceEnrollment, EnrolledStudent } from '../../../../profiles-relationship-management/infrastructure/service-enrollments-api';
 import { VehicleCredentialStore } from '../../../../vehicle-credential-management/application/vehicle-credential.store';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -60,6 +61,14 @@ export class RouteFormComponent {
   private readonly translate = inject(TranslateService);
   readonly store = inject(RouteTripStore);
   private readonly studentCatalog = inject(RouteStudentCatalog);
+  private readonly enrollmentsApi = inject(ServiceEnrollmentsApi);
+  readonly pendingEnrollments = signal<ServiceEnrollment[]>([]);
+  readonly pendingStudents = signal<EnrolledStudent[]>([]);
+  readonly pendingLoading = signal(false);
+  readonly pendingError = signal('');
+  readonly pendingSavingId = signal<number | null>(null);
+  readonly pendingNotice = signal('');
+
   readonly vehicleStore = inject(VehicleCredentialStore);
   readonly students = signal<RouteStudentOption[]>([]);
   readonly studentsLoading = signal(false);
@@ -162,6 +171,58 @@ export class RouteFormComponent {
       this.studentsError.set(this.translate.instant('routes.form.studentsLoadError'));
     } finally {
       this.studentsLoading.set(false);
+    }
+  }
+
+
+  /** Only requests addressed to the current driver are visible here. */
+  async loadPendingEnrollments(): Promise<void> {
+    if (this.pendingLoading()) return;
+    this.pendingLoading.set(true);
+    this.pendingError.set('');
+    try {
+      const rows = await firstValueFrom(this.enrollmentsApi.forDriver());
+      this.pendingEnrollments.set(rows.filter(row => row.status === 'PENDING'));
+      if (this.pendingEnrollments().length) {
+        try {
+          this.pendingStudents.set(await firstValueFrom(this.enrollmentsApi.driverStudents()));
+        } catch {
+          this.pendingStudents.set([]);
+        }
+      }
+    } catch (e) {
+      const failure = e as { status?: number; error?: { detail?: string } };
+      this.pendingError.set(failure.status === 0
+        ? 'No hay conexión con Spring Boot para consultar las solicitudes.'
+        : failure.status === 401 || failure.status === 403
+          ? 'No se pudo comprobar el perfil del conductor. Accede nuevamente como conductor.'
+          : failure.error?.detail || 'No se pudieron consultar las solicitudes de transporte.');
+    } finally {
+      this.pendingLoading.set(false);
+    }
+  }
+
+  pendingStudentName(studentId: number): string {
+    const student = this.pendingStudents().find(row => row.id === studentId);
+    return student ? student.firstName + ' ' + student.lastName : 'Estudiante #' + studentId;
+  }
+
+  async acceptPendingEnrollment(enrollmentId: number): Promise<void> {
+    if (this.pendingSavingId() !== null) return;
+    this.pendingSavingId.set(enrollmentId);
+    this.pendingError.set('');
+    this.pendingNotice.set('');
+    try {
+      await firstValueFrom(this.enrollmentsApi.accept(enrollmentId));
+      this.pendingNotice.set('Afiliación aceptada. El estudiante ya puede seleccionarse en esta ruta.');
+      await this.loadStudentCandidates(true);
+      await this.loadPendingEnrollments();
+    } catch (e) {
+      const failure = e as { error?: { detail?: string; message?: string } };
+      this.pendingError.set(failure.error?.detail ?? failure.error?.message ??
+        'No se pudo aceptar la solicitud. Revisa la conexión con Spring Boot.');
+    } finally {
+      this.pendingSavingId.set(null);
     }
   }
 
@@ -292,10 +353,13 @@ export class RouteFormComponent {
       }
     }
     this.activeStep = step;
-    if (step === 1) void this.loadStudentCandidates();
+    if (step === 1) {
+      void this.loadStudentCandidates();
+      if (this.routeStatus !== 'PUBLISHED') void this.loadPendingEnrollments();
+    }
   }
 
-  applySchoolWeek(): void {
+  applyWeekdaysPreset(): void {
     if (this.saving) return;
     const referenceTime = this.form.controls.departureTime.value;
     this.serviceDays.controls.forEach((row, index) => {
@@ -321,7 +385,10 @@ export class RouteFormComponent {
       this.stepMessage = this.assignmentMessage
         || this.translate.instant('routes.form.requiredFields');
       this.activeStep = this.validStep(0) ? (this.validStep(1) ? 2 : 1) : 0;
-      if (this.activeStep === 1) void this.loadStudentCandidates();
+      if (this.activeStep === 1) {
+        void this.loadStudentCandidates();
+        if (this.routeStatus !== 'PUBLISHED') void this.loadPendingEnrollments();
+      }
       return;
     }
 
@@ -338,6 +405,19 @@ export class RouteFormComponent {
     }
 
     const current = this.store.routes().find(route => route.id === this.routeId);
+    const published = current?.status.toUpperCase() === 'PUBLISHED';
+    // Published routes may adjust their name, schedule and stop addresses.
+    // Existing student assignments must not be replaced after publication.
+    if (published && current) {
+      const previouslyAssigned = new Map(current.stops.map(stop => [stop.id, stop.studentId ?? '']));
+      const assignmentsChanged = values.stops.some(stop =>
+        (stop.id ? previouslyAssigned.get(stop.id) : '') !== (stop.studentId || ''));
+      if (assignmentsChanged) {
+        this.assignmentMessage = this.translate.instant('routes.form.publishedAssignmentsLocked');
+        this.activeStep = 1;
+        return;
+      }
+    }
     const scheduleUnchanged = current !== undefined &&
       JSON.stringify(current.schedule) === JSON.stringify(schedule);
     const route = new Route({
@@ -378,7 +458,8 @@ export class RouteFormComponent {
 
       // Student assignments are a separate protected application operation.
       // A denied assignment leaves the route configurable and shows the error.
-      const assignmentsSaved = await this.store.saveAssignments(saved, route.stops);
+      const assignmentsSaved = published ? true
+        : await this.store.saveAssignments(saved, route.stops);
       if (assignmentsSaved) await this.router.navigate(['/driver/routes']);
     } finally {
       this.saving = false;
