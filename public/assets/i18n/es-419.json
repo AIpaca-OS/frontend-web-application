@@ -185,7 +185,7 @@
       "legacyStops": "Completa las direcciones de esta ruta antes de guardar los cambios.",
       "scheduleTitle": "Días y horarios",
       "scheduleDescription": "Elige cuándo operará tu ruta. Cada día puede tener una hora distinta.",
-      "weekdaysPreset": "Lunes a viernes",
+      "schoolWeek": "Lunes a viernes",
       "clearDays": "Limpiar selección",
       "departure": "Salida",
       "timeRequired": "Hora requerida",

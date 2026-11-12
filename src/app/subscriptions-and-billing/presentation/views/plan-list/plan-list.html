@@ -1,0 +1,93 @@
+<div class="plans-page">
+
+  <header class="page-header">
+
+    <div>
+      <p class="eyebrow">
+        SUSCRIPCIONES
+      </p>
+
+      <h1>Planes disponibles</h1>
+
+      <p>
+        Elige el plan que mejor se adapte a tu servicio.
+      </p>
+    </div>
+
+    @if (canManageSubscriptions) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="secondary-action"
+        (click)="goToSubscriptions()">
+        Ver mi suscripción
+      </button>
+    }
+
+  </header>
+
+  @if (store.plansLoading()) {
+    <div class="loading">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+
+  @if (store.plansError()) {
+    <div class="error" role="alert">
+      No se pudieron cargar los planes. Comprueba la conexión con el backend.
+      <button mat-stroked-button type="button" (click)="reload()">Reintentar</button>
+    </div>
+  }
+
+  @if (!store.plansLoading() && !store.plansError()) {
+
+    <section class="plans-grid">
+
+      @for (plan of availablePlans(); track plan.id) {
+
+
+          <article class="plan-card">
+
+            <div>
+              <span class="available">
+                Disponible
+              </span>
+
+              <h2>
+                {{ plan.name }}
+              </h2>
+              <p class="plan-description">
+                {{ plan.description }}
+              </p>
+
+              <p class="price">
+                <span>S/</span>
+                {{ plan.referencePrice }}
+              </p>
+
+            </div>
+
+            @if (canManageSubscriptions) {
+              <button
+                mat-raised-button
+                type="button"
+                class="primary-action"
+                (click)="selectPlan(plan.id)">
+                Seleccionar plan
+              </button>
+            }
+
+          </article>
+
+
+      } @empty {
+
+        <p>Actualmente no hay planes activos. Revisa el catálogo en Swagger o carga los planes locales de prueba.</p>
+
+      }
+
+    </section>
+
+  }
+
+</div>

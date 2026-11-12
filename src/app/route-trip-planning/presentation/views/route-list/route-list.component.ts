@@ -1,0 +1,88 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { RouteTripStore } from '../../../application/route-trip.store';
+import { Route } from '../../../domain/model/route.entity';
+
+type RouteFilter = 'ALL' | 'CONFIGURABLE' | 'PUBLISHED';
+
+@Component({
+  selector: 'app-route-list',
+  standalone: true,
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  templateUrl: './route-list.component.html',
+  styleUrl: './route-list.component.css',
+})
+export class RouteListComponent {
+  readonly store = inject(RouteTripStore);
+  private readonly translate = inject(TranslateService);
+  private readonly router = inject(Router);
+  readonly search = signal('');
+  readonly filter = signal<RouteFilter>('ALL');
+
+  readonly filteredRoutes = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    return this.store.routes().filter(route => {
+      const statusMatches = this.filter() === 'ALL'
+        || (this.filter() === 'PUBLISHED' && route.status.toUpperCase() === 'PUBLISHED')
+        || (this.filter() === 'CONFIGURABLE' && route.status.toUpperCase() !== 'PUBLISHED');
+      const textMatches = !term || [route.name, route.code, route.departureTime]
+        .some(value => String(value ?? '').toLowerCase().includes(term));
+      return statusMatches && textMatches;
+    });
+  });
+
+  readonly publishedCount = computed(() =>
+    this.store.routes().filter(route => route.status.toUpperCase() === 'PUBLISHED').length,
+  );
+
+  onSearch(event: Event): void {
+    this.search.set((event.target as HTMLInputElement).value);
+  }
+
+  setFilter(value: RouteFilter): void { this.filter.set(value); }
+
+  statusLabel(route: Route): string {
+    switch (route.status.toUpperCase()) {
+      case 'PUBLISHED': return this.translate.instant('routes.list.published');
+      case 'DRAFT': return this.translate.instant('routes.list.statusDraft');
+      case 'CONFIGURABLE': return this.translate.instant('routes.list.statusConfigurable');
+      case 'SCHEDULED': return this.translate.instant('routes.list.statusScheduled');
+      default: return route.status || this.translate.instant('routes.list.configurable');
+    }
+  }
+
+  shiftLabel(route: Route): string {
+    return this.translate.instant(route.shift === 'AFTERNOON'
+      ? 'routes.list.afternoon' : 'routes.list.morning');
+  }
+  isPublished(route: Route): boolean { return route.status.toUpperCase() === 'PUBLISHED'; }
+  publicationMessage(route: Route): string {
+    if (!route.vehicleId) return 'workspace.publishMissingVehicle';
+    if (route.stops.length === 0) return 'workspace.publishMissingStops';
+    if (!route.scheduleConfirmed || route.schedule.length === 0)
+      return 'workspace.publishMissingSchedule';
+    if (!route.stops.some(stop => Boolean(stop.studentId)))
+      return 'workspace.publishMissingStudent';
+    return 'workspace.publishReady';
+  }
+  canPublish(route: Route): boolean {
+    return !this.isPublished(route) && this.publicationMessage(route) === 'workspace.publishReady';
+  }
+
+  navigateToNew(): void { void this.router.navigate(['/driver/routes/new']); }
+  editRoute(id: string): void { void this.router.navigate(['/driver/routes', id, 'edit']); }
+  manageTrips(id: string): void { void this.router.navigate(['/driver/routes', id, 'trips']); }
+
+  deleteRoute(id: string): void {
+    if (window.confirm(this.translate.instant('routes.list.confirmDelete'))) {
+      this.store.deleteRoute(id);
+    }
+  }
+
+  publishRoute(id: string): void {
+    void this.store.publishRoute(id);
+  }
+}

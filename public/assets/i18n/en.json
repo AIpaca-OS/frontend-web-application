@@ -185,7 +185,7 @@
       "legacyStops": "Add the missing addresses before saving this route.",
       "scheduleTitle": "Days and times",
       "scheduleDescription": "Choose when the route operates. Each day can have a different departure time.",
-      "weekdaysPreset": "Monday to Friday",
+      "schoolWeek": "Monday to Friday",
       "clearDays": "Clear selection",
       "departure": "Departure",
       "timeRequired": "Time required",

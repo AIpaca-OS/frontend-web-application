@@ -1,0 +1,44 @@
+.page {
+  padding: 32px;
+  max-width: 850px;
+}
+
+.page header p {
+  color: #66736f;
+}
+
+.card {
+  margin-top: 24px;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid #e7ebe9;
+}
+
+.profile-row p {
+  margin: 4px 0 0;
+  color: #66736f;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #f5d994;
+  font-weight: 700;
+}

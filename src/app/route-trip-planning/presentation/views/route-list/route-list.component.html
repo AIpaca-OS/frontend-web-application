@@ -1,0 +1,102 @@
+<section class="routes-page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">{{ 'routes.list.eyebrow' | translate }}</p>
+      <h1>{{ 'routes.list.title' | translate }}</h1>
+      <p class="subtitle">{{ 'routes.list.subtitle' | translate }}</p>
+    </div>
+    <button mat-flat-button class="primary-action" (click)="navigateToNew()">
+      <mat-icon>add</mat-icon> {{ 'routes.list.new' | translate }}
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><mat-icon>route</mat-icon><div><strong>{{ store.routeCount() }}</strong><span>{{ 'routes.list.registered' | translate }}</span></div></div>
+    <div class="summary-card"><mat-icon>verified</mat-icon><div><strong>{{ publishedCount() }}</strong><span>{{ 'routes.list.publishedCount' | translate }}</span></div></div>
+    <div class="summary-card"><mat-icon>pending_actions</mat-icon><div><strong>{{ store.routeCount() - publishedCount() }}</strong><span>{{ 'routes.list.configCount' | translate }}</span></div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-field">
+      <mat-icon>search</mat-icon>
+      <input type="search" [attr.aria-label]="'routes.list.searchLabel' | translate"
+             [placeholder]="'routes.list.searchPlaceholder' | translate"
+             [value]="search()" (input)="onSearch($event)" />
+    </div>
+    <div class="filter-tabs" [attr.aria-label]="'routes.list.filterLabel' | translate">
+      <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">{{ 'routes.list.all' | translate }}</button>
+      <button type="button" [class.active]="filter() === 'CONFIGURABLE'" (click)="setFilter('CONFIGURABLE')">{{ 'routes.list.configurable' | translate }}</button>
+      <button type="button" [class.active]="filter() === 'PUBLISHED'" (click)="setFilter('PUBLISHED')">{{ 'routes.list.published' | translate }}</button>
+    </div>
+  </div>
+
+  @if (store.loading()) {
+    <div class="empty-state" role="status"><mat-icon>hourglass_empty</mat-icon><strong>{{ 'routes.list.loading' | translate }}</strong></div>
+  } @else if (filteredRoutes().length === 0) {
+    <div class="empty-state">
+      <mat-icon>map</mat-icon><strong>{{ 'routes.list.emptyTitle' | translate }}</strong>
+      <span>{{ 'routes.list.emptyHint' | translate }}</span>
+    </div>
+  } @else {
+    <div class="route-grid">
+      @for (route of filteredRoutes(); track route.id) {
+        <article class="route-card">
+          <div class="route-card-top">
+            <span class="route-icon"><mat-icon>alt_route</mat-icon></span>
+            <span class="status-pill" [class.published]="isPublished(route)">{{ statusLabel(route) }}</span>
+          </div>
+          <h2>{{ route.name }}</h2>
+          <p class="route-code">{{ route.code || ('routes.list.routeNumber' | translate: { id: route.id }) }}</p>
+          <div class="route-details">
+            <div><mat-icon>schedule</mat-icon><span>{{ route.scheduleConfirmed
+              ? ('routes.list.scheduleConfirmed' | translate: { count: route.schedule.length })
+              : ('routes.list.scheduleUnconfirmed' | translate) }}</span></div>
+            <div><mat-icon>sunny</mat-icon><span>{{ shiftLabel(route) }}</span></div>
+            <div><mat-icon>place</mat-icon><span>{{ 'routes.list.stopsCount' | translate: { count: route.stopsCount } }}</span></div>
+          </div>
+          @if (route.stops.length === 0 && route.stopsCount > 0) {
+            <div class="legacy-note"><mat-icon>warning_amber</mat-icon> {{ 'routes.list.missingStops' | translate }}</div>
+          } @else if (route.stops.length > 0) {
+            <div class="stops-preview">
+              <span>{{ 'routes.list.firstStop' | translate }}</span>
+              <strong>{{ route.stops[0].address }}</strong>
+            </div>
+          }
+          @if (!isPublished(route) && !canPublish(route)) {
+            <p class="publish-requirement" role="status">
+              <mat-icon>info_outline</mat-icon>
+              {{ publicationMessage(route) | translate }}
+            </p>
+          }
+          <div class="route-actions">
+            <button mat-stroked-button type="button" (click)="editRoute(route.id)">
+              <mat-icon>edit</mat-icon> {{ 'routes.list.configure' | translate }}
+            </button>
+            @if (isPublished(route)) {
+              <button mat-stroked-button type="button" (click)="manageTrips(route.id)">
+                <mat-icon>directions_bus</mat-icon> Gestionar viajes
+              </button>
+            }
+            @if (!isPublished(route)) {
+              <button mat-stroked-button type="button" (click)="publishRoute(route.id)"
+                      [disabled]="!canPublish(route)"
+                      [attr.title]="publicationMessage(route) | translate"
+                      [attr.aria-label]="'routes.list.publish' | translate">
+                <mat-icon>publish</mat-icon> {{ 'routes.list.publish' | translate }}
+              </button>
+            }
+            <button mat-icon-button type="button" class="danger"
+                    [attr.aria-label]="'routes.list.delete' | translate"
+                    [attr.title]="'routes.list.delete' | translate"
+                    (click)="deleteRoute(route.id)"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (store.error()) {
+    <div class="error-box" role="alert">{{ store.error() }}</div>
+  }
+
+</section>
