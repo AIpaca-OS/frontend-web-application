@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,19 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
 })
 export class SubscriptionList {
   readonly store = inject(SubscriptionsAndBillingStore);
+
+  readonly currentSubscriptions = computed(() =>
+    this.store
+      .subscriptions()
+      .filter(
+        (subscription) => subscription.status === 'ACTIVE' || subscription.status === 'SUSPENDED',
+      ),
+  );
+
   private readonly router = inject(Router);
+
+  showCancelConfirmation = false;
+  pendingCancellationId: number | null = null;
 
   getPlanName(planId: string): string {
     const plan = this.store.plans().find((plan) => plan.id === Number(planId));
@@ -23,14 +35,30 @@ export class SubscriptionList {
   }
 
   editSubscription(id: number): void {
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions', id, 'edit']).then();
+    void this.router.navigate(['/driver/plans/subscriptions', id, 'edit']);
   }
 
-  deleteSubscription(id: number): void {
-    this.store.deleteSubscription(id);
+  requestCancellation(id: number): void {
+    this.pendingCancellationId = id;
+    this.showCancelConfirmation = true;
+  }
+
+  confirmCancellation(): void {
+    if (this.pendingCancellationId === null) {
+      return;
+    }
+
+    this.store.deleteSubscription(this.pendingCancellationId);
+
+    this.closeCancellation();
+  }
+
+  closeCancellation(): void {
+    this.showCancelConfirmation = false;
+    this.pendingCancellationId = null;
   }
 
   goToPlans(): void {
-    this.router.navigate(['subscriptions-and-billing', 'plans']).then();
+    void this.router.navigateByUrl('/driver/plans');
   }
 }

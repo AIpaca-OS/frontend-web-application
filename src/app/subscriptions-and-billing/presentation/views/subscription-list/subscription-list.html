@@ -41,7 +41,7 @@
     <div class="subscriptions-grid">
 
       @for (
-        subscription of store.subscriptions();
+        subscription of currentSubscriptions();
         track subscription.id
         ) {
 
@@ -73,17 +73,13 @@
           </div>
 
           <div class="detail">
-            <span>Estado de pago</span>
-            <strong>
-              {{ subscription.paymentStatus }}
-            </strong>
+            <span>Vigente hasta</span>
+            <strong>{{ subscription.endDate ?? 'Sin fecha registrada' }}</strong>
           </div>
 
           <div class="detail">
-            <span>Monto</span>
-            <strong class="amount">
-              S/ {{ subscription.paymentAmount }}
-            </strong>
+            <span>Límite de vehículos</span>
+            <strong>{{ subscription.vehicleLimit ?? 'Sin especificar' }}</strong>
           </div>
 
           <div class="actions">
@@ -100,7 +96,7 @@
               mat-stroked-button
               type="button"
               class="secondary-action"
-              (click)="deleteSubscription(subscription.id)">
+              (click)="requestCancellation(subscription.id)">
               Cancelar suscripción
             </button>
 
@@ -140,5 +136,52 @@
     </div>
 
   }
+  @if (showCancelConfirmation) {
 
+    <div class="confirmation-backdrop">
+
+      <section
+        class="confirmation-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancel-dialog-title">
+
+        <div class="warning-icon">
+          !
+        </div>
+
+        <h2 id="cancel-dialog-title">
+          ¿Cancelar suscripción?
+        </h2>
+
+        <p>
+          Esta acción eliminará tu suscripción actual.
+          ¿Estás seguro de que deseas continuar?
+        </p>
+
+        <div class="confirmation-actions">
+
+          <button
+            mat-stroked-button
+            type="button"
+            class="keep-action"
+            (click)="closeCancellation()">
+            Mantener suscripción
+          </button>
+
+          <button
+            mat-raised-button
+            type="button"
+            class="danger-action"
+            (click)="confirmCancellation()">
+            Sí, cancelar
+          </button>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  }
 </div>

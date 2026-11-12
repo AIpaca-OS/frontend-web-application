@@ -1,0 +1,134 @@
+<section class="page">
+
+  <header class="page-header">
+
+    <div>
+      <h1>{{ 'students.main.title' | translate }}</h1>
+      <p>{{ 'students.main.subtitle' | translate }}</p>
+    </div>
+
+    <button
+      mat-flat-button
+      class="primary-action"
+      type="button"
+      (click)="createStudent()"
+    >
+      <mat-icon>add</mat-icon>
+      {{'students.main.newStudent' | translate}}
+    </button>
+
+  </header>
+
+  @if (localTransportDemo) {
+    <p class="catalog-feedback" role="note">
+      Registrar al estudiante no envía sus datos a ningún conductor.
+      Pulsa <strong>Solicitar transporte</strong> para enviar una solicitud al conductor;
+      cuando la acepte, podrá incluirlo en una ruta escolar.
+    </p>
+    @if (enrollmentNotice()) {
+      <p class="catalog-feedback" role="status">{{ enrollmentNotice() }}</p>
+    }
+    @if (enrollmentError()) {
+      <p class="error" role="alert">{{ enrollmentError() }}</p>
+    }
+  }
+
+  @if (store.error()) {
+    <p class="error" role="alert">
+      {{ store.error() }}
+    </p>
+  }
+
+  @if (store.loading()) {
+    <div class="state-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando estudiantes...</span>
+    </div>
+  }
+
+  @if (!store.loading()) {
+    <div class="table-card">
+      <table>
+        <thead>
+        <tr>
+          <th>{{'students.data.name' | translate}}</th>
+          <th>{{'students.data.birthdate' | translate}}</th>
+          <th>{{'students.data.school' | translate}}</th>
+          <th>{{'students.data.state' | translate}}</th>
+          @if (localTransportDemo) { <th>Servicio de transporte</th> }
+          <th>{{'students.data.actions' | translate}}</th>
+        </tr>
+        </thead>
+
+      <tbody>
+        @for (student of store.students(); track student.id) {
+          <tr>
+            <td>
+              {{ student.fullName }}
+            </td>
+
+            <td>
+              {{ student.birthDate }}
+            </td>
+
+            <td>
+              {{ student.schoolName }}
+            </td>
+
+            <td>
+              {{ student.status }}
+            </td>
+
+            @if (localTransportDemo) {
+              <td class="transport-status">
+                @if (enrollmentLoading() && !enrollmentStates()[student.id]) {
+                  <span>Consultando...</span>
+                } @else if (statusFor(student.id) === 'PENDING') {
+                  <span class="pending">Solicitud pendiente de aprobación</span>
+                } @else if (statusFor(student.id) === 'ACCEPTED') {
+                  <span class="accepted">Afiliado al conductor</span>
+                } @else {
+                  <button mat-stroked-button type="button"
+                          [disabled]="enrollmentLoading() || enrollmentBusyId() !== null"
+                          (click)="requestTransport(student.id)">
+                    {{ enrollmentBusyId() === student.id ? 'Enviando...' : 'Solicitar transporte' }}
+                  </button>
+                }
+              </td>
+            }
+            <td class="actions">
+              @if (localTransportDemo) {
+                <button mat-button type="button" (click)="viewStudent(student.id)">
+                  Ver servicio
+                </button>
+              }
+              <button
+                mat-icon-button
+                aria-label="Ver estudiante"
+                (click)="viewStudent(student.id)"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                aria-label="Editar estudiante"
+                (click)="editStudent(student.id)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="localTransportDemo ? 6 : 5">
+              {{ 'students.main.noStudents' | translate }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      </table>
+    </div>
+  }
+
+</section>

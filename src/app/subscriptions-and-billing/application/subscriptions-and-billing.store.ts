@@ -1,7 +1,7 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { retry } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { Plan } from '../domain/model/plan.entity';
 import { Subscription } from '../domain/model/subscription.entity';
@@ -12,6 +12,7 @@ import { SubscriptionsAndBillingApi } from '../infrastructure/subscriptions-and-
 })
 export class SubscriptionsAndBillingStore {
   private readonly api = inject(SubscriptionsAndBillingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly plansSignal = signal<Plan[]>([]);
   readonly plans = this.plansSignal.asReadonly();
@@ -20,10 +21,18 @@ export class SubscriptionsAndBillingStore {
   readonly subscriptions = this.subscriptionsSignal.asReadonly();
 
   private readonly loadingSignal = signal<boolean>(false);
-  readonly loading = this.loadingSignal.asReadonly();
+  private readonly plansLoadingSignal = signal<boolean>(false);
+  readonly plansLoading = this.plansLoadingSignal.asReadonly();
+  private readonly subscriptionsLoadingSignal = signal<boolean>(false);
+  readonly subscriptionsLoading = this.subscriptionsLoadingSignal.asReadonly();
+  readonly loading = computed(
+    () => this.loadingSignal() || this.plansLoading() || this.subscriptionsLoading(),
+  );
 
   private readonly errorSignal = signal<string | null>(null);
   readonly error = this.errorSignal.asReadonly();
+  private readonly plansErrorSignal = signal<string | null>(null);
+  readonly plansError = this.plansErrorSignal.asReadonly();
 
   readonly planCount = computed(() => this.plans().length);
 
@@ -46,175 +55,184 @@ export class SubscriptionsAndBillingStore {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    this.api
-      .createPlan(plan)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdPlan) => {
-          this.plansSignal.update((plans) => [...plans, createdPlan]);
+    this.api.createPlan(plan).subscribe({
+      next: (createdPlan) => {
+        this.plansSignal.update((plans) => [...plans, createdPlan]);
 
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to create plan'));
+        this.loadingSignal.set(false);
+      },
+      error: (error) => {
+        this.errorSignal.set(this.formatError(error, 'Failed to create plan'));
 
-          this.loadingSignal.set(false);
-        },
-      });
+        this.loadingSignal.set(false);
+      },
+    });
   }
 
   updatePlan(plan: Plan): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    this.api
-      .updatePlan(plan)
-      .pipe(retry(2))
-      .subscribe({
-        next: (updatedPlan) => {
-          this.plansSignal.update((plans) =>
-            plans.map((current) => (current.id === updatedPlan.id ? updatedPlan : current)),
-          );
+    this.api.updatePlan(plan).subscribe({
+      next: (updatedPlan) => {
+        this.plansSignal.update((plans) =>
+          plans.map((current) => (current.id === updatedPlan.id ? updatedPlan : current)),
+        );
 
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to update plan'));
+        this.loadingSignal.set(false);
+      },
+      error: (error) => {
+        this.errorSignal.set(this.formatError(error, 'Failed to update plan'));
 
-          this.loadingSignal.set(false);
-        },
-      });
+        this.loadingSignal.set(false);
+      },
+    });
   }
 
   deletePlan(id: number): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    this.api
-      .deletePlan(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.plansSignal.update((plans) => plans.filter((plan) => plan.id !== id));
+    this.api.deletePlan(id).subscribe({
+      next: () => {
+        this.plansSignal.update((plans) => plans.filter((plan) => plan.id !== id));
 
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to delete plan'));
+        this.loadingSignal.set(false);
+      },
+      error: (error) => {
+        this.errorSignal.set(this.formatError(error, 'Failed to delete plan'));
 
-          this.loadingSignal.set(false);
-        },
-      });
+        this.loadingSignal.set(false);
+      },
+    });
   }
 
-  addSubscription(subscription: Subscription): void {
+  async addSubscription(subscription: Subscription): Promise<boolean> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-
-    this.api
-      .createSubscription(subscription)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdSubscription) => {
-          this.subscriptionsSignal.update((subscriptions) => [
-            ...subscriptions,
-            createdSubscription,
-          ]);
-
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to create subscription'));
-
-          this.loadingSignal.set(false);
-        },
-      });
+    try {
+      // Do not retry POST: an activation could have been persisted already.
+      const created = await firstValueFrom(this.api.createSubscription(subscription));
+      this.subscriptionsSignal.update((rows) => [
+        ...rows.filter((row) => row.id !== created.id),
+        created,
+      ]);
+      return true;
+    } catch (error) {
+      this.errorSignal.set(this.formatError(error, 'Failed to activate subscription'));
+      return false;
+    } finally {
+      this.loadingSignal.set(false);
+    }
   }
 
-  updateSubscription(subscription: Subscription): void {
-    this.loadingSignal.set(true);
+  async updateSubscription(subscription: Subscription): Promise<boolean> {
     this.errorSignal.set(null);
 
-    this.api
-      .updateSubscription(subscription)
-      .pipe(retry(2))
-      .subscribe({
-        next: (updatedSubscription) => {
-          this.subscriptionsSignal.update((subscriptions) =>
-            subscriptions.map((current) =>
-              current.id === updatedSubscription.id ? updatedSubscription : current,
-            ),
-          );
+    const current = this.subscriptionsSignal().find((item) => item.id === subscription.id);
 
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to update subscription'));
+    if (!current) {
+      this.errorSignal.set('No se encontró la suscripción.');
+      return false;
+    }
 
-          this.loadingSignal.set(false);
-        },
-      });
+    const planChanged = current.planId !== subscription.planId;
+    const statusChanged = current.status !== subscription.status;
+
+    if (planChanged && statusChanged) {
+      this.errorSignal.set(
+        'Cambia primero el plan o el estado. Guarda cada operación por separado.',
+      );
+      return false;
+    }
+
+    if (!planChanged && !statusChanged) {
+      return true;
+    }
+
+    this.loadingSignal.set(true);
+
+    try {
+      if (planChanged) {
+        await firstValueFrom(this.api.updateSubscription(subscription));
+      } else {
+        const status = subscription.status;
+
+        if (status !== 'ACTIVE' && status !== 'SUSPENDED') {
+          throw new Error('Estado de suscripción no admitido');
+        }
+
+        await firstValueFrom(this.api.changeSubscriptionStatus(subscription.id, status));
+      }
+
+      this.refreshSubscriptions();
+      return true;
+    } catch (error) {
+      this.errorSignal.set(this.formatError(error, 'No se pudo actualizar la suscripción'));
+      return false;
+    } finally {
+      this.loadingSignal.set(false);
+    }
   }
 
   deleteSubscription(id: number): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    this.api
-      .deleteSubscription(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.subscriptionsSignal.update((subscriptions) =>
-            subscriptions.filter((subscription) => subscription.id !== id),
-          );
+    this.api.deleteSubscription(id).subscribe({
+      next: () => {
+        this.subscriptionsSignal.update((subscriptions) =>
+          subscriptions.filter((subscription) => subscription.id !== id),
+        );
 
-          this.loadingSignal.set(false);
-        },
-        error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to delete subscription'));
+        this.loadingSignal.set(false);
+      },
+      error: (error) => {
+        this.errorSignal.set(this.formatError(error, 'Failed to delete subscription'));
 
-          this.loadingSignal.set(false);
-        },
-      });
+        this.loadingSignal.set(false);
+      },
+    });
+  }
+
+  reloadPlans(): void {
+    this.loadPlans();
   }
 
   private loadPlans(): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
+    this.plansLoadingSignal.set(true);
+    this.plansErrorSignal.set(null);
 
     this.api
       .getPlans()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (plans) => {
           this.plansSignal.set(plans);
-          this.loadingSignal.set(false);
+          this.plansLoadingSignal.set(false);
         },
         error: (error) => {
-          this.errorSignal.set(this.formatError(error, 'Failed to load plans'));
-
-          this.loadingSignal.set(false);
+          this.plansErrorSignal.set(this.formatError(error, 'Failed to load plans'));
+          this.plansLoadingSignal.set(false);
         },
       });
   }
 
   private loadSubscriptions(): void {
-    this.loadingSignal.set(true);
+    this.subscriptionsLoadingSignal.set(true);
     this.errorSignal.set(null);
 
     this.api
       .getSubscriptions()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (subscriptions) => {
           this.subscriptionsSignal.set(subscriptions);
-          this.loadingSignal.set(false);
+          this.subscriptionsLoadingSignal.set(false);
         },
         error: (error) => {
           this.errorSignal.set(this.formatError(error, 'Failed to load subscriptions'));
-
-          this.loadingSignal.set(false);
+          this.subscriptionsLoadingSignal.set(false);
         },
       });
   }
@@ -227,5 +245,9 @@ export class SubscriptionsAndBillingStore {
     }
 
     return fallback;
+  }
+
+  refreshSubscriptions(): void {
+    this.loadSubscriptions();
   }
 }

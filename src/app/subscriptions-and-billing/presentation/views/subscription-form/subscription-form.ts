@@ -44,6 +44,13 @@ export class SubscriptionForm {
 
       this.subscriptionId = id ? Number(id) : null;
       this.isEdit = this.subscriptionId !== null;
+
+
+      if (this.isEdit) {
+        this.store.refreshSubscriptions();
+      }
+
+
     });
 
     this.route.queryParamMap.subscribe((params) => {
@@ -80,7 +87,7 @@ export class SubscriptionForm {
     return this.store.plans().find((plan) => plan.id === planId);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -106,16 +113,23 @@ export class SubscriptionForm {
       paymentAmount: selectedPlan.referencePrice,
     });
 
+
     if (this.isEdit) {
-      this.store.updateSubscription(subscription);
-    } else {
-      this.store.addSubscription(subscription);
+      const updated = await this.store.updateSubscription(subscription);
+
+      if (updated) {
+        await this.router.navigateByUrl('/driver/plans/subscriptions');
+      }
+
+      return;
     }
 
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions']).then();
+
+    const saved = await this.store.addSubscription(subscription);
+    if (saved) await this.router.navigateByUrl('/driver/plans/subscriptions');
   }
 
   cancel(): void {
-    this.router.navigate(['subscriptions-and-billing', 'plans']).then();
+    void this.router.navigateByUrl('/driver/plans');
   }
 }
