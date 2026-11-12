@@ -41,7 +41,7 @@
     <div class="subscriptions-grid">
 
       @for (
-        subscription of store.subscriptions();
+        subscription of currentSubscriptions();
         track subscription.id
         ) {
 
@@ -73,17 +73,13 @@
           </div>
 
           <div class="detail">
-            <span>Estado de pago</span>
-            <strong>
-              {{ subscription.paymentStatus }}
-            </strong>
+            <span>Vigente hasta</span>
+            <strong>{{ subscription.endDate ?? 'Sin fecha registrada' }}</strong>
           </div>
 
           <div class="detail">
-            <span>Monto</span>
-            <strong class="amount">
-              S/ {{ subscription.paymentAmount }}
-            </strong>
+            <span>Límite de vehículos</span>
+            <strong>{{ subscription.vehicleLimit ?? 'Sin especificar' }}</strong>
           </div>
 
           <div class="actions">

@@ -70,14 +70,17 @@
               Activa
             </mat-option>
 
-            <mat-option value="PAUSED">
+
+            <mat-option value="SUSPENDED">
               Pausada
             </mat-option>
+
           </mat-select>
 
         </mat-form-field>
 
       }
+
 
       <div class="information">
         <strong>
@@ -89,8 +92,13 @@
         </p>
       </div>
 
-      <div class="actions">
+      @if (store.error()) {
+        <p role="alert" class="error">
+          {{ store.error() }}
+        </p>
+      }
 
+      <div class="actions">
         <button
           mat-button
           type="button"
@@ -104,16 +112,10 @@
           type="submit"
           class="primary-action"
           [disabled]="form.invalid">
-
-          {{
-            isEdit
-              ? 'Guardar cambios'
-              : 'Confirmar suscripción'
-          }}
-
+          {{ isEdit ? 'Guardar cambios' : 'Confirmar suscripción' }}
         </button>
-
       </div>
+
 
     </form>
 
