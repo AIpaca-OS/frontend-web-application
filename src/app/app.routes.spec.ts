@@ -20,6 +20,12 @@ describe('Rumbo role navigation', () => {
     expect(tutorTrip?.loadChildren).toBeUndefined();
   });
 
+  it('allows visitors to open the public plans catalog without a preview role', () => {
+    const catalog = routes.find(route => route.path === 'plans');
+    expect(catalog?.loadComponent).toBeDefined();
+    expect(catalog?.canActivate).toBeUndefined();
+  });
+
   it('protects tutor and driver previews with separate role guards', () => {
     expect(driver?.canActivate?.length).toBe(1);
     expect(tutor?.canActivate?.length).toBe(1);
