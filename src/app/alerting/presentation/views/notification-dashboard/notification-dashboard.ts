@@ -1,15 +1,17 @@
-import { Component, inject, Signal, signal } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { environment } from '../../../../../environments/environment';
+import { DriverDemoNotices } from './driver-demo-notices';
+import { TutorJourneyNotifications } from './tutor-journey-notifications';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatExpansionPanel} from '@angular/material/expansion';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AlertingStore } from '../../../application/alerting-store';
 import { Notification } from '../../../domain/model/notification.entity';
-import { MatAccordion } from '@angular/material/expansion';
-import { MatExpansionModule} from '@angular/material/expansion';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notification-dashboard',
@@ -19,26 +21,40 @@ import { Router } from '@angular/router';
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
-    MatExpansionPanel,
-    MatAccordion,
-    MatExpansionModule
+    MatExpansionModule,
+    MatSlideToggleModule,
+    DriverDemoNotices,
+    TutorJourneyNotifications,
   ],
   templateUrl: './notification-dashboard.html',
   styleUrl: './notification-dashboard.css',
 })
 export class NotificationDashboard {
-  readonly alertingStore: AlertingStore = inject(AlertingStore);
-  protected router: Router = inject(Router);
-
+  readonly alertingStore = inject(AlertingStore);
+  private readonly router = inject(Router);
+  readonly showDriverDemo = () => !environment.production && this.router.url.startsWith('/driver/');
+  readonly showTutorJourneys = () => this.router.url.startsWith('/tutor/');
   protected readonly notifications: Signal<Notification[]> = this.alertingStore.notifications;
 
-  markAsRead(notification: Notification){
+  refreshNotifications(): void {
+    this.alertingStore.refreshNotifications();
+  }
+
+  markAsRead(notification: Notification): void {
     this.alertingStore.markNotificationAsRead(notification);
   }
 
-  deleteNotification(id: number){
+  markAllAsRead(): void {
+    this.notifications()
+      .filter((notification) => !notification.read)
+      .forEach((notification) => this.alertingStore.markNotificationAsRead(notification));
+  }
+
+  deleteNotification(id: number): void {
     this.alertingStore.deleteNotification(id);
   }
 
-
+  toggleNonCritical(enabled: boolean): void {
+    this.alertingStore.setNonCriticalEnabled(enabled);
+  }
 }
