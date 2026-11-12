@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -13,6 +13,8 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
   styleUrl: './plan-list.css',
 })
 export class PlanList {
+  // Everyone can browse /plans, but driver actions belong to /driver/plans.
+  readonly canManageSubscriptions = !inject(ActivatedRoute).snapshot.data['publicCatalog'];
   readonly store = inject(SubscriptionsAndBillingStore);
   readonly availablePlans = computed(() => this.store.plans().filter(plan => plan.active));
 
