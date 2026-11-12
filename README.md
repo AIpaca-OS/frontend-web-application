@@ -59,3 +59,5 @@ variables y ejecuta `npm start` de nuevo.
 
 Los errores `401`, `403` y `503` de recursos privados no deben ocultarse
 con credenciales falsas: necesitan las autorizaciones de la aplicación.
+
+El catálogo público se abre en `/plans/` sin iniciar sesión. GitHub Pages consulta el catálogo de Spring Boot por HTTPS en `https://rumbo-team-backend.onrender.com`.

@@ -19,6 +19,10 @@ export class SubscriptionList {
   showCancelConfirmation = false;
   pendingCancellationId: number | null = null;
 
+  ngOnInit(): void {
+    this.store.loadSubscriptions();
+  }
+
   getPlanName(planId: string): string {
     const plan = this.store.plans().find((plan) => plan.id === Number(planId));
 

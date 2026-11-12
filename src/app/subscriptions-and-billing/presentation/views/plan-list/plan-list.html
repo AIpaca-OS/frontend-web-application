@@ -14,13 +14,15 @@
       </p>
     </div>
 
-    <button
-      mat-stroked-button
-      type="button"
-      class="secondary-action"
-      (click)="goToSubscriptions()">
-      Ver mi suscripción
-    </button>
+    @if (canManageSubscriptions) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="secondary-action"
+        (click)="goToSubscriptions()">
+        Ver mi suscripción
+      </button>
+    }
 
   </header>
 
@@ -65,20 +67,22 @@
 
             </div>
 
-            <button
-              mat-raised-button
-              type="button"
-              class="primary-action"
-              (click)="selectPlan(plan.id)">
-              Seleccionar plan
-            </button>
+            @if (canManageSubscriptions) {
+              <button
+                mat-raised-button
+                type="button"
+                class="primary-action"
+                (click)="selectPlan(plan.id)">
+                Seleccionar plan
+              </button>
+            }
 
           </article>
 
 
       } @empty {
 
-        <p>Actualmente no hay planes activos. Revisa el catálogo en Swagger o carga los planes locales de prueba.</p>
+        <p>Actualmente no hay planes activos.</p>
 
       }
 
