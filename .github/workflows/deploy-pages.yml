@@ -64,6 +64,8 @@ jobs:
             exit 1
           fi
           cp "$SITE_DIR/index.html" "$SITE_DIR/404.html"
+          mkdir -p "$SITE_DIR/plans"
+          cp "$SITE_DIR/index.html" "$SITE_DIR/plans/index.html"
           echo "site_dir=$SITE_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Setup Pages

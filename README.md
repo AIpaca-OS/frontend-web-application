@@ -65,3 +65,5 @@ Use the matching [backend integration PR](https://github.com/AIpaca-OS/web-servi
 GitHub Pages uses `https://rumbo-team-backend.onrender.com` by default. To use a different test backend, set the Actions variable `RUMBO_API_ORIGIN` to its HTTPS origin without `/api/v1` or a trailing path. In the backend set `CORS_ALLOWED_ORIGINS=https://aipaca-os.github.io`. The Pages workflow uses the public origin to generate `runtime-config.js`. For another static host, set `apiOrigin` in that file and configure an Angular fallback to `index.html`.
 
 The public site can read the plan catalog. The protected preview endpoints on Render require the private preview key via Swagger or Postman. The Angular bundle contains only the API origin. Identity and authorization, the tutor's current-trip query, automatic notices and notification preferences are pending.
+
+El catálogo público se abre en `/plans/` sin iniciar sesión. GitHub Pages consulta el catálogo de Spring Boot por HTTPS en `https://rumbo-team-backend.onrender.com`.

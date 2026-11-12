@@ -38,7 +38,6 @@ export class SubscriptionsAndBillingStore {
 
   constructor() {
     this.loadPlans();
-    this.loadSubscriptions();
   }
 
   getPlanById(id: number): Signal<Plan | undefined> {
@@ -196,7 +195,7 @@ export class SubscriptionsAndBillingStore {
       });
   }
 
-  private loadSubscriptions(): void {
+  loadSubscriptions(): void {
     this.subscriptionsLoadingSignal.set(true);
     this.errorSignal.set(null);
 

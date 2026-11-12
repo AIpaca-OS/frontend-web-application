@@ -73,6 +73,13 @@ export const routes: Routes = [
     ],
   },
 
+  {
+    path: 'plans',
+    loadComponent: () => import('./subscriptions-and-billing/presentation/views/plan-list/plan-list')
+      .then(module => module.PlanList),
+    data: { publicCatalog: true },
+    title: `${baseTitle} - Planes disponibles`,
+  },
   { path: 'terms', loadComponent: termsPage, title: `${baseTitle} - Terms` },
   { path: 'privacy', loadComponent: privacyPage, title: `${baseTitle} - Privacy` },
   { path: 'login', loadComponent: loginPage, title: `${baseTitle} - Login` },

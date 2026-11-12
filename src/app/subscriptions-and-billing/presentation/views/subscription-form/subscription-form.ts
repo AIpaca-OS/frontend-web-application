@@ -44,6 +44,7 @@ export class SubscriptionForm {
 
       this.subscriptionId = id ? Number(id) : null;
       this.isEdit = this.subscriptionId !== null;
+      if (this.isEdit) this.store.loadSubscriptions();
     });
 
     this.route.queryParamMap.subscribe((params) => {

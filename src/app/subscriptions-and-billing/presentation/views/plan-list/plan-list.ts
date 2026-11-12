@@ -1,6 +1,6 @@
 import { environment } from '../../../../../environments/environment';
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,7 +14,8 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
   styleUrl: './plan-list.css',
 })
 export class PlanList {
-  readonly canManageSubscriptions = !environment.production;
+  readonly canManageSubscriptions = !environment.production &&
+    !inject(ActivatedRoute).snapshot.data['publicCatalog'];
   readonly store = inject(SubscriptionsAndBillingStore);
   readonly availablePlans = computed(() => this.store.plans().filter(plan => plan.active));
 
