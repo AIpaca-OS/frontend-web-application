@@ -19,14 +19,18 @@ describe('Spring Boot API origin', () => {
     delete window.rumboConfig;
   });
 
-  it('uses the configured origin for plans without appending a second API prefix', () => {
-    TestBed.inject(HttpClient).get('/api/v1/plans', { params: { active: true } }).subscribe();
+  it('uses the deployed backend for /api/v1/plans', () => {
+    TestBed.inject(HttpClient).get('/api/v1/plans').subscribe();
     TestBed.inject(HttpTestingController)
-      .expectOne('https://rumbo-preview.example/api/v1/plans?active=true').flush([]);
+      .expectOne('https://rumbo-preview.example/api/v1/plans').flush([]);
   });
 
-  it('keeps Angular assets on the site origin', () => {
-    TestBed.inject(HttpClient).get('./assets/i18n/en.json').subscribe();
-    TestBed.inject(HttpTestingController).expectOne('./assets/i18n/en.json').flush({});
+  it('does not rewrite Angular assets or external provider calls', () => {
+    const http = TestBed.inject(HttpClient);
+    http.get('./assets/i18n/en.json').subscribe();
+    http.get('https://example.org/notifications').subscribe();
+    const ctrl = TestBed.inject(HttpTestingController);
+    ctrl.expectOne('./assets/i18n/en.json').flush({});
+    ctrl.expectOne('https://example.org/notifications').flush([]);
   });
 });

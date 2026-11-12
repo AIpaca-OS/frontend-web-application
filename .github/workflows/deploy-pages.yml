@@ -32,21 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure Spring Boot origin
-        env:
-          RUMBO_API_ORIGIN: ${{ vars.RUMBO_API_ORIGIN || 'https://rumbo-team-backend.onrender.com' }}
-        run: |
-          node --input-type=module - <<'JS'
-          import { writeFileSync } from 'node:fs';
-          const origin = new URL(process.env.RUMBO_API_ORIGIN);
-          if (origin.protocol !== 'https:' || origin.username || origin.password ||
-              origin.pathname !== '/' || origin.search || origin.hash) {
-            throw new Error('RUMBO_API_ORIGIN must be the public HTTPS origin of Spring Boot');
-          }
-          writeFileSync('public/runtime-config.js',
-            'window.rumboConfig = ' + JSON.stringify({ apiOrigin: origin.origin }) + ';\n');
-          JS
-
       - name: Build Angular application
         run: npm run build -- --base-href /frontend-web-application/
 
@@ -64,8 +49,6 @@ jobs:
             exit 1
           fi
           cp "$SITE_DIR/index.html" "$SITE_DIR/404.html"
-          mkdir -p "$SITE_DIR/plans"
-          cp "$SITE_DIR/index.html" "$SITE_DIR/plans/index.html"
           echo "site_dir=$SITE_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Setup Pages
