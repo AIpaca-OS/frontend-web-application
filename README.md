@@ -1,35 +1,61 @@
-# Rumbo — Frontend Web Application
+# Rumbo — Frontend (Open Source)
 
-Frontend Web Application del producto **Rumbo**, desarrollado para el curso **1ASI0729 Desarrollo de Aplicaciones Open Source** (NRC 7760, ciclo 2026-20).
+Angular 21, Angular Material y HttpClient. Consume los REST Controllers del backend
+`AIpaca-OS/web-services` siguiendo el enfoque del proyecto Learning Center UPC.
 
-## Alcance actual
+## Compilar en cualquier PC
+Requisitos: Node.js 22, npm y acceso a GitHub. No necesita PostgreSQL
+ni un backend levantado para **compilar**.
 
-En **AV1** la implementación obligatoria se concentra en la primera versión desplegada del Landing Page. Este repositorio queda reservado para el Frontend Web Application que se desarrollará progresivamente en los siguientes Sprints, de acuerdo con el Product Backlog y los artefactos de diseño del Project Report.
+```powershell
+npm ci
+npm run build
+npm test -- --watch=false
+```
 
-## Tecnologías exigidas por el curso
+## Ejecutar en desarrollo
 
-- Angular Framework
-- TypeScript
-- HTML5
-- CSS3
-- Angular Material
-- Material Design
-- Responsive Web Design
-- Internationalization con `en_US` y `es_419`
-- Accessibility con atributos ARIA cuando corresponda
+```powershell
+npm start
+```
 
-El idioma por defecto de la interfaz será inglés.
+Abre `http://localhost:4200`. `npm start` y `npx ng serve` utilizan
+el **mismo** proxy `src/proxy.conf.cjs`, que reenvía `/api/**` a
+`http://127.0.0.1:8080` por defecto.
 
-## Arquitectura
+### Consumir un backend remoto desde tu PC
+Sin modificar código ni instalar Spring Boot localmente:
 
-La organización interna del proyecto se definirá a partir de los bounded contexts validados mediante EventStorming y Domain-Driven Design. No se crearán carpetas o capas ficticias antes de que el diseño quede aprobado por el equipo.
+```powershell
+$env:RUMBO_API_URL = "https://TU-BACKEND.onrender.com"
+npm start
+```
 
-## Control de versiones
+Usa la URL **real** del servicio que Render asigne, sin `/api/v1` al final.
+Si se trata de la instancia de vista previa protegida, el responsable del
+equipo puede proporcionar una clave temporal y configurarla solo en su terminal:
 
-Se utilizará GitFlow con `main`, `develop` y ramas `feature/...` creadas para funcionalidades reales. Los commits seguirán Conventional Commits y las versiones publicadas seguirán Semantic Versioning.
+```powershell
+$env:RUMBO_PREVIEW_KEY = "CLAVE_PRIVADA_DE_PRUEBAS"
+npm start
+```
 
-## Repositorios relacionados
+No subas esa clave a GitHub, no la guardes en Angular y utiliza solo
+datos ficticios hasta implementar IAM. La clave temporal no verifica
+roles de conductor o tutor.
 
-- Project Report: https://github.com/AIpaca-OS/project-report
-- Landing Page: https://github.com/AIpaca-OS/landing-page
-- Web Services: https://github.com/AIpaca-OS/web-services
+Para volver a consumir el backend local, cierra la terminal o elimina esas
+variables y ejecuta `npm start` de nuevo.
+
+## Endpoints y limitaciones
+- Routes, Vehicles y el catálogo de Billing consumen Spring Boot a través de `/api/v1`.
+- Profiles y Notifications tienen módulos REST, pero algunas operaciones requieren
+  perfiles de demostración o autenticación que todavía no existe.
+- Incidents, Delays y preferencias no totalmente implementadas pueden conservar
+  integraciones MockAPI temporales; no cuentan como servicios productivos.
+- El proxy solo se aplica al servidor Angular de desarrollo. Para publicar Angular
+  en otro hosting hay que configurar el enrutamiento de `/api/**` hacia el backend
+  real o ajustar su URL de compilación y CORS.
+
+Los errores `401`, `403` y `503` de recursos privados no deben ocultarse
+con credenciales falsas: necesitan las autorizaciones de la aplicación.

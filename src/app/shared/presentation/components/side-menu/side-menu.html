@@ -1,0 +1,27 @@
+<aside class="sidebar">
+  <div class="sidebar-top">
+
+    <div class="sidebar-brand">
+      <img src="./assets/logo.png" alt="Rumbo" class="logo">
+      <h1>Rumbo</h1>
+    </div>
+
+    <nav
+      class="sidebar-nav"
+      [attr.aria-label]="'nav.mainNavigation' | translate"
+    >
+      @for (option of options(); track option.link) {
+        <a
+          [routerLink]="option.link"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <mat-icon>{{ option.icon }}</mat-icon>
+          {{ option.label | translate }}
+        </a>
+      }
+    </nav>
+
+  </div>
+
+</aside>
