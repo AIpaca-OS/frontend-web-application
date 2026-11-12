@@ -15,6 +15,8 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
 export class SubscriptionList {
   readonly store = inject(SubscriptionsAndBillingStore);
 
+  constructor() { this.store.refreshSubscriptions(); }
+
   readonly currentSubscriptions = computed(() =>
     this.store
       .subscriptions()
