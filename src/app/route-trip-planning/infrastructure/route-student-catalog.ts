@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { RoutesApi } from './routes-api';
+import { ServiceEnrollmentsApi } from '../../profiles-relationship-management/infrastructure/service-enrollments-api';
 
 export interface RouteStudentOption {
   id: string;
@@ -14,7 +14,7 @@ export interface RouteStudentOption {
  */
 @Injectable({ providedIn: 'root' })
 export class RouteStudentCatalog {
-  private readonly routesApi = inject(RoutesApi);
+  private readonly enrollmentsApi = inject(ServiceEnrollmentsApi);
 
   getCandidates(): Observable<RouteStudentOption[]> {
     if (environment.routePlanningUseLocalDemoStudents) {
@@ -26,6 +26,18 @@ export class RouteStudentCatalog {
         { id: 'demo-103', fullName: 'Demo Student 103' },
       ]);
     }
-    return this.routesApi.getEligibleStudents();
+    // Accepted (not pending) service enrollments are the only candidates.
+    // No additional unimplemented /routes/eligible-students HTTP request.
+    return forkJoin({
+      enrollments: this.enrollmentsApi.forDriver(),
+      students: this.enrollmentsApi.driverStudents(),
+    }).pipe(map(({ enrollments, students }) => {
+      const accepted = new Set(enrollments
+        .filter(item => item.status === 'ACCEPTED')
+        .map(item => item.studentId));
+      return students
+        .filter(student => accepted.has(student.id))
+        .map(student => ({ id: String(student.id), fullName: student.firstName + ' ' + student.lastName }));
+    }));
   }
 }

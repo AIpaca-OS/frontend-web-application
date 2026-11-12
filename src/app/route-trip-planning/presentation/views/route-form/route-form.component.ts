@@ -359,7 +359,7 @@ export class RouteFormComponent {
     }
   }
 
-  applySchoolWeek(): void {
+  applyWeekdaysPreset(): void {
     if (this.saving) return;
     const referenceTime = this.form.controls.departureTime.value;
     this.serviceDays.controls.forEach((row, index) => {

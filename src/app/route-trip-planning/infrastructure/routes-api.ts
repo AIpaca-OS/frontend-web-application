@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { DemoRoleSession } from '../../identity-and-access-management/application/demo-role-session.service';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
@@ -13,9 +14,9 @@ import { RouteSchedule } from '../domain/model/route-schedule.entity';
 export class RoutesApi extends BaseApi {
   private readonly endpoint: RoutesApiEndpoint;
 
-  constructor(http: HttpClient, translate: TranslateService) {
+  constructor(http: HttpClient, translate: TranslateService, session: DemoRoleSession) {
     super();
-    this.endpoint = new RoutesApiEndpoint(http, () => translate.getCurrentLang() ?? 'en');
+    this.endpoint = new RoutesApiEndpoint(http, () => translate.getCurrentLang() ?? 'en', session);
   }
 
   getRoutes(): Observable<Route[]> {

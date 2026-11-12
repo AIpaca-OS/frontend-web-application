@@ -203,7 +203,7 @@
                       }
                     </mat-form-field>
                     <div class="stop-student">
-                      <mat-icon>school</mat-icon>
+                      <mat-icon>person</mat-icon>
                       <mat-form-field appearance="outline" class="student-picker">
                         <mat-label>{{ 'routes.form.studentAtStop' | translate }}</mat-label>
                         <mat-select formControlName="studentId" (selectionChange)="changeStudent(i)"
@@ -248,8 +248,8 @@
               </div>
             </div>
             <div class="quick-actions">
-              <button mat-stroked-button type="button" (click)="applySchoolWeek()" [disabled]="saving">
-                <mat-icon>event_available</mat-icon> {{ 'routes.form.schoolWeek' | translate }}
+              <button mat-stroked-button type="button" (click)="applyWeekdaysPreset()" [disabled]="saving">
+                <mat-icon>event_available</mat-icon> {{ 'routes.form.weekdaysPreset' | translate }}
               </button>
               <button mat-button type="button" (click)="clearServiceDays()" [disabled]="saving">
                 {{ 'routes.form.clearDays' | translate }}

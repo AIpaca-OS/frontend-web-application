@@ -1,22 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { TripsApi, RouteForTrip, TripRecord, TripPassenger } from '../../../infrastructure/trips-api';
+import { ServiceEnrollmentsApi } from '../../../../profiles-relationship-management/infrastructure/service-enrollments-api';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-
-interface Stop { id: string; address: string; position: number; studentId: string | null; }
-interface RouteData {
-  id: string; name: string; code: string; status: string;
-  schedule: Array<{ dayOfWeek: string; departureTime: string }>; stops: Stop[];
-}
-interface Passenger {
-  studentId: string; stopId: string; stopPosition: number; stopAddress: string;
-  absent: boolean; stopServed: boolean; arrived: boolean;
-}
-interface TripData {
-  id: string; serviceDate: string; status: string; students: Passenger[];
-}
-interface EligibleStudent { id: string; fullName: string; }
 
 @Component({
   selector: 'app-driver-trips',
@@ -68,6 +56,7 @@ interface EligibleStudent { id: string; fullName: string; }
               @if (trip.status === 'IN_PROGRESS') {
                 <div class="buttons">
                   @if (!passenger.stopServed && !passenger.absent) {
+                    <button type="button" [disabled]="saving()" (click)="markAbsence(trip,passenger)">Registrar ausencia</button>
                     <button type="button" [disabled]="saving()" (click)="serve(trip,passenger)">
                       Marcar parada atendida
                     </button>
@@ -86,6 +75,9 @@ interface EligibleStudent { id: string; fullName: string; }
             <button type="button" [disabled]="saving()" (click)="action(trip,'complete')">
               Finalizar viaje
             </button>
+          }
+          @if (trip.status !== 'COMPLETED' && trip.status !== 'CANCELLED') {
+            <button type="button" [disabled]="saving()" (click)="cancelTrip(trip)">Cancelar viaje</button>
           }
         </article>
       } @empty {
@@ -109,77 +101,112 @@ interface EligibleStudent { id: string; fullName: string; }
   `],
 })
 export class DriverTrips implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly api = inject(TripsApi);
+  private readonly enrollments = inject(ServiceEnrollmentsApi);
   private readonly activated = inject(ActivatedRoute);
-  readonly route = signal<RouteData | null>(null);
-  readonly trips = signal<TripData[]>([]);
-  readonly studentNames = signal<Record<string,string>>({});
+
+  readonly route = signal<RouteForTrip | null>(null);
+  readonly trips = signal<TripRecord[]>([]);
+  readonly studentNames = signal<Record<number,string>>({});
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
   readonly message = signal('');
   serviceDate = new Date().toLocaleDateString('en-CA');
-  private routeId = '';
+  private routeId = 0;
 
   ngOnInit(): void {
-    this.routeId = this.activated.snapshot.paramMap.get('id') || '';
+    this.routeId = Number(this.activated.snapshot.paramMap.get('id'));
+    if (!Number.isSafeInteger(this.routeId) || this.routeId < 1) {
+      this.error.set('El ID de la ruta no es válido.');
+      return;
+    }
     void this.reload();
   }
+
   scheduleText(): string {
-    return this.route()?.schedule.map(s => s.dayOfWeek + ' ' + s.departureTime).join(', ') || 'Sin horario';
+    return this.route()?.schedule?.map(s => s.dayOfWeek + ' ' + s.departureTime).join(', ') || 'Sin horario';
   }
   statusName(s: string): string {
     return ({ SCHEDULED:'Programado', IN_PROGRESS:'En recorrido',
               COMPLETED:'Finalizado', CANCELLED:'Cancelado' } as Record<string,string>)[s] || s;
   }
-  studentName(id: string): string { return this.studentNames()[id] || 'Estudiante #' + id; }
+  studentName(id: number): string { return this.studentNames()[id] || 'Estudiante #' + id; }
+
   private errorText(e: unknown): string {
     const x = e as { status?: number; error?: {detail?:string;message?:string} };
     if (x.status === 0) return 'No se puede conectar al backend.';
     return x.error?.detail || x.error?.message || (e instanceof Error ? e.message : 'No se pudo realizar la operación.');
   }
+
   async reload(): Promise<void> {
-    if (this.loading()) return;
+    if (this.loading() || !this.routeId) return;
     this.loading.set(true); this.error.set('');
     try {
-      const base = '/api/v1/routes/' + this.routeId;
       const [route, trips] = await Promise.all([
-        firstValueFrom(this.http.get<RouteData>(base)),
-        firstValueFrom(this.http.get<TripData[]>(base + '/trips')),
+        firstValueFrom(this.api.route(this.routeId)),
+        firstValueFrom(this.api.forRoute(this.routeId)),
       ]);
-      this.route.set(route); this.trips.set(trips);
+      this.route.set(route);
+      this.trips.set(trips);
       try {
-        const students = await firstValueFrom(this.http.get<EligibleStudent[]>('/api/v1/routes/eligible-students'));
-        this.studentNames.set(Object.fromEntries(students.map(s => [s.id,s.fullName])));
-      } catch { /* Route/trip details remain usable without the optional name catalog. */ }
+        const students = await firstValueFrom(this.enrollments.driverStudents());
+        this.studentNames.set(Object.fromEntries(
+          students.map(s => [s.id, s.firstName + ' ' + s.lastName])));
+      } catch { /* Names are optional; trip state is still available. */ }
     } catch (e) { this.error.set(this.errorText(e)); }
     finally { this.loading.set(false); }
   }
-  private async update(request: Promise<unknown>, done: string): Promise<void> {
+
+  private async update(request: () => Observable<TripRecord>, done: string): Promise<void> {
     if (this.saving()) return;
     this.saving.set(true); this.error.set(''); this.message.set('');
-    try { await request; this.message.set(done); await this.reload(); }
-    catch (e) { this.error.set(this.errorText(e)); }
+    try {
+      await firstValueFrom(request());
+      this.message.set(done);
+      await this.reload();
+    } catch (e) { this.error.set(this.errorText(e)); }
     finally { this.saving.set(false); }
   }
+
   async plan(): Promise<void> {
-    if (!this.serviceDate) return;
-    await this.update(firstValueFrom(this.http.post('/api/v1/routes/' + this.routeId + '/trips',
-      { date:this.serviceDate })), 'Viaje programado.');
+    const route = this.route();
+    if (!route || !this.serviceDate) return;
+    const selectedDay = new Date(this.serviceDate + 'T12:00:00').getDay();
+    const day = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][selectedDay];
+    if (!route.schedule.some(item => item.dayOfWeek === day)) {
+      this.error.set('Selecciona una fecha incluida en el horario semanal de esta ruta.');
+      return;
+    }
+    await this.update(() => this.api.plan(route, this.serviceDate), 'Viaje programado.');
   }
-  async action(trip: TripData, kind: 'start'|'complete'): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch('/api/v1/trips/' + trip.id + '/' + kind, {})),
-      kind === 'start' ? 'Recorrido iniciado.' : 'Viaje finalizado.');
+
+  async action(trip: TripRecord, kind: 'start'|'complete'): Promise<void> {
+    await this.update(
+      () => kind === 'start' ? this.api.start(trip.id) : this.api.complete(trip.id),
+      kind === 'start' ? 'Recorrido iniciado.' : 'Viaje finalizado.', 
+    );
   }
-  async serve(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
-      '/api/v1/trips/' + trip.id + '/stops/' + passenger.stopId + '/served', {})),
-      'Parada atendida. Confirma la llegada cuando corresponda.');
+
+  async serve(trip: TripRecord, passenger: TripPassenger): Promise<void> {
+    await this.update(() => this.api.serve(trip.id,passenger.stopId),
+      'Parada atendida.');
   }
-  async confirmArrival(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
-      '/api/v1/trips/' + trip.id + '/passengers/' +
-        encodeURIComponent(passenger.studentId) + '/arrived', {})),
-      'Llegada confirmada y aviso enviado al tutor.');
+
+  async confirmArrival(trip: TripRecord, passenger: TripPassenger): Promise<void> {
+    await this.update(() => this.api.arrived(trip.id,passenger.studentId),
+      'Llegada confirmada.');
+  }
+
+  async markAbsence(trip: TripRecord, passenger: TripPassenger): Promise<void> {
+    await this.update(() => this.api.absence(trip.id,passenger.studentId),
+      'Ausencia registrada.');
+  }
+
+  async cancelTrip(trip: TripRecord): Promise<void> {
+    const reason = window.prompt('Motivo de cancelación del viaje:')?.trim();
+    if (!reason) return;
+    await this.update(() => this.api.cancel(trip.id,reason),
+      'Viaje cancelado.');
   }
 }
