@@ -5,11 +5,12 @@ import { TestBed } from '@angular/core/testing';
 import { Subscription } from '../domain/model/subscription.entity';
 import { SubscriptionsAndBillingApi } from './subscriptions-and-billing-api';
 
-describe('Billing Spring Boot REST contract', () => {
+describe('Billing Spring Boot demo REST contract', () => {
   let api: SubscriptionsAndBillingApi;
   let http: HttpTestingController;
 
   beforeEach(() => {
+    try { localStorage.removeItem('rumbo.billing.demo-session.v1'); } catch { /* no storage */ }
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -17,9 +18,18 @@ describe('Billing Spring Boot REST contract', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    try { localStorage.removeItem('rumbo.billing.demo-session.v1'); } catch { /* no storage */ }
+  });
 
-  it('loads plans from Spring Boot instead of MockAPI', () => {
+  function openSession(): void {
+    const request = http.expectOne('/api/v1/billing-demo/session');
+    expect(request.request.method).toBe('POST');
+    request.flush({ token: 'test-personal-demo-token' });
+  }
+
+  it('gets public plans directly from Spring Boot', () => {
     api.getPlans().subscribe(plans => expect(plans[0].name).toBe('Premium'));
     http.expectOne('/api/v1/plans').flush([{
       id: 2, name: 'Premium', description: 'Mensual',
@@ -27,33 +37,39 @@ describe('Billing Spring Boot REST contract', () => {
     }]);
   });
 
-  it('lists subscriptions for the demo driver through Spring Boot', () => {
-    api.getSubscriptions().subscribe(rows => expect(rows.length).toBe(0));
-    http.expectOne('/api/v1/subscriptions?driverId=1').flush([]);
+  it('lists only the browser demo subscriptions via a signed session', () => {
+    api.getSubscriptions().subscribe(rows => expect(rows).toEqual([]));
+    openSession();
+    const request = http.expectOne('/api/v1/billing-demo/subscriptions');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-personal-demo-token');
+    request.flush([]);
   });
 
-  it('activates subscriptions using the backend driver/plan contract', () => {
-    const subscription = new Subscription({
-      id: 0, driverId: '1', planId: '2', status: 'ACTIVE',
+  it('activates a plan in Spring Boot without a caller-supplied driver ID', () => {
+    const model = new Subscription({
+      id: 0, driverId: '0', planId: '2', status: 'ACTIVE',
       startDate: '2026-11-12', paymentStatus: 'NOT_APPLICABLE', paymentAmount: 0,
     });
-    api.createSubscription(subscription).subscribe(row => expect(row.id).toBe(4));
-    const request = http.expectOne('/api/v1/subscriptions');
+    api.createSubscription(model).subscribe(row => expect(row.id).toBe(4));
+    openSession();
+    const request = http.expectOne('/api/v1/billing-demo/subscriptions');
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ driverId: 1, planId: 2 });
+    expect(request.request.body).toEqual({ planId: 2 });
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-personal-demo-token');
     request.flush({
-      id: 4, driverId: 1, planId: 2, status: 'ACTIVE',
+      id: 4, driverId: 5000000000000, planId: 2, status: 'ACTIVE',
       startDate: '2026-11-12', endDate: null, active: true, vehicleLimit: null,
     });
   });
 
-  it('cancels via PATCH instead of MockAPI DELETE', () => {
+  it('cancels with PATCH using only this browser token', () => {
     api.deleteSubscription(4).subscribe();
-    const request = http.expectOne('/api/v1/subscriptions/4/cancel');
+    openSession();
+    const request = http.expectOne('/api/v1/billing-demo/subscriptions/4/cancel');
     expect(request.request.method).toBe('PATCH');
-    expect(request.request.body).toEqual({ driverId: 1 });
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-personal-demo-token');
     request.flush({
-      id: 4, driverId: 1, planId: 2, status: 'CANCELLED',
+      id: 4, driverId: 5000000000000, planId: 2, status: 'CANCELLED',
       startDate: '2026-11-12', endDate: null, active: false, vehicleLimit: null,
     });
   });
