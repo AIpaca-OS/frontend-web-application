@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { VehiclesApiEndpoint } from './vehicles-api-endpoint';
+import { DemoRoleSession } from '../../identity-and-access-management/application/demo-role-session.service';
 import { Vehicle } from '../domain/model/vehicle.entity';
 
 @Injectable({
@@ -11,9 +12,9 @@ import { Vehicle } from '../domain/model/vehicle.entity';
 export class VehiclesApi extends BaseApi {
   private readonly endpoint: VehiclesApiEndpoint;
 
-  constructor(http: HttpClient) {
+  constructor(http: HttpClient, session: DemoRoleSession) {
     super();
-    this.endpoint = new VehiclesApiEndpoint(http);
+    this.endpoint = new VehiclesApiEndpoint(http, session);
   }
 
   getVehicles(): Observable<Vehicle[]> {
