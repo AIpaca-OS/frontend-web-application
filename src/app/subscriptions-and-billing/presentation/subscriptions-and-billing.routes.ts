@@ -28,7 +28,7 @@ export const subscriptionsAndBillingRoutes: Routes = [
   },
   {
     path: 'plans',
-    redirectTo: '',
     pathMatch: 'full',
+    redirectTo: '/driver/plans',
   },
 ];

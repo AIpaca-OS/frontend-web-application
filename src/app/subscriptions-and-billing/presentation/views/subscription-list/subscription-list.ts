@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -14,14 +14,19 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
 })
 export class SubscriptionList {
   readonly store = inject(SubscriptionsAndBillingStore);
+
+  readonly currentSubscriptions = computed(() =>
+    this.store
+      .subscriptions()
+      .filter(
+        (subscription) => subscription.status === 'ACTIVE' || subscription.status === 'SUSPENDED',
+      ),
+  );
+
   private readonly router = inject(Router);
 
   showCancelConfirmation = false;
   pendingCancellationId: number | null = null;
-
-  ngOnInit(): void {
-    this.store.loadSubscriptions();
-  }
 
   getPlanName(planId: string): string {
     const plan = this.store.plans().find((plan) => plan.id === Number(planId));
@@ -30,7 +35,7 @@ export class SubscriptionList {
   }
 
   editSubscription(id: number): void {
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions', id, 'edit']).then();
+    void this.router.navigate(['/driver/plans/subscriptions', id, 'edit']);
   }
 
   requestCancellation(id: number): void {

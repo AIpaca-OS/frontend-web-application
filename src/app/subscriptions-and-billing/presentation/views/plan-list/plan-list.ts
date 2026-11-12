@@ -1,4 +1,3 @@
-import { environment } from '../../../../../environments/environment';
 import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -14,8 +13,8 @@ import { SubscriptionsAndBillingStore } from '../../../application/subscriptions
   styleUrl: './plan-list.css',
 })
 export class PlanList {
-  readonly canManageSubscriptions = !environment.production &&
-    !inject(ActivatedRoute).snapshot.data['publicCatalog'];
+  // Everyone can browse /plans, but driver actions belong to /driver/plans.
+  readonly canManageSubscriptions = !inject(ActivatedRoute).snapshot.data['publicCatalog'];
   readonly store = inject(SubscriptionsAndBillingStore);
   readonly availablePlans = computed(() => this.store.plans().filter(plan => plan.active));
 
