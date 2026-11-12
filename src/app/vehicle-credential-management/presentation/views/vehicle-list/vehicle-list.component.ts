@@ -58,7 +58,7 @@ export class VehicleListComponent {
    */
 
   editVehicle(id: number): void {
-    this.router.navigate(['vehicles', id, 'edit']);
+    this.router.navigate(['/driver/vehicles', id, 'edit']);
   }
 
   deleteVehicle(id: number): void {
@@ -76,6 +76,6 @@ export class VehicleListComponent {
       });
   }
   navigateToNew(): void {
-    this.router.navigate(['vehicles', 'new']);
+    this.router.navigate(['/driver/vehicles/new']);
   }
 }
