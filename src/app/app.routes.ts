@@ -6,6 +6,7 @@ const notificationRoutes=()=>import('./alerting/presentation/views/alerting.rout
 const vehiclesRoutes=()=>import('./vehicle-credential-management/presentation/views/vehicle-credential.routes').then(m=>m.vehicleCredentialRoutes);
 const routeTripRoutes=()=>import('./route-trip-planning/presentation/views/route-trip.routes').then(m=>m.routeTripRoutes);
 const profilesRoutes=()=>import('./profiles-relationship-management/presentation/profiles.routes').then(m=>m.profilesRoutes);
+const driverEnrollments=()=>import('./profiles-relationship-management/presentation/views/driver-enrollments/driver-enrollments').then(m=>m.DriverEnrollmentsComponent);
 const subscriptionsRoutes=()=>import('./subscriptions-and-billing/presentation/subscriptions-and-billing.routes').then(m=>m.subscriptionsAndBillingRoutes);
 const termsPage=()=>import('./shared/presentation/views/legal/terms').then(m=>m.TermsPage);
 const loginPage = () => import('./identity-and-access-management/presentation/views/login/login').then((m) => m.Login);
@@ -53,7 +54,7 @@ export const routes: Routes = [
       { path: 'configuration', loadComponent: driverSettings, title: `${baseTitle} - Driver settings` },
       { path: 'routes', loadChildren: routeTripRoutes, title: `${baseTitle} - Routes` },
       { path: 'vehicles', loadChildren: vehiclesRoutes, title: `${baseTitle} - Vehicles` },
-      { path: 'students', loadChildren: profilesRoutes, title: `${baseTitle} - Students` },
+      { path: 'students', loadComponent: driverEnrollments, title: `${baseTitle} - Student Enrollments` },
       {
         path: 'notifications',
         loadChildren: notificationRoutes,

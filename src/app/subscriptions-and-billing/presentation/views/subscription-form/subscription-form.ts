@@ -44,6 +44,13 @@ export class SubscriptionForm {
 
       this.subscriptionId = id ? Number(id) : null;
       this.isEdit = this.subscriptionId !== null;
+
+
+      if (this.isEdit) {
+        this.store.refreshSubscriptions();
+      }
+
+
     });
 
     this.route.queryParamMap.subscribe((params) => {
@@ -106,11 +113,17 @@ export class SubscriptionForm {
       paymentAmount: selectedPlan.referencePrice,
     });
 
+
     if (this.isEdit) {
-      // Backend does not support changing a subscription after activation.
-      this.store.updateSubscription(subscription);
+      const updated = await this.store.updateSubscription(subscription);
+
+      if (updated) {
+        await this.router.navigateByUrl('/driver/plans/subscriptions');
+      }
+
       return;
     }
+
 
     const saved = await this.store.addSubscription(subscription);
     if (saved) await this.router.navigateByUrl('/driver/plans/subscriptions');

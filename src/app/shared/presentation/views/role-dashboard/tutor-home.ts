@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { TutorJourney, TutorJourneysApi } from '../../../infrastructure/tutor-journeys-api';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -14,8 +16,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 
       <section class="trip-panel">
         <div class="panel-label">{{ 'workspace.tutorDashboardTrip' | translate }}</div>
-        <h2>{{ 'workspace.tripNotAvailable' | translate }}</h2>
-        <p>{{ 'workspace.protectedTripHint' | translate }}</p>
+        @if (journeys().length) {
+          <h2>{{ journeys()[0].routeName }}</h2>
+          <p>{{ journeys()[0].studentName }} · {{ journeyState(journeys()[0]) }}</p>
+        } @else {
+          <h2>Tus rutas escolares</h2>
+          <p>Consulta las rutas publicadas y las novedades de tus estudiantes.</p>
+        }
         <a class="primary-link" routerLink="/tutor/current-trip">{{ 'nav.trip' | translate }}</a>
       </section>
 
@@ -52,4 +59,20 @@ import { TranslatePipe } from '@ngx-translate/core';
     a:focus-visible { outline: 2px solid #13836c; outline-offset: 3px; }
   `],
 })
-export class TutorHome {}
+export class TutorHome implements OnInit {
+  private readonly api = inject(TutorJourneysApi);
+  readonly journeys = signal<TutorJourney[]>([]);
+  ngOnInit(): void {
+    void firstValueFrom(this.api.journeys())
+      .then(items => this.journeys.set(items))
+      .catch(() => this.journeys.set([]));
+  }
+  journeyState(journey: TutorJourney): string {
+    if (journey.studentStatus === 'ARRIVED') return 'Llegada confirmada';
+    if (journey.studentStatus === 'STOP_SERVED') return 'Parada atendida';
+    if (journey.studentStatus === 'IN_PROGRESS') return 'En recorrido';
+    if (journey.studentStatus === 'TRIP_COMPLETED') return 'Viaje finalizado';
+    if (journey.studentStatus === 'SCHEDULED') return 'Viaje programado';
+    return 'Ruta publicada';
+  }
+}

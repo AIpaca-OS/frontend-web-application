@@ -239,7 +239,12 @@
       "vehicleNotFound": "Previously selected vehicle is not available in the registry",
       "vehicleLoading": "Loading registered vehicles...",
       "vehicleLoadError": "Could not load registered vehicles. Verify the vehicle service and try again.",
-      "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first."
+      "vehicleEmpty": "No registered vehicles. Add one in Manage vehicles first.",
+      "enrollmentNeeded": "A tutor must request transport service, and the driver must accept the enrollment before assignment.",
+      "reviewEnrollments": "Review enrollments",
+      "refreshEligibleStudents": "Refresh available students",
+      "publishedAssignmentsLocked": "Published routes retain their student assignments. Replan to change the assigned students.",
+      "publishedVehicleLocked": "The vehicle cannot be changed after a route is published."
     },
     "days": {
       "MONDAY": "Monday",
@@ -255,5 +260,33 @@
     "rights": "All rights reserved.",
     "terms": "Terms and Conditions",
     "privacy": "Privacy"
+  },
+  "profiles": {
+    "enrollments": {
+      "tutorTitle": "School transport service",
+      "tutorDescription": "Request school transport service so the driver can include the student in a route.",
+      "loading": "Loading enrollments...",
+      "driverLabel": "Driver",
+      "status": "Status",
+      "cancel": "Cancel request",
+      "requestExplanation": "The driver will confirm the request before a route is assigned.",
+      "request": "Request service",
+      "noDrivers": "No drivers are available yet.",
+      "refresh": "Refresh",
+      "demoDisclaimer": "",
+      "driverTitle": "Enrolled students",
+      "driverDescription": "Review family service requests and accept them before assigning students to routes.",
+      "createRoute": "Create route",
+      "pendingTitle": "Pending requests",
+      "studentReference": "Student",
+      "pendingHint": "A parent or guardian requested transport for this student.",
+      "accept": "Accept",
+      "noPending": "No pending requests.",
+      "acceptedTitle": "Enrolled students",
+      "end": "End enrollment",
+      "noAccepted": "No enrolled students.",
+      "tutorListHint": "To make a student available for the driver's routes, open their profile and request transport service. The driver must approve the request first.",
+      "manage": "Transport service"
+    }
   }
 }
