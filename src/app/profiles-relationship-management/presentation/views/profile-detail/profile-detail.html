@@ -5,11 +5,11 @@
     <header>
 
       <h1>
-        Perfil del {{ getProfileType().toLowerCase() }}
+        {{ 'profiles.detail.title' | translate }}
       </h1>
 
       <p>
-        Gestiona tu información personal.
+        {{ 'profiles.detail.description' | translate }}
       </p>
 
     </header>
@@ -19,7 +19,7 @@
       <div class="card-header">
 
         <h2>
-          Información del perfil
+          {{ 'profiles.detail.info' | translate }}
         </h2>
 
         <button
@@ -27,7 +27,7 @@
           type="button"
           (click)="editProfile()"
         >
-          Editar
+          {{ 'common.edit' | translate }}
         </button>
 
       </div>
@@ -46,7 +46,7 @@
           </strong>
 
           <p>
-            {{ getProfileType() }}
+            {{ getProfileType() | translate }}
           </p>
 
         </div>
@@ -56,12 +56,12 @@
       <div class="profile-row">
 
         <div>
-          <strong>Teléfono</strong>
+          <strong>{{ 'profiles.detail.phone' | translate }}</strong>
 
           <p>
             {{
               currentProfile.phoneNumber
-              ?? 'No registrado'
+              ?? ('profiles.detail.noPhone' | translate)
             }}
           </p>
         </div>

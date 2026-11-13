@@ -17,7 +17,9 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -25,14 +27,19 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/material-theme.scss", "src/styles.css"]
+            "styles": [
+              "src/material-theme.scss",
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {
               "optimization": {
                 "scripts": true,
                 "styles": true,
-                "fonts": { "inline": false }
+                "fonts": {
+                  "inline": false
+                }
               },
               "budgets": [
                 {
@@ -69,8 +76,7 @@
               "buildTarget": "Rumbo-frontend:build:production"
             },
             "development": {
-              "buildTarget": "Rumbo-frontend:build:development",
-              "proxyConfig": "src/proxy.conf.cjs"
+              "buildTarget": "Rumbo-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

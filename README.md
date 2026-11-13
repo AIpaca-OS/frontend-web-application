@@ -1,63 +1,59 @@
-# Rumbo — Frontend (Open Source)
+# RumboFrontend
 
-Angular 21, Angular Material y HttpClient. Consume los REST Controllers del backend
-`AIpaca-OS/web-services` siguiendo el enfoque del proyecto Learning Center UPC.
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.10.
 
-## Compilar en cualquier PC
-Requisitos: Node.js 22, npm y acceso a GitHub. No necesita PostgreSQL
-ni un backend levantado para **compilar**.
+## Development server
 
-```powershell
-npm ci
-npm run build
-npm test -- --watch=false
+To start a local development server, run:
+
+```bash
+ng serve
 ```
 
-## Ejecutar en desarrollo
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-```powershell
-npm start
+## Code scaffolding
+
+Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+
+```bash
+ng generate component component-name
 ```
 
-Abre `http://localhost:4200`. `npm start` y `npx ng serve` utilizan
-el **mismo** proxy `src/proxy.conf.cjs`, que reenvía `/api/**` a
-`http://127.0.0.1:8080` por defecto.
+For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
-### Consumir un backend remoto desde tu PC
-Sin modificar código ni instalar Spring Boot localmente:
-
-```powershell
-$env:RUMBO_API_URL = "https://TU-BACKEND.onrender.com"
-npm start
+```bash
+ng generate --help
 ```
 
-Usa la URL **real** del servicio que Render asigne, sin `/api/v1` al final.
-Si se trata de la instancia de vista previa protegida, el responsable del
-equipo puede proporcionar una clave temporal y configurarla solo en su terminal:
+## Building
 
-```powershell
-$env:RUMBO_PREVIEW_KEY = "CLAVE_PRIVADA_DE_PRUEBAS"
-npm start
+To build the project run:
+
+```bash
+ng build
 ```
 
-No subas esa clave a GitHub, no la guardes en Angular y utiliza solo
-datos ficticios hasta implementar IAM. La clave temporal no verifica
-roles de conductor o tutor.
+This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
-Para volver a consumir el backend local, cierra la terminal o elimina esas
-variables y ejecuta `npm start` de nuevo.
+## Running unit tests
 
-## Endpoints y limitaciones
-- Routes, Vehicles y el catálogo de Billing consumen Spring Boot a través de `/api/v1`.
-- Profiles y Notifications tienen módulos REST, pero algunas operaciones requieren
-  perfiles de demostración o autenticación que todavía no existe.
-- Incidents, Delays y preferencias no totalmente implementadas pueden conservar
-  integraciones MockAPI temporales; no cuentan como servicios productivos.
-- El proxy solo se aplica al servidor Angular de desarrollo. Para publicar Angular
-  en otro hosting hay que configurar el enrutamiento de `/api/**` hacia el backend
-  real o ajustar su URL de compilación y CORS.
+To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
-Los errores `401`, `403` y `503` de recursos privados no deben ocultarse
-con credenciales falsas: necesitan las autorizaciones de la aplicación.
+```bash
+ng test
+```
 
-El catálogo público se abre en `/plans/` sin iniciar sesión. GitHub Pages consulta el catálogo de Spring Boot por HTTPS en `https://rumbo-team-backend.onrender.com`.
+## Running end-to-end tests
+
+For end-to-end (e2e) testing, run:
+
+```bash
+ng e2e
+```
+
+Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Additional Resources
+
+For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

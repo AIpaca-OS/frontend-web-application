@@ -9,7 +9,7 @@ import { RouteTripStore } from '../../../../route-trip-planning/application/rout
   imports: [RouterLink, TranslatePipe],
   template: `
     <main class="dashboard">
-      <p class="eyebrow">RUMBO · {{ 'workspace.driverRole' | translate }}</p>
+      <p class="eyebrow">Rumbo · {{ 'workspace.driverRole' | translate }}</p>
       <h1>{{ 'workspace.driverHome' | translate }}</h1>
       <p class="description">{{ 'workspace.driverDescription' | translate }}</p>
 
@@ -29,7 +29,7 @@ import { RouteTripStore } from '../../../../route-trip-planning/application/rout
         <p class="message" role="status">{{ 'routes.list.loading' | translate }}</p>
       }
       @if (store.error()) {
-        <p class="message error" role="alert">{{ store.error() }}</p>
+        <p class="message error" role="alert">{{ store.error()! | translate }}</p>
       }
 
       <section class="panel">
@@ -64,8 +64,8 @@ import { RouteTripStore } from '../../../../route-trip-planning/application/rout
     </main>
   `,
   styles: [`
-    .dashboard { max-width: 1020px; margin: 0 auto; padding: 36px 28px; color: #183c37; }
-    .eyebrow { color: #13836c; font-size: 12px; letter-spacing: .12em; font-weight: 700; }
+    .dashboard { box-sizing:border-box; width:100%; max-width:var(--rumbo-page-max-width); margin:0 auto; padding:var(--rumbo-page-padding);  color: #183c37; }
+    .eyebrow { color: #13836c; font-size: 12px; letter-spacing: .12em; font-weight: 700; text-transform: uppercase; margin: 0; }
     h1 { margin: 6px 0; font-size: 30px; }
     .description { color: #61736f; }
     .metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 16px; margin: 28px 0; }

@@ -6,8 +6,6 @@ export class Subscription implements BaseEntity {
   #planId: string;
   #status: string;
   #startDate: string;
-  #endDate: string | null;
-  #vehicleLimit: number | null;
   #paymentStatus: string;
   #paymentAmount: number;
 
@@ -17,8 +15,6 @@ export class Subscription implements BaseEntity {
     planId: string;
     status: string;
     startDate: string;
-    endDate?: string | null;
-    vehicleLimit?: number | null;
     paymentStatus: string;
     paymentAmount: number;
   }) {
@@ -27,8 +23,6 @@ export class Subscription implements BaseEntity {
     this.#planId = subscription.planId;
     this.#status = subscription.status;
     this.#startDate = subscription.startDate;
-    this.#endDate = subscription.endDate ?? null;
-    this.#vehicleLimit = subscription.vehicleLimit ?? null;
     this.#paymentStatus = subscription.paymentStatus;
     this.#paymentAmount = subscription.paymentAmount;
   }
@@ -72,13 +66,7 @@ export class Subscription implements BaseEntity {
   set startDate(value: string) {
     this.#startDate = value;
   }
-  get endDate(): string | null {
-    return this.#endDate;
-  }
 
-  get vehicleLimit(): number | null {
-    return this.#vehicleLimit;
-  }
   get paymentStatus(): string {
     return this.#paymentStatus;
   }

@@ -1,24 +1,21 @@
+/**
+ * Rumbo platform endpoints (Spring Boot published on Render).
+ * Every bounded context composes its URLs from platformProviderApiBaseUrl plus a resource path.
+ */
 export const environment = {
-  apiOrigin: '',
-  production:false,
-  platformProviderApiBaseUrl:'https://6a4ec144e785c9ef536d1e99.mockapi.io/api/v1',
-  platformProviderDelaysEndpointPath:'/delays',
-  platformProviderIncidentsEndpointPath:'/incidents',
-  platformProviderNotificationsEndpointPath:'/notifications',
-  platformProviderNotificationSettingsEndpointPath:'/notificationSettings',
-  vehicleApiBaseUrl:'/api/v1',
-  platformProviderVehiclesEndpointPath:'/vehicles',
-  routePlanningApiBaseUrl:'/api/v1',
-  routePlanningRoutesEndpointPath:'/routes',
-  routePlanningApiMode:'backend',
-  routePlanningUseLocalDemoStudents:false,
-  billingBasePath:'/api/v1',
-  billingPlansEndpointPath:'/plans',
-  billingSubscriptionsEndpointPath:'/subscriptions',
-  profilesApiBaseUrl:'https://6ac53c3d54a61668c5f700f2.mockapi.io/api/v1',
-  profilesStudentsEndpointPath:'/students',
-  profilesProfilesEndpointPath:'/profiles',
-  relationshipsApiBaseUrl:'https://6ac54f4854a61668c5f718ab.mockapi.io/api/v1',
-  relationshipsTutorStudentsRelationshipsEndpointPath:'/tutor-student-relationships',
-  relationshipsDataDeletionRequestsEndpointPath:'/data-deletion-requests',
+  production: false,
+  platformProviderApiBaseUrl: 'https://web-services-gjgh.onrender.com/api/v1',
+  platformProviderProfilesEndpointPath: '/profiles',
+  platformProviderStudentsEndpointPath: '/students',
+  platformProviderServiceEnrollmentsEndpointPath: '/service-enrollments',
+  platformProviderDataDeletionRequestsEndpointPath: '/data-deletion-requests',
+  platformProviderRoutesEndpointPath: '/routes',
+  platformProviderTripsEndpointPath: '/trips',
+  platformProviderVehiclesEndpointPath: '/vehicles',
+  platformProviderPlansEndpointPath: '/plans',
+  platformProviderSubscriptionsEndpointPath: '/subscriptions',
+  platformProviderIncidentsEndpointPath: '/incidents',
+  platformProviderDelaysEndpointPath: '/delays',
+  platformProviderNotificationsEndpointPath: '/notifications',
+  platformProviderStudentJourneyNotificationsEndpointPath: '/notifications/student-journeys'
 };

@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import {
   AbstractControl, FormArray, FormBuilder, FormControl, FormGroup,
   ReactiveFormsModule, ValidationErrors, Validators,
@@ -14,14 +14,15 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RouteTripStore } from '../../../application/route-trip.store';
 import { Route, RouteShift } from '../../../domain/model/route.entity';
 import { RouteStop } from '../../../domain/model/route-stop.entity';
-import { RouteStudentCatalog, RouteStudentOption } from '../../../infrastructure/route-student-catalog';
-import { ServiceEnrollmentsApi, ServiceEnrollment, EnrolledStudent } from '../../../../profiles-relationship-management/infrastructure/service-enrollments-api';
+import { ProfilesRelationshipStore } from '../../../../profiles-relationship-management/application/profiles-relationship-management-store';
 import { VehicleCredentialStore } from '../../../../vehicle-credential-management/application/vehicle-credential.store';
-import { firstValueFrom } from 'rxjs';
 import {
   ROUTE_WEEKDAY_LABELS, ROUTE_WEEKDAYS, RouteSchedule, RouteWeekday,
   isValidRouteSchedule, isValidRouteTime,
 } from '../../../domain/model/route-schedule.entity';
+
+/** Student that can be linked to a stop (accepted enrollment with the acting driver). */
+interface RouteStudentOption { id: string; fullName: string; }
 
 type StopForm = FormGroup<{
   id: FormControl<string | null>;
@@ -60,20 +61,24 @@ export class RouteFormComponent {
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   readonly store = inject(RouteTripStore);
-  private readonly studentCatalog = inject(RouteStudentCatalog);
-  private readonly enrollmentsApi = inject(ServiceEnrollmentsApi);
-  readonly pendingEnrollments = signal<ServiceEnrollment[]>([]);
-  readonly pendingStudents = signal<EnrolledStudent[]>([]);
-  readonly pendingLoading = signal(false);
-  readonly pendingError = signal('');
+  /** Profiles store: service enrollments addressed to the acting driver. */
+  readonly profilesStore = inject(ProfilesRelationshipStore);
+  readonly pendingEnrollments = computed(() =>
+    this.profilesStore.enrollments().filter(enrollment => enrollment.status === 'PENDING'));
+  readonly pendingLoading = this.profilesStore.enrollmentsLoading;
+  readonly pendingError = this.profilesStore.enrollmentsError;
   readonly pendingSavingId = signal<number | null>(null);
-  readonly pendingNotice = signal('');
+  readonly pendingAccepted = signal(false);
 
   readonly vehicleStore = inject(VehicleCredentialStore);
-  readonly students = signal<RouteStudentOption[]>([]);
-  readonly studentsLoading = signal(false);
-  readonly studentsLoaded = signal(false);
-  readonly studentsError = signal('');
+  readonly students = computed<RouteStudentOption[]>(() => this.profilesStore.acceptedDriverStudents()
+    .map(student => ({ id: String(student.id), fullName: student.fullName })));
+  readonly studentsLoading = this.profilesStore.enrollmentsLoading;
+  private readonly studentsRequested = signal(false);
+  readonly studentsLoaded = computed(() =>
+    this.studentsRequested() && !this.profilesStore.enrollmentsLoading() && !this.profilesStore.enrollmentsError());
+  readonly studentsError = computed(() =>
+    this.studentsRequested() && this.profilesStore.enrollmentsError() ? 'routes.form.studentsLoadError' : '');
   assignmentMessage = ''; 
   readonly weekdayLabels = ROUTE_WEEKDAY_LABELS;
 
@@ -158,72 +163,41 @@ export class RouteFormComponent {
     return this.stops.controls.filter(stop => Boolean(stop.controls.studentId.value)).length;
   }
 
-  async loadStudentCandidates(force = false): Promise<void> {
+  /**
+   * Loads the students whose enrollment was accepted by the acting driver (and the pending requests).
+   * @param force - Reload even if the candidates were already loaded.
+   */
+  loadStudentCandidates(force = false): void {
     if (this.studentsLoading() || (this.studentsLoaded() && !force)) return;
-    this.studentsLoading.set(true);
-    this.studentsError.set('');
-    try {
-      const candidates = await firstValueFrom(this.studentCatalog.getCandidates());
-      this.students.set(candidates);
-      this.studentsLoaded.set(true);
-    } catch {
-      this.studentsLoaded.set(false);
-      this.studentsError.set(this.translate.instant('routes.form.studentsLoadError'));
-    } finally {
-      this.studentsLoading.set(false);
-    }
+    this.studentsRequested.set(true);
+    this.profilesStore.loadDriverEnrollments();
   }
 
-
-  /** Only requests addressed to the current driver are visible here. */
-  async loadPendingEnrollments(): Promise<void> {
-    if (this.pendingLoading()) return;
-    this.pendingLoading.set(true);
-    this.pendingError.set('');
-    try {
-      const rows = await firstValueFrom(this.enrollmentsApi.forDriver());
-      this.pendingEnrollments.set(rows.filter(row => row.status === 'PENDING'));
-      if (this.pendingEnrollments().length) {
-        try {
-          this.pendingStudents.set(await firstValueFrom(this.enrollmentsApi.driverStudents()));
-        } catch {
-          this.pendingStudents.set([]);
-        }
-      }
-    } catch (e) {
-      const failure = e as { status?: number; error?: { detail?: string } };
-      this.pendingError.set(failure.status === 0
-        ? 'No hay conexión con Spring Boot para consultar las solicitudes.'
-        : failure.status === 401 || failure.status === 403
-          ? 'No se pudo comprobar el perfil del conductor. Accede nuevamente como conductor.'
-          : failure.error?.detail || 'No se pudieron consultar las solicitudes de transporte.');
-    } finally {
-      this.pendingLoading.set(false);
-    }
+  /** Reloads the service requests addressed to the acting driver. */
+  loadPendingEnrollments(): void {
+    this.loadStudentCandidates(true);
   }
 
+  /**
+   * Builds the label of a student with a pending request.
+   * @param studentId - Student identifier.
+   * @returns Student label.
+   */
   pendingStudentName(studentId: number): string {
-    const student = this.pendingStudents().find(row => row.id === studentId);
-    return student ? student.firstName + ' ' + student.lastName : 'Estudiante #' + studentId;
+    return this.profilesStore.driverStudents().find(student => student.id === studentId)?.fullName
+      ?? this.translate.instant('profiles.enrollments.studentReference', { id: studentId });
   }
 
+  /**
+   * Accepts a pending request so the student can be assigned to a stop.
+   * @param enrollmentId - Enrollment identifier.
+   */
   async acceptPendingEnrollment(enrollmentId: number): Promise<void> {
     if (this.pendingSavingId() !== null) return;
     this.pendingSavingId.set(enrollmentId);
-    this.pendingError.set('');
-    this.pendingNotice.set('');
-    try {
-      await firstValueFrom(this.enrollmentsApi.accept(enrollmentId));
-      this.pendingNotice.set('Afiliación aceptada. El estudiante ya puede seleccionarse en esta ruta.');
-      await this.loadStudentCandidates(true);
-      await this.loadPendingEnrollments();
-    } catch (e) {
-      const failure = e as { error?: { detail?: string; message?: string } };
-      this.pendingError.set(failure.error?.detail ?? failure.error?.message ??
-        'No se pudo aceptar la solicitud. Revisa la conexión con Spring Boot.');
-    } finally {
-      this.pendingSavingId.set(null);
-    }
+    this.pendingAccepted.set(false);
+    this.pendingAccepted.set(await this.profilesStore.acceptEnrollment(enrollmentId));
+    this.pendingSavingId.set(null);
   }
 
   vehicleIsAvailable(id: string): boolean {
@@ -353,10 +327,7 @@ export class RouteFormComponent {
       }
     }
     this.activeStep = step;
-    if (step === 1) {
-      void this.loadStudentCandidates();
-      if (this.routeStatus !== 'PUBLISHED') void this.loadPendingEnrollments();
-    }
+    if (step === 1) this.loadStudentCandidates();
   }
 
   applySchoolWeek(): void {
@@ -385,10 +356,7 @@ export class RouteFormComponent {
       this.stepMessage = this.assignmentMessage
         || this.translate.instant('routes.form.requiredFields');
       this.activeStep = this.validStep(0) ? (this.validStep(1) ? 2 : 1) : 0;
-      if (this.activeStep === 1) {
-        void this.loadStudentCandidates();
-        if (this.routeStatus !== 'PUBLISHED') void this.loadPendingEnrollments();
-      }
+      if (this.activeStep === 1) this.loadStudentCandidates();
       return;
     }
 

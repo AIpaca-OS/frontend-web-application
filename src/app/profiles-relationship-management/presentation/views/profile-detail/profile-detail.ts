@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 import { Tutor } from '../../../domain/model/tutor.entity';
@@ -11,7 +12,7 @@ import { Tutor } from '../../../domain/model/tutor.entity';
 @Component({
   selector: 'app-profile-detail',
   standalone: true,
-  imports: [MatButtonModule],
+  imports: [MatButtonModule, TranslatePipe],
   templateUrl: './profile-detail.html',
   styleUrl: './profile-detail.css',
 })
@@ -24,7 +25,7 @@ export class ProfileDetail {
 
   getProfileType(): string {
     const profile = this.profile();
-    return profile instanceof Tutor ? 'Tutor' : 'Conductor';
+    return profile instanceof Tutor ? 'workspace.tutorRole' : 'workspace.driverRole';
   }
 
   editProfile(): void {

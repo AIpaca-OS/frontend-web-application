@@ -1,9 +1,6 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import {
-  DemoDriver, ServiceEnrollment, ServiceEnrollmentsApi,
-} from '../../../infrastructure/service-enrollments-api';
+import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 
 /** Explicit tutor consent: student registration does NOT enroll the child automatically. */
 @Component({
@@ -14,41 +11,35 @@ import {
     <section class="enrollment-card" aria-labelledby="enroll-heading">
       <h2 id="enroll-heading">{{ 'profiles.enrollments.tutorTitle' | translate }}</h2>
       <p>{{ 'profiles.enrollments.tutorDescription' | translate }}</p>
-      @if (loading()) {
+      @if (store.enrollmentsLoading()) {
         <p role="status">{{ 'profiles.enrollments.loading' | translate }}</p>
       }
-      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-      @if (message()) { <p class="notice" role="status">{{ message() }}</p> }
+      @if (store.enrollmentsError()) { <p class="error" role="alert">{{ store.enrollmentsError()! | translate }}</p> }
+      @if (requested()) { <p class="notice" role="status">{{ 'profiles.enrollments.requested' | translate }}</p> }
       @for (enrollment of enrollments(); track enrollment.id) {
         <div class="entry">
           <div>
             <strong>{{ 'profiles.enrollments.driverLabel' | translate }} #{{ enrollment.driverProfileId }}</strong>
-            <p>{{ 'profiles.enrollments.status' | translate }}: {{ enrollment.status }}</p>
+            <p>{{ 'profiles.enrollments.status' | translate }}: {{ 'profiles.enrollments.statuses.' + enrollment.status | translate }}</p>
           </div>
           @if (enrollment.status === 'PENDING') {
-            <button type="button" [disabled]="saving()" (click)="cancel(enrollment.id)">
+            <button type="button" [disabled]="store.enrollmentsLoading()" (click)="cancel(enrollment.id)">
               {{ 'profiles.enrollments.cancel' | translate }}
             </button>
           }
         </div>
       }
-      @if (!loading() && !hasOpenEnrollment()) {
-        @for (driver of drivers(); track driver.id) {
-          <div class="entry">
-            <div>
-              <strong>{{ driver.displayName }}</strong>
-              <p>{{ 'profiles.enrollments.requestExplanation' | translate }}</p>
-            </div>
-            <button type="button" class="primary" [disabled]="saving()" (click)="request(driver)">
-              {{ 'profiles.enrollments.request' | translate }}
-            </button>
-          </div>
-        }
-        @if (!drivers().length && !error()) {
-          <p>{{ 'profiles.enrollments.noDrivers' | translate }}</p>
-        }
+      @if (!store.enrollmentsLoading() && !hasOpenEnrollment()) {
+        <div class="entry">
+          <label for="driver-profile-id">{{ 'profiles.enrollments.driverProfileId' | translate }}</label>
+          <input id="driver-profile-id" #driverId type="number" min="1" step="1"
+            [value]="driverProfileId() ?? ''"
+            (input)="driverProfileId.set(driverId.value ? +driverId.value : null)" />
+          <button type="button" class="primary" [disabled]="store.enrollmentsLoading() || !validDriverId()"
+            (click)="request()">{{ 'profiles.enrollments.request' | translate }}</button>
+        </div>
       }
-      <button type="button" class="refresh" [disabled]="loading() || saving()" (click)="reload()">
+      <button type="button" class="refresh" [disabled]="store.enrollmentsLoading()" (click)="reload()">
         {{ 'profiles.enrollments.refresh' | translate }}
       </button>
     </section>
@@ -68,66 +59,43 @@ import {
   `],
 })
 export class StudentEnrollmentsComponent implements OnInit {
-  @Input({ required: true }) studentId!: number;
-  private readonly api = inject(ServiceEnrollmentsApi);
-  readonly drivers = signal<DemoDriver[]>([]);
-  readonly enrollments = signal<ServiceEnrollment[]>([]);
-  readonly loading = signal(false);
-  readonly saving = signal(false);
-  readonly error = signal('');
-  readonly message = signal('');
+  readonly studentId = input.required<number>();
+  readonly store = inject(ProfilesRelationshipStore);
+  readonly driverProfileId = signal<number | null>(null);
+  readonly requested = signal(false);
+  readonly enrollments = computed(() =>
+    this.store.enrollments().filter(enrollment => enrollment.studentId === this.studentId()));
 
-  ngOnInit(): void { void this.reload(); }
+  ngOnInit(): void { this.reload(); }
 
+  /** True when the student already has a pending or accepted enrollment. */
   hasOpenEnrollment(): boolean {
-    return this.enrollments().some(e => e.status === 'PENDING' || e.status === 'ACCEPTED');
+    return this.enrollments().some(enrollment => enrollment.status === 'PENDING' || enrollment.status === 'ACCEPTED');
   }
 
-  async reload(): Promise<void> {
-    if (this.loading()) return;
-    this.loading.set(true);
-    this.error.set('');
-    try {
-      const [drivers, enrollments] = await Promise.all([
-        firstValueFrom(this.api.availableDemoDrivers()),
-        firstValueFrom(this.api.forStudent(this.studentId)),
-      ]);
-      this.drivers.set(drivers);
-      this.enrollments.set(enrollments);
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo consultar la afiliación');
-    } finally {
-      this.loading.set(false);
-    }
+  /** True when the typed driver profile ID is a positive integer. */
+  validDriverId(): boolean {
+    const id = this.driverProfileId();
+    return id !== null && Number.isSafeInteger(id) && id > 0;
   }
 
-  async request(driver: DemoDriver): Promise<void> {
-    if (this.saving() || this.hasOpenEnrollment()) return;
-    this.saving.set(true);
-    this.error.set('');
-    this.message.set('');
-    try {
-      await firstValueFrom(this.api.request(this.studentId, driver.id));
-      this.message.set('Solicitud registrada. El conductor debe aceptarla antes de asignar rutas.');
-      await this.reload();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo solicitar el servicio');
-    } finally {
-      this.saving.set(false);
-    }
+  /** Reloads the enrollments of the student. */
+  reload(): void { this.store.loadStudentEnrollments([this.studentId()]); }
+
+  /** Requests the transport service of the typed driver. */
+  async request(): Promise<void> {
+    const driverProfileId = this.driverProfileId();
+    if (!this.validDriverId() || driverProfileId === null || this.hasOpenEnrollment()) return;
+    this.requested.set(false);
+    this.requested.set(await this.store.requestEnrollment(this.studentId(), driverProfileId));
   }
 
-  async cancel(id: number): Promise<void> {
-    if (this.saving()) return;
-    this.saving.set(true);
-    this.error.set('');
-    try {
-      await firstValueFrom(this.api.cancel(id));
-      await this.reload();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo cancelar la solicitud');
-    } finally {
-      this.saving.set(false);
-    }
+  /**
+   * Cancels a pending request.
+   * @param id - Enrollment identifier.
+   */
+  cancel(id: number): void {
+    this.requested.set(false);
+    this.store.cancelEnrollment(id);
   }
 }

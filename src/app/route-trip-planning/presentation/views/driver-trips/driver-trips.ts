@@ -1,81 +1,78 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { RouteTripStore } from '../../../application/route-trip.store';
+import { Trip, TripPassenger } from '../../../domain/model/trip.entity';
+import { DelayForm } from '../../../../incident/presentation/views/delay-form/delay-form';
+import { IncidentForm } from '../../../../incident/presentation/views/incident-form/incident-form';
 
-interface Stop { id: string; address: string; position: number; studentId: string | null; }
-interface RouteData {
-  id: string; name: string; code: string; status: string;
-  schedule: Array<{ dayOfWeek: string; departureTime: string }>; stops: Stop[];
-}
-interface Passenger {
-  studentId: string; stopId: string; stopPosition: number; stopAddress: string;
-  absent: boolean; stopServed: boolean; arrived: boolean;
-}
-interface TripData {
-  id: string; serviceDate: string; status: string; students: Passenger[];
-}
-interface EligibleStudent { id: string; fullName: string; }
-
+/**
+ * Trip management of a published route: planning, start, served stops, arrivals and completion.
+ */
 @Component({
   selector: 'app-driver-trips',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe, MatDialogModule],
   template: `
     <main class="trip-management">
-      <a routerLink="/driver/routes">Volver a mis rutas</a>
-      <h1>Gestionar viajes y llegadas</h1>
-      @if (route()) {
-        <p><strong>{{ route()?.name }}</strong> · {{ route()?.code }}</p>
-        <p>Días: {{ scheduleText() }}</p>
+      <a routerLink="/driver/routes">{{ 'trips.back' | translate }}</a>
+      <h1>{{ 'trips.title' | translate }}</h1>
+      @if (route(); as currentRoute) {
+        <p><strong>{{ currentRoute.name }}</strong> · {{ currentRoute.code }}</p>
+        <p>{{ 'trips.days' | translate }}: {{ scheduleText() }}</p>
       }
       <section class="panel">
-        <h2>Programar viaje</h2>
-        <p>Selecciona un día que esté incluido en el horario de esta ruta publicada.</p>
+        <h2>{{ 'trips.planTitle' | translate }}</h2>
+        <p>{{ 'trips.planHint' | translate }}</p>
         <div class="inline">
-          <label for="tripDate">Fecha</label>
+          <label for="tripDate">{{ 'trips.date' | translate }}</label>
           <input id="tripDate" name="tripDate" type="date" [(ngModel)]="serviceDate" />
-          <button type="button" [disabled]="saving() || !serviceDate" (click)="plan()">
-            Programar viaje
+          <button type="button" [disabled]="store.tripsLoading() || !serviceDate || !route()" (click)="plan()">
+            {{ 'trips.plan' | translate }}
           </button>
         </div>
       </section>
-      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-      @if (message()) { <p class="success" role="status">{{ message() }}</p> }
-      <button type="button" (click)="reload()" [disabled]="loading() || saving()">Actualizar viajes</button>
-      @if (loading()) { <p role="status">Cargando...</p> }
+      @if (store.tripsError()) { <p class="error" role="alert">{{ store.tripsError()! | translate }}</p> }
+      @if (message()) { <p class="success" role="status">{{ message()! | translate }}</p> }
+      <button type="button" (click)="reload()" [disabled]="store.tripsLoading()">{{ 'trips.refresh' | translate }}</button>
+      @if (store.tripsLoading()) { <p role="status">{{ 'common.loading' | translate }}</p> }
       @for (trip of trips(); track trip.id) {
         <article class="panel">
           <div class="header">
-            <h2>Viaje del {{ trip.serviceDate }}</h2>
-            <span class="pill">{{ statusName(trip.status) }}</span>
+            <h2>{{ 'trips.tripOf' | translate: { date: trip.serviceDate } }}</h2>
+            <span class="pill">{{ 'trips.status.' + trip.status | translate }}</span>
           </div>
-          @if (trip.status === 'SCHEDULED') {
-            <button type="button" [disabled]="saving()" (click)="action(trip, 'start')">
-              Iniciar recorrido
-            </button>
-          }
+          <div class="buttons">
+            @if (trip.status === 'SCHEDULED') {
+              <button type="button" [disabled]="store.tripsLoading()" (click)="start(trip)">
+                {{ 'trips.start' | translate }}
+              </button>
+            }
+            @if (trip.status === 'SCHEDULED' || trip.status === 'IN_PROGRESS') {
+              <button type="button" (click)="reportDelay(trip)">{{ 'quickActions.reportDelay' | translate }}</button>
+              <button type="button" (click)="reportIncident(trip)">{{ 'quickActions.reportIncident' | translate }}</button>
+            }
+          </div>
           @for (passenger of trip.students; track passenger.studentId) {
             <div class="student">
               <div>
-                <strong>{{ studentName(passenger.studentId) }}</strong>
-                <p>Parada {{ passenger.stopPosition }} · {{ passenger.stopAddress }}</p>
-                <p>Estado: {{ passenger.arrived ? 'Llegada confirmada' :
-                  passenger.absent ? 'Ausente' :
-                  passenger.stopServed ? 'Parada atendida; llegada pendiente' : 'Parada pendiente' }}</p>
+                <strong>{{ 'profiles.enrollments.studentReference' | translate: { id: passenger.studentId } }}</strong>
+                <p>{{ 'trips.stop' | translate: { position: passenger.stopPosition } }} · {{ passenger.stopAddress }}</p>
+                <p>{{ 'trips.passengerStatus' | translate }}: {{ passengerState(passenger) | translate }}</p>
               </div>
               @if (trip.status === 'IN_PROGRESS') {
                 <div class="buttons">
                   @if (!passenger.stopServed && !passenger.absent) {
-                    <button type="button" [disabled]="saving()" (click)="serve(trip,passenger)">
-                      Marcar parada atendida
+                    <button type="button" [disabled]="store.tripsLoading()" (click)="serve(trip, passenger)">
+                      {{ 'trips.serveStop' | translate }}
                     </button>
                   }
                   @if (passenger.stopServed && !passenger.arrived && !passenger.absent) {
-                    <button type="button" class="primary" [disabled]="saving()"
-                      (click)="confirmArrival(trip,passenger)">
-                      Confirmar llegada
+                    <button type="button" class="primary" [disabled]="store.tripsLoading()"
+                      (click)="confirmArrival(trip, passenger)">
+                      {{ 'trips.confirmArrival' | translate }}
                     </button>
                   }
                 </div>
@@ -83,24 +80,24 @@ interface EligibleStudent { id: string; fullName: string; }
             </div>
           }
           @if (trip.status === 'IN_PROGRESS') {
-            <button type="button" [disabled]="saving()" (click)="action(trip,'complete')">
-              Finalizar viaje
+            <button type="button" [disabled]="store.tripsLoading()" (click)="complete(trip)">
+              {{ 'trips.complete' | translate }}
             </button>
           }
         </article>
       } @empty {
-        @if (!loading()) { <p>Todavía no hay viajes programados para esta ruta.</p> }
+        @if (!store.tripsLoading()) { <p>{{ 'trips.empty' | translate }}</p> }
       }
     </main>
   `,
   styles: [`
-    .trip-management{max-width:1000px;margin:auto;padding:30px 24px;color:#19493a;display:grid;gap:16px;}
-    h1{font-size:29px;}h2{font-size:19px;margin:4px 0 12px;}p{font-size:13px;color:#587268;}
+    .trip-management{box-sizing:border-box;width:100%;max-width:var(--rumbo-page-max-width);margin:0 auto;padding:var(--rumbo-page-padding);color:#19493a;display:grid;gap:16px;}
+    h1{font-size:29px;margin:0;}h2{font-size:19px;margin:4px 0 12px;}p{font-size:13px;color:#587268;}
     .panel{background:#fff;border:1px solid #dae7df;border-radius:14px;padding:22px;}
     .inline,.buttons,.header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
     .header{justify-content:space-between;}
     input{padding:9px;border:1px solid #b4cfc2;border-radius:9px;}
-    button{border:1px solid #228a6e;border-radius:9px;padding:9px 12px;background:#fff;color:#175d49;cursor:pointer;}
+    button{border:1px solid #228a6e;border-radius:9px;padding:9px 12px;background:#fff;color:#175d49;cursor:pointer;justify-self:start;}
     button.primary{background:#229777;color:white;}button:disabled{opacity:.5;}
     a{color:#0e8266;font-size:13px;}
     .student{padding:14px 0;border-top:1px solid #e6eeea;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
@@ -109,77 +106,84 @@ interface EligibleStudent { id: string; fullName: string; }
   `],
 })
 export class DriverTrips implements OnInit {
-  private readonly http = inject(HttpClient);
+  readonly store = inject(RouteTripStore);
   private readonly activated = inject(ActivatedRoute);
-  readonly route = signal<RouteData | null>(null);
-  readonly trips = signal<TripData[]>([]);
-  readonly studentNames = signal<Record<string,string>>({});
-  readonly loading = signal(false);
-  readonly saving = signal(false);
-  readonly error = signal('');
-  readonly message = signal('');
+  private readonly dialog = inject(MatDialog);
+  private readonly translate = inject(TranslateService);
+  private readonly routeId = this.activated.snapshot.paramMap.get('id') ?? '';
+  readonly route = this.store.getRouteById(this.routeId);
+  readonly trips = computed(() => this.store.getTripsByRouteId(this.routeId)());
+  readonly message = signal<string | null>(null);
   serviceDate = new Date().toLocaleDateString('en-CA');
-  private routeId = '';
 
-  ngOnInit(): void {
-    this.routeId = this.activated.snapshot.paramMap.get('id') || '';
-    void this.reload();
-  }
+  ngOnInit(): void { this.reload(); }
+
+  /** Weekly schedule rendered with translated weekday names. */
   scheduleText(): string {
-    return this.route()?.schedule.map(s => s.dayOfWeek + ' ' + s.departureTime).join(', ') || 'Sin horario';
+    const schedule = this.route()?.schedule ?? [];
+    return schedule.length
+      ? schedule.map(day => `${this.translate.instant('routes.days.' + day.dayOfWeek)} ${day.departureTime}`).join(', ')
+      : this.translate.instant('trips.noSchedule');
   }
-  statusName(s: string): string {
-    return ({ SCHEDULED:'Programado', IN_PROGRESS:'En recorrido',
-              COMPLETED:'Finalizado', CANCELLED:'Cancelado' } as Record<string,string>)[s] || s;
+
+  /**
+   * Builds the i18n key of a passenger state.
+   * @param passenger - Trip passenger.
+   * @returns Translation key.
+   */
+  passengerState(passenger: TripPassenger): string {
+    if (passenger.arrived) return 'trips.passenger.arrived';
+    if (passenger.absent) return 'trips.passenger.absent';
+    if (passenger.stopServed) return 'trips.passenger.served';
+    return 'trips.passenger.pending';
   }
-  studentName(id: string): string { return this.studentNames()[id] || 'Estudiante #' + id; }
-  private errorText(e: unknown): string {
-    const x = e as { status?: number; error?: {detail?:string;message?:string} };
-    if (x.status === 0) return 'No se puede conectar al backend.';
-    return x.error?.detail || x.error?.message || (e instanceof Error ? e.message : 'No se pudo realizar la operación.');
+
+  /** Reloads the trips of the route. */
+  reload(): void {
+    this.message.set(null);
+    this.store.loadTrips([this.routeId]);
   }
-  async reload(): Promise<void> {
-    if (this.loading()) return;
-    this.loading.set(true); this.error.set('');
-    try {
-      const base = '/api/v1/routes/' + this.routeId;
-      const [route, trips] = await Promise.all([
-        firstValueFrom(this.http.get<RouteData>(base)),
-        firstValueFrom(this.http.get<TripData[]>(base + '/trips')),
-      ]);
-      this.route.set(route); this.trips.set(trips);
-      try {
-        const students = await firstValueFrom(this.http.get<EligibleStudent[]>('/api/v1/routes/eligible-students'));
-        this.studentNames.set(Object.fromEntries(students.map(s => [s.id,s.fullName])));
-      } catch { /* Route/trip details remain usable without the optional name catalog. */ }
-    } catch (e) { this.error.set(this.errorText(e)); }
-    finally { this.loading.set(false); }
-  }
-  private async update(request: Promise<unknown>, done: string): Promise<void> {
-    if (this.saving()) return;
-    this.saving.set(true); this.error.set(''); this.message.set('');
-    try { await request; this.message.set(done); await this.reload(); }
-    catch (e) { this.error.set(this.errorText(e)); }
-    finally { this.saving.set(false); }
-  }
+
+  /** Plans a trip for the selected date. */
   async plan(): Promise<void> {
-    if (!this.serviceDate) return;
-    await this.update(firstValueFrom(this.http.post('/api/v1/routes/' + this.routeId + '/trips',
-      { date:this.serviceDate })), 'Viaje programado.');
+    const route = this.route();
+    if (!route || !this.serviceDate) return;
+    await this.notify(this.store.planTrip(route, this.serviceDate), 'trips.planned');
   }
-  async action(trip: TripData, kind: 'start'|'complete'): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch('/api/v1/trips/' + trip.id + '/' + kind, {})),
-      kind === 'start' ? 'Recorrido iniciado.' : 'Viaje finalizado.');
+
+  /** Starts a scheduled trip. */
+  async start(trip: Trip): Promise<void> { await this.notify(this.store.startTrip(trip), 'trips.started'); }
+
+  /** Completes a trip in progress. */
+  async complete(trip: Trip): Promise<void> { await this.notify(this.store.completeTrip(trip), 'trips.completed'); }
+
+  /** Marks the stop of a passenger as served. */
+  async serve(trip: Trip, passenger: TripPassenger): Promise<void> {
+    await this.notify(this.store.serveStop(trip, passenger.stopId), 'trips.stopServed');
   }
-  async serve(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
-      '/api/v1/trips/' + trip.id + '/stops/' + passenger.stopId + '/served', {})),
-      'Parada atendida. Confirma la llegada cuando corresponda.');
+
+  /** Confirms the arrival of a passenger. */
+  async confirmArrival(trip: Trip, passenger: TripPassenger): Promise<void> {
+    await this.notify(this.store.confirmArrival(trip, passenger.studentId), 'trips.arrivalConfirmed');
   }
-  async confirmArrival(trip: TripData, passenger: Passenger): Promise<void> {
-    await this.update(firstValueFrom(this.http.patch(
-      '/api/v1/trips/' + trip.id + '/passengers/' +
-        encodeURIComponent(passenger.studentId) + '/arrived', {})),
-      'Llegada confirmada y aviso enviado al tutor.');
+
+  /** Opens the delay report for the trip (Incident Management). */
+  reportDelay(trip: Trip): void {
+    this.dialog.open(DelayForm, { width: '520px', data: { tripId: trip.id } });
+  }
+
+  /** Opens the incident report for the trip (Incident Management). */
+  reportIncident(trip: Trip): void {
+    this.dialog.open(IncidentForm, { width: '520px', data: { tripId: trip.id } });
+  }
+
+  /**
+   * Shows a confirmation when the operation succeeds.
+   * @param operation - Store operation.
+   * @param key - Success message key.
+   */
+  private async notify(operation: Promise<boolean>, key: string): Promise<void> {
+    this.message.set(null);
+    if (await operation) this.message.set(key);
   }
 }

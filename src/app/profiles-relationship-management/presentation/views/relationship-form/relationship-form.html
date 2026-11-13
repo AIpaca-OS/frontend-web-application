@@ -3,12 +3,11 @@
   <article class="card">
 
     <h1>
-      Autorizar tutor
+      {{ 'students.authorize.title' | translate }}
     </h1>
 
     <p>
-      Selecciona un tutor registrado y define
-      su relación con el estudiante.
+      {{ 'students.authorize.description' | translate }}
     </p>
 
     <form
@@ -19,58 +18,31 @@
 
       <mat-form-field appearance="outline">
 
-        <mat-label>Tutor</mat-label>
+        <mat-label>{{ 'students.authorize.tutorProfileId' | translate }}</mat-label>
 
-        <mat-select formControlName="tutorId">
-
-          @for (
-            tutor of store.tutors();
-            track tutor.id
-            ) {
-
-            <mat-option [value]="tutor.id">
-              {{ tutor.fullName }}
-            </mat-option>
-
-          }
-
-        </mat-select>
+        <input matInput type="number" min="1" step="1" formControlName="tutorId" />
+        @if (form.controls.tutorId.touched && form.controls.tutorId.invalid) {
+          <mat-error>{{ 'students.authorize.tutorProfileIdError' | translate }}</mat-error>
+        }
 
       </mat-form-field>
 
       <mat-form-field appearance="outline">
 
-        <mat-label>Relación</mat-label>
+        <mat-label>{{ 'students.form.relationship' | translate }}</mat-label>
 
         <mat-select formControlName="relationshipType">
-
-          <mat-option
-            [value]="RelationshipType.MOTHER"
-          >
-            Madre
-          </mat-option>
-
-          <mat-option
-            [value]="RelationshipType.FATHER"
-          >
-            Padre
-          </mat-option>
-
-          <mat-option
-            [value]="RelationshipType.LEGAL_GUARDIAN"
-          >
-            Tutor legal
-          </mat-option>
-
-          <mat-option
-            [value]="RelationshipType.OTHER"
-          >
-            Otro
-          </mat-option>
-
+          <mat-option [value]="RelationshipType.MOTHER">{{ 'students.relationship.MOTHER' | translate }}</mat-option>
+          <mat-option [value]="RelationshipType.FATHER">{{ 'students.relationship.FATHER' | translate }}</mat-option>
+          <mat-option [value]="RelationshipType.LEGAL_GUARDIAN">{{ 'students.relationship.LEGAL_GUARDIAN' | translate }}</mat-option>
+          <mat-option [value]="RelationshipType.OTHER">{{ 'students.relationship.OTHER' | translate }}</mat-option>
         </mat-select>
 
       </mat-form-field>
+
+      @if (store.error()) {
+        <p class="error" role="alert">{{ store.error()! | translate }}</p>
+      }
 
       <div class="actions">
 
@@ -79,15 +51,15 @@
           type="button"
           (click)="cancel()"
         >
-          Cancelar
+          {{ 'common.cancel' | translate }}
         </button>
 
         <button
           mat-flat-button
           type="submit"
-          [disabled]="form.invalid"
+          [disabled]="form.invalid || store.loading()"
         >
-          Autorizar
+          {{ 'students.authorize.submit' | translate }}
         </button>
 
       </div>

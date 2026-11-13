@@ -2,7 +2,7 @@
 
   <article class="card">
 
-    <h1>Editar perfil</h1>
+    <h1>{{ 'profiles.form.title' | translate }}</h1>
 
     <form
       [formGroup]="form"
@@ -11,17 +11,17 @@
     >
 
       <mat-form-field appearance="outline">
-        <mat-label>Nombres</mat-label>
-        <input matInput formControlName="firstName" />
+        <mat-label>{{ 'students.form.firstName' | translate }}</mat-label>
+        <input matInput [value]="profile()?.firstName" readonly />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Apellidos</mat-label>
-        <input matInput formControlName="lastName" />
+        <mat-label>{{ 'students.form.lastName' | translate }}</mat-label>
+        <input matInput [value]="profile()?.lastName" readonly />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Teléfono</mat-label>
+        <mat-label>{{ 'profiles.detail.phone' | translate }}</mat-label>
         <input matInput formControlName="phoneNumber" />
       </mat-form-field>
 
@@ -32,7 +32,7 @@
           type="button"
           (click)="cancel()"
         >
-          Cancelar
+          {{ 'common.cancel' | translate }}
         </button>
 
         <button
@@ -40,7 +40,7 @@
           type="submit"
           [disabled]="form.invalid"
         >
-          Guardar cambios
+          {{ 'common.saveChanges' | translate }}
         </button>
 
       </div>

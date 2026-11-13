@@ -14,35 +14,27 @@
       (click)="createStudent()"
     >
       <mat-icon>add</mat-icon>
-      {{'students.main.newStudent' | translate}}
+      {{ 'students.main.newStudent' | translate }}
     </button>
 
   </header>
 
-  @if (localTransportDemo) {
-    <p class="catalog-feedback" role="note">
-      Registrar al estudiante no envía sus datos a ningún conductor.
-      Pulsa <strong>Solicitar transporte</strong> para enviar una solicitud al conductor;
-      cuando la acepte, podrá incluirlo en una ruta escolar.
-    </p>
-    @if (enrollmentNotice()) {
-      <p class="catalog-feedback" role="status">{{ enrollmentNotice() }}</p>
-    }
-    @if (enrollmentError()) {
-      <p class="error" role="alert">{{ enrollmentError() }}</p>
-    }
+  <p class="catalog-feedback" role="note">{{ 'students.main.transportHint' | translate }}</p>
+
+  @if (store.enrollmentsError()) {
+    <p class="error" role="alert">{{ store.enrollmentsError()! | translate }}</p>
   }
 
   @if (store.error()) {
     <p class="error" role="alert">
-      {{ store.error() }}
+      {{ store.error()! | translate }}
     </p>
   }
 
   @if (store.loading()) {
     <div class="state-box">
       <mat-spinner diameter="40"></mat-spinner>
-      <span>Cargando estudiantes...</span>
+      <span>{{ 'students.main.loading' | translate }}</span>
     </div>
   }
 
@@ -51,12 +43,11 @@
       <table>
         <thead>
         <tr>
-          <th>{{'students.data.name' | translate}}</th>
-          <th>{{'students.data.birthdate' | translate}}</th>
-          <th>{{'students.data.school' | translate}}</th>
-          <th>{{'students.data.state' | translate}}</th>
-          @if (localTransportDemo) { <th>Servicio de transporte</th> }
-          <th>{{'students.data.actions' | translate}}</th>
+          <th>{{ 'students.data.name' | translate }}</th>
+          <th>{{ 'students.data.birthdate' | translate }}</th>
+          <th>{{ 'students.data.state' | translate }}</th>
+          <th>{{ 'students.data.transport' | translate }}</th>
+          <th>{{ 'students.data.actions' | translate }}</th>
         </tr>
         </thead>
 
@@ -72,39 +63,33 @@
             </td>
 
             <td>
-              {{ student.schoolName }}
+              {{ 'students.status.' + student.status | translate }}
             </td>
 
-            <td>
-              {{ student.status }}
-            </td>
-
-            @if (localTransportDemo) {
-              <td class="transport-status">
-                @if (enrollmentLoading() && !enrollmentStates()[student.id]) {
-                  <span>Consultando...</span>
-                } @else if (statusFor(student.id) === 'PENDING') {
-                  <span class="pending">Solicitud pendiente de aprobación</span>
-                } @else if (statusFor(student.id) === 'ACCEPTED') {
-                  <span class="accepted">Afiliado al conductor</span>
-                } @else {
-                  <button mat-stroked-button type="button"
-                          [disabled]="enrollmentLoading() || enrollmentBusyId() !== null"
-                          (click)="requestTransport(student.id)">
-                    {{ enrollmentBusyId() === student.id ? 'Enviando...' : 'Solicitar transporte' }}
-                  </button>
-                }
-              </td>
-            }
-            <td class="actions">
-              @if (localTransportDemo) {
-                <button mat-button type="button" (click)="viewStudent(student.id)">
-                  Ver servicio
+            <td class="transport-status">
+              @if (store.enrollmentsLoading() && statusFor(student.id) === 'NONE') {
+                <span>{{ 'students.transport.checking' | translate }}</span>
+              } @else if (statusFor(student.id) === 'PENDING') {
+                <span class="pending">{{ 'students.transport.pending' | translate }}</span>
+              } @else if (statusFor(student.id) === 'ACCEPTED') {
+                <span class="accepted">{{ 'students.transport.accepted' | translate }}</span>
+              } @else {
+                <button mat-stroked-button type="button"
+                        [disabled]="store.enrollmentsLoading()"
+                        (click)="requestTransport(student.id)">
+                  {{ 'students.transport.request' | translate }}
                 </button>
               }
+            </td>
+
+            <td class="actions">
+              <button mat-button type="button" (click)="viewStudent(student.id)">
+                {{ 'students.transport.viewService' | translate }}
+              </button>
+
               <button
                 mat-icon-button
-                aria-label="Ver estudiante"
+                [attr.aria-label]="'students.actions.view' | translate"
                 (click)="viewStudent(student.id)"
               >
                 <mat-icon>visibility</mat-icon>
@@ -112,7 +97,7 @@
 
               <button
                 mat-icon-button
-                aria-label="Editar estudiante"
+                [attr.aria-label]="'students.actions.edit' | translate"
                 (click)="editStudent(student.id)"
               >
                 <mat-icon>edit</mat-icon>
@@ -121,7 +106,7 @@
           </tr>
         } @empty {
           <tr>
-            <td [attr.colspan]="localTransportDemo ? 6 : 5">
+            <td [attr.colspan]="5">
               {{ 'students.main.noStudents' | translate }}
             </td>
           </tr>

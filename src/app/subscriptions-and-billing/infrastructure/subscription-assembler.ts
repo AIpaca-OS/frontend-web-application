@@ -2,36 +2,50 @@ import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { Subscription } from '../domain/model/subscription.entity';
 import { SubscriptionResource, SubscriptionsResponse } from './subscriptions-response';
 
-export class SubscriptionAssembler implements BaseAssembler<
-  Subscription,
-  SubscriptionResource,
-  SubscriptionsResponse
-> {
-  toEntitiesFromResponse(response: SubscriptionsResponse): Subscription[] {
-    return response.subscriptions.map((resource) => this.toEntityFromResource(resource));
-  }
+/**
+ * Maps subscription entities to and from API resources.
+ *
+ * @remarks
+ * The API has no payment information: payment fields are set to neutral values.
+ */
+export class SubscriptionAssembler implements BaseAssembler<Subscription, SubscriptionResource, SubscriptionsResponse> {
+  /**
+   * Converts a SubscriptionsResponse to an array of Subscription entities.
+   * @param response - The API response containing subscriptions.
+   * @returns An array of Subscription entities.
+   */
+  toEntitiesFromResponse = (response: SubscriptionsResponse): Subscription[] =>
+    response.subscriptions.map(resource => this.toEntityFromResource(resource));
 
-  toEntityFromResource(resource: SubscriptionResource): Subscription {
-    return new Subscription({
-      id: Number(resource.id),
-      driverId: resource.driverId,
-      planId: resource.planId,
+  /**
+   * Converts a SubscriptionResource to a Subscription entity.
+   * @param resource - The resource to convert.
+   * @returns The converted Subscription entity.
+   */
+  toEntityFromResource = (resource: SubscriptionResource): Subscription =>
+    new Subscription({
+      id: resource.id,
+      driverId: String(resource.driverId),
+      planId: String(resource.planId),
       status: resource.status,
       startDate: resource.startDate,
-      paymentStatus: resource.paymentStatus,
-      paymentAmount: Number(resource.paymentAmount),
+      paymentStatus: 'NOT_APPLICABLE',
+      paymentAmount: 0,
     });
-  }
 
-  toResourceFromEntity(entity: Subscription): SubscriptionResource {
-    return {
-      id: entity.id,
-      driverId: entity.driverId,
-      planId: entity.planId,
-      status: entity.status,
-      startDate: entity.startDate,
-      paymentStatus: entity.paymentStatus,
-      paymentAmount: entity.paymentAmount,
-    };
-  }
+  /**
+   * Converts a Subscription entity to a SubscriptionResource.
+   * @param entity - The entity to convert.
+   * @returns The converted SubscriptionResource.
+   */
+  toResourceFromEntity = (entity: Subscription): SubscriptionResource => ({
+    id: entity.id,
+    driverId: Number(entity.driverId),
+    planId: Number(entity.planId),
+    status: entity.status,
+    startDate: entity.startDate,
+    endDate: null,
+    active: entity.status === 'ACTIVE',
+    vehicleLimit: null,
+  });
 }

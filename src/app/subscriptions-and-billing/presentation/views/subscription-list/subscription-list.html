@@ -3,15 +3,11 @@
   <header class="page-header">
 
     <div>
-      <p class="eyebrow">
-        SUSCRIPCIONES
-      </p>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
 
-      <h1>Mi suscripción</h1>
+      <h1>{{ 'billing.subscriptions.title' | translate }}</h1>
 
-      <p>
-        Consulta y administra la información de tu suscripción en Rumbo.
-      </p>
+      <p>{{ 'billing.subscriptions.subtitle' | translate }}</p>
     </div>
 
     <button
@@ -19,7 +15,7 @@
       type="button"
       class="secondary-action"
       (click)="goToPlans()">
-      Ver planes
+      {{ 'billing.subscriptions.viewPlans' | translate }}
     </button>
 
   </header>
@@ -32,7 +28,7 @@
 
   @if (store.error()) {
     <div class="error">
-      {{ store.error() }}
+      {{ store.error()! | translate }}
     </div>
   }
 
@@ -41,7 +37,7 @@
     <div class="subscriptions-grid">
 
       @for (
-        subscription of currentSubscriptions();
+        subscription of store.subscriptions();
         track subscription.id
         ) {
 
@@ -50,36 +46,29 @@
           <div class="card-header">
 
             <div>
-              <span class="plan-label">
-                PLAN ACTUAL
-              </span>
+              <span class="plan-label">{{ 'billing.subscriptions.currentPlan' | translate }}</span>
 
               <h2>
                 {{ getPlanName(subscription.planId) }}
               </h2>
             </div>
 
-            <span class="status-badge">
-              {{ subscription.status }}
-            </span>
+            <span class="status-badge">{{ 'billing.status.' + subscription.status | translate }}</span>
 
           </div>
 
           <div class="detail">
-            <span>Fecha de inicio</span>
+            <span>{{ 'billing.subscriptions.startDate' | translate }}</span>
             <strong>
               {{ subscription.startDate }}
             </strong>
           </div>
 
           <div class="detail">
-            <span>Vigente hasta</span>
-            <strong>{{ subscription.endDate ?? 'Sin fecha registrada' }}</strong>
-          </div>
-
-          <div class="detail">
-            <span>Límite de vehículos</span>
-            <strong>{{ subscription.vehicleLimit ?? 'Sin especificar' }}</strong>
+            <span>{{ 'billing.subscriptions.amount' | translate }}</span>
+            <strong class="amount">
+              S/ {{ getPlanPrice(subscription.planId) }}
+            </strong>
           </div>
 
           <div class="actions">
@@ -89,7 +78,7 @@
               type="button"
               class="primary-action"
               (click)="editSubscription(subscription.id)">
-              Gestionar suscripción
+              {{ 'billing.subscriptions.manage' | translate }}
             </button>
 
             <button
@@ -97,7 +86,7 @@
               type="button"
               class="secondary-action"
               (click)="requestCancellation(subscription.id)">
-              Cancelar suscripción
+              {{ 'billing.subscriptions.cancel' | translate }}
             </button>
 
           </div>
@@ -112,21 +101,16 @@
             R
           </div>
 
-          <h2>
-            No tienes una suscripción
-          </h2>
+          <h2>{{ 'billing.subscriptions.emptyTitle' | translate }}</h2>
 
-          <p>
-            Consulta los planes disponibles y elige
-            el que mejor se adapte a tu servicio.
-          </p>
+          <p>{{ 'billing.subscriptions.emptyDescription' | translate }}</p>
 
           <button
             mat-raised-button
             type="button"
             class="primary-action"
             (click)="goToPlans()">
-            Ver planes disponibles
+            {{ 'billing.subscriptions.viewAvailablePlans' | translate }}
           </button>
 
         </article>
@@ -150,14 +134,9 @@
           !
         </div>
 
-        <h2 id="cancel-dialog-title">
-          ¿Cancelar suscripción?
-        </h2>
+        <h2 id="cancel-dialog-title">{{ 'billing.cancel.title' | translate }}</h2>
 
-        <p>
-          Esta acción eliminará tu suscripción actual.
-          ¿Estás seguro de que deseas continuar?
-        </p>
+        <p>{{ 'billing.cancel.message' | translate }}</p>
 
         <div class="confirmation-actions">
 
@@ -166,7 +145,7 @@
             type="button"
             class="keep-action"
             (click)="closeCancellation()">
-            Mantener suscripción
+            {{ 'billing.cancel.keep' | translate }}
           </button>
 
           <button
@@ -174,7 +153,7 @@
             type="button"
             class="danger-action"
             (click)="confirmCancellation()">
-            Sí, cancelar
+            {{ 'billing.cancel.confirm' | translate }}
           </button>
 
         </div>

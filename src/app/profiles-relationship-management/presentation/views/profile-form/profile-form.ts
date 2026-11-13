@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 
@@ -17,7 +18,7 @@ import { Driver } from '../../../domain/model/driver.entity';
 @Component({
   selector: 'app-profile-form',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, TranslatePipe],
   templateUrl: './profile-form.html',
   styleUrl: './profile-form.css',
 })
@@ -31,8 +32,6 @@ export class ProfileForm {
   private initialized = false;
 
   readonly form = this.fb.nonNullable.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
     phoneNumber: [''],
   });
 
@@ -45,8 +44,6 @@ export class ProfileForm {
       }
 
       this.form.patchValue({
-        firstName: profile.firstName,
-        lastName: profile.lastName,
         phoneNumber: profile.phoneNumber ?? '',
       });
 
@@ -66,8 +63,8 @@ export class ProfileForm {
     const props = {
       id: current.id,
       accountId: current.accountId,
-      firstName: value.firstName,
-      lastName: value.lastName,
+      firstName: current.firstName,
+      lastName: current.lastName,
       phoneNumber: value.phoneNumber.trim() || null,
     };
 

@@ -1,1 +1,30 @@
 /* You can add global styles to this file, and also import other style files */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+/*
+ * Shared spacing for every routed page rendered inside the tutor/driver layouts.
+ * Each view root uses these tokens so that all screens start at the same distance
+ * from the side menu and the header, and share the same maximum reading width.
+ */
+:root {
+  --rumbo-page-padding: 32px;
+  --rumbo-page-max-width: 1200px;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --rumbo-page-padding: 16px;
+  }
+}
+
+.container-with-spacing {
+  margin: 10px; /* Applies margin to all sides */
+}

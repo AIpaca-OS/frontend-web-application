@@ -1,1 +1,28 @@
-<h2 mat-dialog-title class="modal-title">Reportar incidencia</h2><mat-dialog-content class="modal-content"><mat-form-field appearance="outline" class="full-width"><mat-label>Título</mat-label><input matInput [(ngModel)]="title" placeholder="Ej. Avería del vehículo"></mat-form-field><mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput rows="4" [(ngModel)]="message" placeholder="Describe brevemente lo ocurrido"></textarea></mat-form-field><mat-form-field appearance="outline" class="full-width"><mat-label>Prioridad</mat-label><mat-select [(ngModel)]="priority"><mat-option value="regular">Regular</mat-option><mat-option value="important">Importante</mat-option><mat-option value="critical">Crítica</mat-option></mat-select></mat-form-field></mat-dialog-content><mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="submit()" [disabled]="!title.trim() || !message.trim()">Guardar</button></mat-dialog-actions>
+<h2 mat-dialog-title class="modal-title">{{ 'incidents.incident.title' | translate }}</h2>
+<mat-dialog-content class="modal-content">
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>{{ 'incidents.incident.category' | translate }}</mat-label>
+    <mat-select [(ngModel)]="title">
+      @for (category of categories; track category) {
+        <mat-option [value]="category">{{ 'incidents.categories.' + category | translate }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>{{ 'incidents.tripId' | translate }}</mat-label>
+    <input matInput type="number" [(ngModel)]="tripId" min="1" [readonly]="tripFromContext">
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>{{ 'incidents.incident.description' | translate }}</mat-label>
+    <textarea matInput rows="4" [(ngModel)]="message" [placeholder]="'incidents.incident.descriptionPlaceholder' | translate"></textarea>
+  </mat-form-field>
+  @if (store.error()) {
+    <p class="form-error" role="alert">{{ store.error()! | translate }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>{{ 'common.cancel' | translate }}</button>
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="tripId <= 0 || !message.trim() || store.loading()">
+    {{ 'common.save' | translate }}
+  </button>
+</mat-dialog-actions>

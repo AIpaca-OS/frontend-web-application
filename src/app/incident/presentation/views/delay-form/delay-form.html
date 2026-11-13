@@ -1,1 +1,28 @@
-<h2 mat-dialog-title class="modal-title">Reportar retraso</h2><mat-dialog-content class="modal-content"><p class="modal-subtitle">Selecciona la magnitud estimada de la demora:</p><div class="magnitude-grid">@for (value of ['5 minutos','10 minutos','15+ minutos']; track value) {<button type="button" class="mag-btn" [class.selected]="magnitude===value" (click)="magnitude=value">{{ value }}</button>}</div><mat-form-field appearance="outline" class="full-width"><mat-label>Causa del retraso</mat-label><input matInput [(ngModel)]="cause" placeholder="Ej. Tráfico pesado"></mat-form-field></mat-dialog-content><mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="submit()" [disabled]="!cause.trim()">Confirmar y guardar</button></mat-dialog-actions>
+<h2 mat-dialog-title class="modal-title">{{ 'incidents.delay.title' | translate }}</h2>
+<mat-dialog-content class="modal-content">
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>{{ 'incidents.tripId' | translate }}</mat-label>
+    <input matInput type="number" min="1" [(ngModel)]="tripId" [readonly]="tripFromContext">
+  </mat-form-field>
+  <p class="modal-subtitle">{{ 'incidents.delay.magnitude' | translate }}</p>
+  <div class="magnitude-grid">
+    @for (value of ['5','10','15','30']; track value) {
+      <button type="button" class="mag-btn" [class.selected]="magnitude===value" (click)="magnitude=value">
+        {{ 'incidents.delay.minutes' | translate: { count: value } }}
+      </button>
+    }
+  </div>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>{{ 'incidents.delay.cause' | translate }}</mat-label>
+    <input matInput [(ngModel)]="cause" [placeholder]="'incidents.delay.causePlaceholder' | translate">
+  </mat-form-field>
+  @if (store.error()) {
+    <p class="form-error" role="alert">{{ store.error()! | translate }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>{{ 'common.cancel' | translate }}</button>
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="tripId <= 0 || !cause.trim() || store.loading()">
+    {{ 'incidents.delay.submit' | translate }}
+  </button>
+</mat-dialog-actions>

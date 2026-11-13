@@ -27,6 +27,6 @@ export class QuickActions {
   }
 
   configureRoute(): void {
-    this.router.navigate(['/routes']).then();
+    this.router.navigate(['/driver/routes']).then();
   }
 }

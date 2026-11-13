@@ -18,12 +18,7 @@ export class Student extends Person {
    */
   #birthDate: string;
 
-  /**
-   * The student's school name.
-   */
-  #schoolName: string;
-
-  /**
+/**
    * The current status of the student.
    */
   #status: StudentStatus;
@@ -36,7 +31,6 @@ export class Student extends Person {
    * @param props.firstName - Student's first name.
    * @param props.lastName - Student's last name.
    * @param props.birthDate - Student's date of birth in `YYYY-MM-DD` format.
-   * @param props.schoolName - Student's school name.
    * @param props.status - Current student status.
    * If omitted, it defaults to {@link StudentStatus.ACTIVE}.
    */
@@ -45,7 +39,6 @@ export class Student extends Person {
     firstName: string;
     lastName: string;
     birthDate: string;
-    schoolName: string;
     status?: StudentStatus;
   }) {
     super({
@@ -55,7 +48,6 @@ export class Student extends Person {
     });
 
     this.#birthDate = props.birthDate;
-    this.#schoolName = props.schoolName;
     this.#status = props.status ?? StudentStatus.ACTIVE;
   }
 
@@ -65,22 +57,6 @@ export class Student extends Person {
    */
   get birthDate(): string {
     return this.#birthDate;
-  }
-
-  /**
-   * Updates the student's school name.
-   * @param value - New school's name.
-   */
-  set schoolName(value: string) {
-    this.#schoolName = value.trim();
-  }
-
-  /**
-   * Gets the student's school name.
-   * @returns The school's name.
-   */
-  get schoolName(): string {
-    return this.#schoolName;
   }
 
   /**

@@ -3,6 +3,7 @@ import {BaseEntity} from '../../../shared/domain/model/base-entity';
 export class Incident implements BaseEntity {
 
   #id: number;
+  #tripId: number;
   #title: string;
   #message: string;
   #priority: string;
@@ -13,6 +14,7 @@ export class Incident implements BaseEntity {
 
   constructor(incident: {
     id: number;
+    tripId?: number;
     title: string;
     message: string;
     priority: string;
@@ -23,6 +25,7 @@ export class Incident implements BaseEntity {
   })
   {
     this.#id = incident.id;
+    this.#tripId = incident.tripId ?? 0;
     this.#title = incident.title;
     this.#message = incident.message;
     this.#priority = incident.priority;
@@ -37,6 +40,8 @@ export class Incident implements BaseEntity {
     this.#resolvedAt = new Date().toISOString();
   }
 
+  get tripId(): number { return this.#tripId; }
+  set tripId(value: number) { this.#tripId = value; }
   get id(): number {
     return this.#id;
   }

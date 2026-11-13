@@ -3,6 +3,7 @@ import {BaseEntity} from '../../../shared/domain/model/base-entity';
 export class Delay implements BaseEntity {
 
   #id: number;
+  #tripId: number;
   #cause: string;
   #priority: string;
   #magnitude: string;
@@ -11,6 +12,7 @@ export class Delay implements BaseEntity {
 
   constructor(delay: {
     id: number;
+    tripId?: number;
     cause: string;
     priority: string;
     magnitude: string;
@@ -19,6 +21,7 @@ export class Delay implements BaseEntity {
   }) {
 
     this.#id = delay.id;
+    this.#tripId = delay.tripId ?? 0;
     this.#cause = delay.cause;
     this.#priority = delay.priority;
     this.#magnitude = delay.magnitude;
@@ -26,6 +29,8 @@ export class Delay implements BaseEntity {
     this.#createdAt = delay.createdAt;
   }
 
+  get tripId(): number { return this.#tripId; }
+  set tripId(value: number) { this.#tripId = value; }
   get id(): number {
     return this.#id;
   }
