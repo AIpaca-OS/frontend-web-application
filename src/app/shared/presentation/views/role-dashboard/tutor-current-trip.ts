@@ -1,82 +1,99 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { TutorJourney, TutorJourneysApi } from '../../../infrastructure/tutor-journeys-api';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ProfilesRelationshipStore } from '../../../../profiles-relationship-management/application/profiles-relationship-management-store';
+import { RouteTripStore } from '../../../../route-trip-planning/application/route-trip.store';
+import { Route } from '../../../../route-trip-planning/domain/model/route.entity';
+import { Trip, TripPassenger } from '../../../../route-trip-planning/domain/model/trip.entity';
 
+/** Read model shown to the tutor: one student on one published route. */
+interface TutorJourney {
+  key: string;
+  studentName: string;
+  route: Route;
+  assignedStopId: string;
+  assignedStopAddress: string;
+  trip: Trip | null;
+  passenger: TripPassenger | null;
+}
+
+/**
+ * Published routes and latest trip state of the tutor's students.
+ *
+ * @remarks
+ * Composed from published endpoints only: GET /students?tutorProfileId, GET /service-enrollments/students/{id},
+ * GET /routes?driverProfileId and GET /trips?routeId.
+ */
 @Component({
   selector: 'app-tutor-current-trip',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <main class="trip">
       <header class="heading">
         <div>
-          <p class="eyebrow">RUMBO · SEGUIMIENTO ESCOLAR</p>
-          <h1>Rutas de mis estudiantes</h1>
-          <p>Consulta la ruta publicada y los estados registrados por el conductor.</p>
+          <p class="eyebrow">{{ 'tutorTrip.eyebrow' | translate }}</p>
+          <h1>{{ 'tutorTrip.title' | translate }}</h1>
+          <p>{{ 'tutorTrip.subtitle' | translate }}</p>
         </div>
-        <button type="button" (click)="reload()" [disabled]="loading()">Actualizar estado</button>
+        <button type="button" (click)="reload()" [disabled]="loading()">{{ 'tutorTrip.refresh' | translate }}</button>
       </header>
-      @if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
+      @for (error of errors(); track error) {
+        <p class="error" role="alert">{{ error | translate }}</p>
       }
       @if (loading()) {
-        <p role="status">Consultando rutas y viajes...</p>
-      } @else if (!journeys().length && !error()) {
+        <p role="status">{{ 'tutorTrip.loading' | translate }}</p>
+      } @else if (!journeys().length && !errors().length) {
         <section class="card">
-          <h2>Sin rutas asignadas todavía</h2>
-          <p>Registra a tu estudiante y solicita el transporte. Cuando el conductor publique
-            una ruta con su parada asignada, aparecerá aquí.</p>
-          <a routerLink="/tutor/students">Gestionar estudiantes</a>
+          <h2>{{ 'tutorTrip.emptyTitle' | translate }}</h2>
+          <p>{{ 'tutorTrip.emptyDescription' | translate }}</p>
+          <a routerLink="/tutor/students">{{ 'tutorTrip.manageStudents' | translate }}</a>
         </section>
       }
-      @for (journey of journeys(); track journey.studentId + ':' + journey.routeId) {
+      @for (journey of journeys(); track journey.key) {
         <article class="card">
           <div class="card-top">
             <div>
               <span class="student">{{ journey.studentName }}</span>
-              <h2>{{ journey.routeName }}</h2>
-              <p>{{ journey.routeCode }} · {{ journey.shift === 'MORNING' ? 'Mañana' : 'Tarde' }}
-                @if (journey.departureTime) { · {{ journey.departureTime }} }
+              <h2>{{ journey.route.name }}</h2>
+              <p>{{ journey.route.code }} · {{ (journey.route.shift === 'MORNING' ? 'routes.form.morning' : 'routes.form.afternoon') | translate }}
+                @if (journey.route.departureTime) { · {{ journey.route.departureTime }} }
               </p>
             </div>
-            <span class="state" [class.arrived]="journey.studentStatus === 'ARRIVED'">
-              {{ statusName(journey.studentStatus) }}
+            <span class="state" [class.arrived]="journey.passenger?.arrived">
+              {{ stateKey(journey) | translate }}
             </span>
           </div>
-          <p><strong>Parada asignada:</strong> {{ journey.assignedStopAddress }}</p>
-          @if (journey.serviceDate) {
-            <p><strong>Viaje registrado:</strong> {{ journey.serviceDate }}
-              · {{ journey.tripStatus === 'IN_PROGRESS' ? 'En recorrido' :
-                    journey.tripStatus === 'COMPLETED' ? 'Finalizado' :
-                    journey.tripStatus === 'CANCELLED' ? 'Cancelado' : 'Programado' }}
-            </p>
+          <p><strong>{{ 'tutorTrip.assignedStop' | translate }}:</strong> {{ journey.assignedStopAddress }}</p>
+          @if (journey.trip; as trip) {
+            <p><strong>{{ 'tutorTrip.registeredTrip' | translate }}:</strong> {{ trip.serviceDate }}
+              · {{ 'trips.status.' + trip.status | translate }}</p>
           } @else {
-            <p>La ruta ya está publicada. Aún no se ha programado un viaje.</p>
+            <p>{{ 'tutorTrip.noTrip' | translate }}</p>
           }
-          <h3>Recorrido</h3>
+          <h3>{{ 'tutorTrip.itinerary' | translate }}</h3>
           <ol>
-            @for (stop of journey.stops; track stop.position) {
-              <li [class.my-stop]="stop.assignedToStudent">
+            @for (stop of journey.route.stops; track stop.position) {
+              <li [class.my-stop]="stop.id === journey.assignedStopId">
                 <span>{{ stop.address }}</span>
-                @if (stop.assignedToStudent) { <strong>Parada del estudiante</strong> }
+                @if (stop.id === journey.assignedStopId) { <strong>{{ 'tutorTrip.studentStop' | translate }}</strong> }
               </li>
             }
           </ol>
-          @if (journey.studentStatus === 'ARRIVED') {
-            <p class="confirmation" role="status">El conductor confirmó la llegada del estudiante.</p>
-          } @else if (journey.studentStatus === 'STOP_SERVED') {
-            <p class="confirmation">La parada fue atendida. Todavía no se ha confirmado la llegada.</p>
+          @if (journey.passenger?.arrived) {
+            <p class="confirmation" role="status">{{ 'tutorTrip.arrivalConfirmed' | translate }}</p>
+          } @else if (journey.passenger?.stopServed) {
+            <p class="confirmation">{{ 'tutorTrip.stopServed' | translate }}</p>
           }
         </article>
       }
-      <a routerLink="/tutor/notifications">Ver notificaciones del recorrido</a>
+      <a routerLink="/tutor/notifications">{{ 'tutorTrip.viewNotifications' | translate }}</a>
     </main>
   `,
   styles: [`
-    .trip { max-width:1050px; margin:auto; padding:30px 24px; color:#143f34; display:grid; gap:18px; }
+    .trip { box-sizing:border-box;width:100%;max-width:var(--rumbo-page-max-width);margin:0 auto;padding:var(--rumbo-page-padding); color:#143f34; display:grid; gap:18px; }
     .heading,.card-top { display:flex; justify-content:space-between; align-items:start; gap:20px; flex-wrap:wrap; }
-    .eyebrow { font-size:12px; color:#19876c; font-weight:700; letter-spacing:.08em; }
+    .eyebrow { font-size:12px; color:#19876c; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:0; }
     h1 {font-size:28px;margin:8px 0;} h2{font-size:20px;margin:3px 0;}h3{font-size:15px;}
     p {font-size:13px; color:#556e64; line-height:1.6;}
     .card { border:1px solid #d8e7df; background:#fff; padding:22px; border-radius:14px; }
@@ -90,45 +107,101 @@ import { TutorJourney, TutorJourneysApi } from '../../../infrastructure/tutor-jo
     .error{color:#ab302e;}
   `],
 })
-export class TutorCurrentTrip implements OnInit {
-  private readonly api = inject(TutorJourneysApi);
-  readonly journeys = signal<TutorJourney[]>([]);
-  readonly loading = signal(false);
-  readonly error = signal('');
+export class TutorCurrentTrip {
+  private readonly profilesStore = inject(ProfilesRelationshipStore);
+  private readonly routeTripStore = inject(RouteTripStore);
+  private lastStudents = '';
+  private lastDrivers = '';
+  private lastRoutes = '';
 
-  ngOnInit(): void { void this.reload(); }
+  /** Driver profiles that accepted the transport of the tutor's students. */
+  private readonly driverIds = computed(() => [...new Set(this.profilesStore.enrollments()
+    .filter(enrollment => enrollment.status === 'ACCEPTED')
+    .map(enrollment => enrollment.driverProfileId))].sort((a, b) => a - b));
 
-  statusName(status: string): string {
-    const names: Record<string,string> = {
-      ROUTE_PUBLISHED: 'Ruta publicada',
-      NOT_PLANNED: 'Ruta publicada',
-      SCHEDULED: 'Viaje programado',
-      IN_PROGRESS: 'En recorrido',
-      STOP_SERVED: 'Parada atendida',
-      ARRIVED: 'Llegada confirmada',
-      ABSENT: 'Ausente',
-      CANCELLED: 'Viaje cancelado',
-      TRIP_COMPLETED: 'Viaje finalizado',
-      NOT_ASSIGNED_ON_TRIP: 'Sin asignación en este viaje',
-    };
-    return names[status] || status;
+  /** Published routes where a student of the tutor has an assigned stop. */
+  readonly journeys = computed<TutorJourney[]>(() => {
+    const result: TutorJourney[] = [];
+    for (const student of this.profilesStore.students()) {
+      for (const route of this.routeTripStore.routes()) {
+        if (route.status.toUpperCase() !== 'PUBLISHED') continue;
+        const stop = route.stops.find(item => (item.studentIds ?? []).includes(String(student.id)));
+        if (!stop?.id) continue;
+        const trip = this.routeTripStore.trips()
+          .filter(item => String(item.routeId) === route.id && item.students.some(p => p.studentId === String(student.id)))
+          .sort((a, b) => b.serviceDate.localeCompare(a.serviceDate))[0] ?? null;
+        result.push({
+          key: `${student.id}:${route.id}`,
+          studentName: student.fullName,
+          route,
+          assignedStopId: stop.id,
+          assignedStopAddress: stop.address,
+          trip,
+          passenger: trip?.students.find(p => p.studentId === String(student.id)) ?? null,
+        });
+      }
+    }
+    return result;
+  });
+
+  readonly loading = computed(() =>
+    this.profilesStore.loading() || this.profilesStore.enrollmentsLoading() ||
+    this.routeTripStore.loading() || this.routeTripStore.tripsLoading());
+
+  readonly errors = computed(() => [
+    this.profilesStore.error(), this.profilesStore.enrollmentsError(),
+    this.routeTripStore.error(), this.routeTripStore.tripsError(),
+  ].filter((key): key is string => Boolean(key)));
+
+  /**
+   * Chains the loads: students → enrollments → driver routes → trips.
+   */
+  constructor() {
+    effect(() => {
+      const ids = this.profilesStore.students().map(student => student.id);
+      const key = ids.join(',');
+      if (key && key !== this.lastStudents) {
+        this.lastStudents = key;
+        this.profilesStore.loadStudentEnrollments(ids);
+      }
+    });
+    effect(() => {
+      const ids = this.driverIds();
+      const key = ids.join(',');
+      if (key && key !== this.lastDrivers) {
+        this.lastDrivers = key;
+        this.routeTripStore.loadRoutesByDrivers(ids);
+      }
+    });
+    effect(() => {
+      const ids = [...new Set(this.journeys().map(journey => journey.route.id))];
+      const key = ids.join(',');
+      if (key && key !== this.lastRoutes) {
+        this.lastRoutes = key;
+        this.routeTripStore.loadTrips(ids);
+      }
+    });
   }
 
-  async reload(): Promise<void> {
-    if (this.loading()) return;
-    this.loading.set(true);
-    this.error.set('');
-    try {
-      this.journeys.set(await firstValueFrom(this.api.journeys()));
-    } catch (e) {
-      const response = e as {status?:number;error?:{detail?:string}};
-      this.error.set(response.status === 0
-        ? 'No se puede conectar al backend. Comprueba que Spring Boot esté ejecutándose.'
-        : response.status === 401 || response.status === 403 || response.status === 503
-          ? 'No se pudo acceder a las rutas del estudiante con la sesión actual.'
-          : response.error?.detail || 'No se pudieron consultar las rutas. Vuelve a actualizar.');
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Builds the i18n key of the student's current state.
+   * @param journey - Journey to describe.
+   * @returns Translation key.
+   */
+  stateKey(journey: TutorJourney): string {
+    const passenger = journey.passenger;
+    if (!journey.trip || !passenger) return 'tutorTrip.state.published';
+    if (passenger.arrived) return 'tutorTrip.state.arrived';
+    if (passenger.absent) return 'tutorTrip.state.absent';
+    if (passenger.stopServed) return 'tutorTrip.state.stopServed';
+    return 'trips.status.' + journey.trip.status;
+  }
+
+  /** Reloads the whole chain. */
+  reload(): void {
+    this.lastDrivers = '';
+    this.lastRoutes = '';
+    const ids = this.profilesStore.students().map(student => student.id);
+    if (ids.length) this.profilesStore.loadStudentEnrollments(ids);
   }
 }

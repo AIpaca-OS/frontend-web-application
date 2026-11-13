@@ -61,7 +61,9 @@
     "publishMissingStops": "Add at least one stop to publish this route.",
     "publishMissingSchedule": "Confirm a weekly schedule before publishing.",
     "publishMissingStudent": "Assign at least one eligible student before publishing.",
-    "publishReady": "This route meets the local publication requirements. The server will verify student permissions."
+    "publishReady": "This route meets the local publication requirements. The server will verify student permissions.",
+    "tutorRoutesTitle": "Your school routes",
+    "tutorRoutesDescription": "Check the published routes and your students' updates."
   },
   "nav": {
     "home": "Home",
@@ -91,14 +93,70 @@
       "title": "Students",
       "subtitle": "Manage students associated to your account.",
       "newStudent": "New student",
-      "noStudents": "No students registered."
+      "noStudents": "No students registered.",
+      "transportHint": "Registering a student does not share their data with any driver. Use Request transport to send a request to the driver; once accepted, the driver can include the student in a school route.",
+      "loading": "Loading students..."
     },
     "data": {
       "name": "Name",
       "birthdate": "Birthdate",
       "school": "School",
       "state": "State",
-      "actions": "Actions"
+      "actions": "Actions",
+      "transport": "Transport service"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
+    "relationship": {
+      "MOTHER": "Mother",
+      "FATHER": "Father",
+      "LEGAL_GUARDIAN": "Legal guardian",
+      "OTHER": "Other"
+    },
+    "transport": {
+      "checking": "Checking...",
+      "pending": "Request pending approval",
+      "accepted": "Enrolled with the driver",
+      "request": "Request transport",
+      "viewService": "View service"
+    },
+    "actions": {
+      "view": "View student",
+      "edit": "Edit student"
+    },
+    "form": {
+      "newTitle": "New student",
+      "editTitle": "Edit student",
+      "description": "Register the student's basic information.",
+      "firstName": "First names",
+      "lastName": "Last names",
+      "birthDate": "Birth date",
+      "relationship": "Relationship with the responsible tutor",
+      "required": "This field is required."
+    },
+    "authorize": {
+      "title": "Authorize tutor",
+      "description": "Enter the profile ID of a registered tutor and define their relationship with the student.",
+      "tutorProfileId": "Tutor profile ID",
+      "tutorProfileIdError": "Enter a valid tutor profile ID.",
+      "submit": "Authorize"
+    },
+    "detail": {
+      "eyebrow": "Student profile",
+      "description": "Manage the student's information and authorizations.",
+      "basicInfo": "Basic information",
+      "student": "Student",
+      "authorizedTutors": "Authorized tutors",
+      "revoke": "Revoke",
+      "noTutors": "There are no authorized tutors.",
+      "tutorReference": "Tutor #{{id}}",
+      "privacyTitle": "Privacy and data handling",
+      "deletionPending": "There is a pending data deletion request.",
+      "deletionHint": "You can request the deletion of the student's personal data.",
+      "requestDeletion": "Request deletion",
+      "notFound": "The student is not among the students linked to your profile."
     }
   },
   "routes": {
@@ -133,7 +191,8 @@
       "confirmDelete": "Delete this route? This action affects the connected API.",
       "statusConfigurable": "Configurable",
       "statusDraft": "Draft",
-      "statusScheduled": "Scheduled"
+      "statusScheduled": "Scheduled",
+      "manageTrips": "Manage trips"
     },
     "form": {
       "back": "Back to my routes",
@@ -244,7 +303,12 @@
       "reviewEnrollments": "Review enrollments",
       "refreshEligibleStudents": "Refresh available students",
       "publishedAssignmentsLocked": "Published routes retain their student assignments. Replan to change the assigned students.",
-      "publishedVehicleLocked": "The vehicle cannot be changed after a route is published."
+      "publishedVehicleLocked": "The vehicle cannot be changed after a route is published.",
+      "pendingTitle": "Pending transport requests",
+      "pendingHint": "Accept the student first so they can be assigned to a stop.",
+      "acceptRequest": "Accept request",
+      "accepting": "Accepting...",
+      "pendingAccepted": "Enrollment accepted. The student can now be selected for this route."
     },
     "days": {
       "MONDAY": "Monday",
@@ -278,7 +342,7 @@
       "driverDescription": "Review family service requests and accept them before assigning students to routes.",
       "createRoute": "Create route",
       "pendingTitle": "Pending requests",
-      "studentReference": "Student",
+      "studentReference": "Student #{{id}}",
       "pendingHint": "A parent or guardian requested transport for this student.",
       "accept": "Accept",
       "noPending": "No pending requests.",
@@ -286,7 +350,351 @@
       "end": "End enrollment",
       "noAccepted": "No enrolled students.",
       "tutorListHint": "To make a student available for the driver's routes, open their profile and request transport service. The driver must approve the request first.",
-      "manage": "Transport service"
+      "manage": "Transport service",
+      "driverProfileId": "Driver profile ID",
+      "requested": "Request registered. The driver must accept it before assigning routes.",
+      "acceptedMessage": "Enrollment accepted. You can now assign the student to a route.",
+      "noPendingHint": "There are no pending requests. The tutor must register the student and use Request transport to send you the request.",
+      "statuses": {
+        "PENDING": "Pending",
+        "ACCEPTED": "Accepted",
+        "CANCELLED": "Cancelled",
+        "ENDED": "Ended"
+      }
+    },
+    "detail": {
+      "title": "Profile",
+      "description": "Manage your personal information.",
+      "info": "Profile information",
+      "phone": "Phone",
+      "noPhone": "Not registered"
+    },
+    "form": {
+      "title": "Edit profile"
+    }
+  },
+  "errors": {
+    "network": "The server could not be reached (network or CORS). Check the browser console.",
+    "badRequest": "The server rejected the request. Review the entered data.",
+    "unauthorized": "You are not allowed to perform this operation with the current profile.",
+    "notFound": "The requested resource does not exist.",
+    "conflict": "The operation conflicts with existing data.",
+    "unprocessable": "The operation is not allowed in the current state.",
+    "unavailable": "The service is temporarily unavailable. Try again later.",
+    "server": "The server failed while processing the request.",
+    "unexpected": "Unexpected error. Try again.",
+    "profileRequired": "Sign in again and enter an existing profile ID.",
+    "driverProfileRequired": "Sign in as a driver with an existing profile ID.",
+    "loadNotifications": "Notifications could not be loaded.",
+    "createNotification": "The notice could not be published.",
+    "updateNotification": "The notification could not be updated.",
+    "deleteNotification": "The notification could not be deleted.",
+    "loadSettings": "Notification preferences could not be loaded.",
+    "updateSettings": "Notification preferences could not be saved.",
+    "createStudent": "The student could not be registered.",
+    "updateStudent": "The student could not be updated.",
+    "updateProfile": "The profile could not be updated.",
+    "authorizeTutor": "The tutor could not be authorized.",
+    "revokeTutor": "The authorization could not be revoked.",
+    "revokedAuthorizationMissing": "The revoked authorization is not in the student's history.",
+    "requestDataDeletion": "The data deletion could not be requested.",
+    "loadStudents": "Students could not be loaded.",
+    "loadProfile": "The profile could not be loaded.",
+    "loadRelationships": "Tutor authorizations could not be loaded.",
+    "loadDeletionRequests": "Data deletion requests could not be loaded.",
+    "loadEnrollments": "The transport service status could not be loaded.",
+    "requestEnrollment": "The transport service could not be requested.",
+    "cancelEnrollment": "The request could not be cancelled.",
+    "acceptEnrollment": "The request could not be accepted.",
+    "endEnrollment": "The enrollment could not be ended.",
+    "loadRoutes": "Routes could not be loaded.",
+    "createRoute": "The route could not be created.",
+    "updateRoute": "The route could not be updated.",
+    "saveAssignments": "The student assignments could not be saved.",
+    "publishRoute": "The route could not be published.",
+    "deleteRoute": "The route could not be deleted.",
+    "loadTrips": "Trips could not be loaded.",
+    "planTrip": "The trip could not be scheduled.",
+    "updateTrip": "The trip could not be updated.",
+    "tripRouteNotPublished": "Publish the route before scheduling a trip.",
+    "tripWithoutVehicle": "The route needs an assigned vehicle.",
+    "tripWithoutPassengers": "Assign students to the stops before scheduling the trip.",
+    "loadVehicles": "Vehicles could not be loaded.",
+    "createVehicle": "The vehicle could not be registered. Check the plate and the data.",
+    "updateVehicle": "The vehicle could not be updated.",
+    "deleteVehicle": "The vehicle could not be deleted.",
+    "loadPlans": "Plans could not be loaded.",
+    "loadSubscriptions": "Subscriptions could not be loaded.",
+    "activateSubscription": "The subscription could not be activated.",
+    "updateSubscription": "The subscription could not be updated.",
+    "cancelSubscription": "The subscription could not be cancelled.",
+    "noSubscriptionChanges": "No changes were detected.",
+    "loadIncidents": "Incidents could not be loaded.",
+    "loadDelays": "Delays could not be loaded.",
+    "reportIncident": "The incident could not be reported.",
+    "updateIncident": "The incident could not be updated.",
+    "reportDelay": "The delay could not be reported."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Operational events of your routes are gathered here.",
+    "recent": "Recent updates",
+    "refresh": "Refresh",
+    "markAllRead": "Mark all as read",
+    "loading": "Loading notifications...",
+    "empty": "There are no notifications yet. Refresh to check for new notices.",
+    "markRead": "Mark as read",
+    "delete": "Delete notification",
+    "behaviourTitle": "Notice behaviour",
+    "behaviourDescription": "Critical incidents remain available even when non-critical notices are disabled.",
+    "nonCriticalToggle": "Enable or disable non-critical notices",
+    "nonCritical": "Non-critical notices",
+    "sessionOnly": "This preference is kept only for the current session: the API does not store notification settings yet.",
+    "bannerTitle": "Designed to reduce noise",
+    "bannerDescription": "Rumbo focuses notices on pick-ups, delays, incidents and arrivals.",
+    "types": {
+      "warning": "Warning",
+      "success": "Confirmation",
+      "important": "Important",
+      "info": "Notice"
+    },
+    "journeyEvents": {
+      "ROUTE_PUBLISHED": "New route",
+      "TRIP_PLANNED": "Trip scheduled",
+      "TRIP_STARTED": "Route started",
+      "STOP_SERVED": "Stop served",
+      "ABSENT": "Absence",
+      "STUDENT_ARRIVED": "Arrival",
+      "TRIP_CANCELLED": "Cancellation",
+      "TRIP_COMPLETED": "Trip completed"
+    },
+    "composer": {
+      "title": "Report a delay or incident",
+      "hint": "Describe the situation of the route. Tutors of the assigned students will receive the notice. Do not include personal data.",
+      "noPublishedRoutes": "You need a published route before sending notices for it.",
+      "route": "Published route",
+      "selectRoute": "Select a route",
+      "kind": "Notice type",
+      "delay": "Delay",
+      "incident": "Incident",
+      "message": "Short description, without personal data",
+      "placeholder": "e.g. Ten-minute delay due to traffic",
+      "send": "Send notice",
+      "sending": "Sending...",
+      "success": "Notice published. It will appear in Notifications.",
+      "delayTitle": "Delay reported",
+      "incidentTitle": "Incident reported"
+    },
+    "tutor": {
+      "eyebrow": "Rumbo · School communication",
+      "title": "My students' notifications",
+      "subtitle": "Route publications, trip starts, stops, arrivals, delays and incidents.",
+      "refresh": "Refresh notices",
+      "loading": "Loading notices...",
+      "emptyTitle": "No notifications yet",
+      "emptyDescription": "When the driver publishes a route or reports the trip progress, the notices about your students will appear here.",
+      "viewRoutes": "View school routes",
+      "viewStudentRoute": "View my students' route"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "loading": "Loading..."
+  },
+  "trips": {
+    "back": "Back to my routes",
+    "title": "Manage trips and arrivals",
+    "days": "Days",
+    "noSchedule": "No schedule",
+    "planTitle": "Schedule a trip",
+    "planHint": "Choose a date included in the schedule of this published route.",
+    "date": "Date",
+    "plan": "Schedule trip",
+    "refresh": "Refresh trips",
+    "tripOf": "Trip of {{date}}",
+    "start": "Start route",
+    "stop": "Stop {{position}}",
+    "passengerStatus": "Status",
+    "serveStop": "Mark stop as served",
+    "confirmArrival": "Confirm arrival",
+    "complete": "Finish trip",
+    "empty": "There are no scheduled trips for this route yet.",
+    "planned": "Trip scheduled.",
+    "started": "Route started.",
+    "completed": "Trip finished.",
+    "stopServed": "Stop served. Confirm the arrival when it happens.",
+    "arrivalConfirmed": "Arrival confirmed.",
+    "status": {
+      "SCHEDULED": "Scheduled",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "passenger": {
+      "arrived": "Arrival confirmed",
+      "absent": "Absent",
+      "served": "Stop served; arrival pending",
+      "pending": "Stop pending"
+    }
+  },
+  "tutorTrip": {
+    "eyebrow": "Rumbo · School tracking",
+    "title": "My students' routes",
+    "subtitle": "Check the published route and the states registered by the driver.",
+    "refresh": "Refresh status",
+    "loading": "Loading routes and trips...",
+    "emptyTitle": "No routes assigned yet",
+    "emptyDescription": "Register your student and request transport. When the driver publishes a route with their assigned stop, it will appear here.",
+    "manageStudents": "Manage students",
+    "assignedStop": "Assigned stop",
+    "registeredTrip": "Registered trip",
+    "noTrip": "The route is published. No trip has been scheduled yet.",
+    "itinerary": "Itinerary",
+    "studentStop": "Student's stop",
+    "arrivalConfirmed": "The driver confirmed the student's arrival.",
+    "stopServed": "The stop was served. The arrival has not been confirmed yet.",
+    "viewNotifications": "View trip notifications",
+    "state": {
+      "published": "Route published",
+      "arrived": "Arrival confirmed",
+      "absent": "Absent",
+      "stopServed": "Stop served"
+    }
+  },
+  "vehicles": {
+    "list": {
+      "title": "Vehicle & Credential Management",
+      "subtitle": "Rumbo shows and centralizes the registered information of your fleet.",
+      "new": "New vehicle",
+      "seats": "{{count}} seats",
+      "empty": "There are no registered vehicles yet.",
+      "noticeTitle": "Important",
+      "noticeDescription": "These records and capacities are declared by the provider in this prototype. Rumbo centralizes the operational management without simulating an external government validation."
+    },
+    "fields": {
+      "id": "Vehicle ID",
+      "licensePlate": "License plate",
+      "brand": "Brand",
+      "model": "Model",
+      "capacity": "Capacity",
+      "capacitySeats": "Capacity (seats)",
+      "year": "Year"
+    },
+    "status": {
+      "PENDING_VERIFICATION": "Pending verification",
+      "VERIFIED": "Verified"
+    },
+    "form": {
+      "newTitle": "New vehicle",
+      "editTitle": "Edit vehicle",
+      "subtitle": "Complete the vehicle data to update the fleet record.",
+      "plateRequired": "The license plate is required.",
+      "create": "Create vehicle",
+      "update": "Update vehicle"
+    },
+    "delete": {
+      "title": "Delete vehicle?",
+      "message": "This action deletes the vehicle from the fleet and cannot be undone. Do you want to continue?"
+    }
+  },
+  "billing": {
+    "eyebrow": "Subscriptions",
+    "status": {
+      "PENDING": "Pending",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Paused",
+      "EXPIRED": "Expired",
+      "CANCELLED": "Cancelled"
+    },
+    "plans": {
+      "title": "Available plans",
+      "subtitle": "Choose the plan that best fits your service.",
+      "viewSubscription": "View my subscription",
+      "available": "Available",
+      "select": "Select plan",
+      "empty": "There are no active plans at the moment."
+    },
+    "form": {
+      "newTitle": "Confirm subscription",
+      "editTitle": "Manage my subscription",
+      "newDescription": "Review the selected plan before confirming.",
+      "editDescription": "Change the plan or the status of your subscription.",
+      "plan": "Plan",
+      "selectedPlan": "Selected plan",
+      "status": "Subscription status",
+      "newInfo": "New subscription",
+      "updateInfo": "Subscription update",
+      "information": "The data will be registered in Rumbo when you confirm the operation.",
+      "confirm": "Confirm subscription"
+    },
+    "subscriptions": {
+      "title": "My subscription",
+      "subtitle": "Check and manage your Rumbo subscription.",
+      "viewPlans": "View plans",
+      "currentPlan": "Current plan",
+      "startDate": "Start date",
+      "amount": "Reference price",
+      "manage": "Manage subscription",
+      "cancel": "Cancel subscription",
+      "emptyTitle": "You have no subscription",
+      "emptyDescription": "Check the available plans and choose the one that best fits your service.",
+      "viewAvailablePlans": "View available plans",
+      "planUnavailable": "Plan not available"
+    },
+    "cancel": {
+      "title": "Cancel subscription?",
+      "message": "This action cancels your current subscription. Are you sure you want to continue?",
+      "keep": "Keep subscription",
+      "confirm": "Yes, cancel"
+    }
+  },
+  "incidents": {
+    "tripId": "Trip ID",
+    "delay": {
+      "title": "Report delay",
+      "magnitude": "Select the estimated delay:",
+      "minutes": "{{count}} minutes",
+      "cause": "Cause of the delay",
+      "causePlaceholder": "e.g. Heavy traffic",
+      "submit": "Confirm and save"
+    },
+    "incident": {
+      "title": "Report incident",
+      "category": "Incident type",
+      "description": "Description",
+      "descriptionPlaceholder": "Briefly describe what happened"
+    },
+    "categories": {
+      "MECHANICAL_FAILURE": "Mechanical failure",
+      "TRAFFIC_ACCIDENT": "Traffic accident",
+      "ROAD_BLOCKED": "Road blocked",
+      "STUDENT_HEALTH": "Student health",
+      "OTHER": "Other"
+    }
+  },
+  "login": {
+    "tagline": "Peace of mind<br>on every<br>trip.",
+    "profileIdLabel": "Profile ID registered in Rumbo (development preview only)",
+    "profileIdPlaceholder": "e.g. 1",
+    "profileIdError": "Enter the numeric ID of a profile registered in the backend."
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms and Conditions",
+      "paragraph1": "Rumbo is an academic software project. Use of the application is subject to the rules, permissions and responsibilities defined for the service.",
+      "paragraph2": "Personal and operational information must be used only for school transportation management."
+    },
+    "privacy": {
+      "title": "Privacy",
+      "paragraph1": "Rumbo treats personal information as part of an academic software project and limits its use to the functions represented in the application.",
+      "paragraph2": "Production use requires privacy, security and legal review before processing real personal data."
     }
   }
 }

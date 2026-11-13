@@ -4,8 +4,8 @@
 <main class="main-content">
   <div class="content-body">
     <div class="page-header-section">
-      <h3 class="page-title">Notificaciones</h3>
-      <p class="page-subtitle">Los eventos operativos de tu ruta se centralizan aquí.</p>
+      <h3 class="page-title">{{ 'notifications.title' | translate }}</h3>
+      <p class="page-subtitle">{{ 'notifications.subtitle' | translate }}</p>
     </div>
 
     @if (showDriverDemo()) {
@@ -15,29 +15,29 @@
     <div class="dashboard-grid">
       <mat-card class="custom-card">
         <div class="card-header-row">
-          <h4 class="card-title">Actualizaciones recientes</h4>
+          <h4 class="card-title">{{ 'notifications.recent' | translate }}</h4>
           <div class="notification-toolbar">
             <button mat-button type="button" class="action-text-btn"
                     (click)="refreshNotifications()" [disabled]="alertingStore.loading()">
-              Actualizar
+              {{ 'notifications.refresh' | translate }}
             </button>
             <button mat-button type="button" color="primary" class="action-text-btn"
                     [disabled]="alertingStore.loading() || notifications().length === 0"
                     (click)="markAllAsRead()">
-              Marcar todo como leído
+              {{ 'notifications.markAllRead' | translate }}
             </button>
           </div>
         </div>
 
         @if (alertingStore.loading()) {
-          <p class="notification-feedback" role="status">Cargando notificaciones...</p>
+          <p class="notification-feedback" role="status">{{ 'notifications.loading' | translate }}</p>
         } @else if (alertingStore.error()) {
           <p class="notification-feedback notification-error" role="alert">
-            No se pudieron cargar las notificaciones. Verifica que la API esté disponible.
+            {{ alertingStore.error()! | translate }}
           </p>
         } @else if (notifications().length === 0) {
           <p class="notification-feedback" role="status">
-            No hay notificaciones por el momento. Puedes actualizar para consultar nuevos avisos.
+            {{ 'notifications.empty' | translate }}
           </p>
         }
         <div class="notifications-list">
@@ -78,8 +78,8 @@
                   <button
                     mat-icon-button
                     class="action-icon-btn check-btn"
-                    aria-label="Marcar notificación como leída"
-                    title="Marcar como leído"
+                    [attr.aria-label]="'notifications.markRead' | translate"
+                    [title]="'notifications.markRead' | translate"
                     (click)="markAsRead(notification)"
                   >
                     <mat-icon>done</mat-icon>
@@ -88,8 +88,8 @@
                 <button
                   mat-icon-button
                   class="action-icon-btn delete-btn"
-                  aria-label="Eliminar notificación"
-                  title="Eliminar notificación"
+                  [attr.aria-label]="'notifications.delete' | translate"
+                  [title]="'notifications.delete' | translate"
                   (click)="deleteNotification(notification.id)"
                 >
                   <mat-icon>delete_outline</mat-icon>
@@ -102,27 +102,28 @@
 
       <mat-card class="custom-card">
         <div class="card-inner-wrapper">
-          <h4 class="card-title">Comportamiento de avisos</h4>
+          <h4 class="card-title">{{ 'notifications.behaviourTitle' | translate }}</h4>
           <p class="card-desc-muted">
-            Las incidencias críticas permanecen disponibles aunque los avisos no críticos estén desactivados.
+            {{ 'notifications.behaviourDescription' | translate }}
           </p>
 
           @if (alertingStore.settings(); as settings) {
             <mat-slide-toggle
               [checked]="settings.nonCriticalEnabled"
               (change)="toggleNonCritical($event.checked)"
-              aria-label="Activar o desactivar avisos no críticos"
+              [attr.aria-label]="'notifications.nonCriticalToggle' | translate"
             >
-              Avisos no críticos
+              {{ 'notifications.nonCritical' | translate }}
             </mat-slide-toggle>
+            <p class="card-desc-muted">{{ 'notifications.sessionOnly' | translate }}</p>
           }
 
           <div class="info-banner">
             <div class="banner-icon"><mat-icon>info</mat-icon></div>
             <div class="banner-text-wrap">
-              <p class="banner-title">Diseñado para reducir ruido</p>
+              <p class="banner-title">{{ 'notifications.bannerTitle' | translate }}</p>
               <p class="banner-desc">
-                Rumbo concentra los avisos en recojos, retrasos, incidencias y llegadas.
+                {{ 'notifications.bannerDescription' | translate }}
               </p>
             </div>
           </div>

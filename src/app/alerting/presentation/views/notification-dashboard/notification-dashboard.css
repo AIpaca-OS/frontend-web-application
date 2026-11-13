@@ -275,9 +275,13 @@
   color: #9ca3af;
 }
 
-/* Cuerpo de la página */
+/* Cuerpo de la página: mismo margen que el resto de vistas */
 .content-body {
-  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--rumbo-page-max-width);
+  margin: 0 auto;
+  padding: var(--rumbo-page-padding);
   display: flex;
   flex-direction: column;
   gap: 24px;

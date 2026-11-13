@@ -16,11 +16,7 @@
     </div>
 
     <div class="brand-content">
-      <h1>
-        Tranquilidad<br>
-        en cada<br>
-        trayecto.
-      </h1>
+      <h1 [innerHTML]="'login.tagline' | translate"></h1>
     </div>
 
     <div class="decoration decoration-bottom">
@@ -28,7 +24,7 @@
     </div>
 
     <footer class="brand-footer">
-      Copyright © 2026 Rumbo. Todos los derechos reservados.
+      Copyright © 2026 Rumbo. {{ 'footer.rights' | translate }}
     </footer>
 
   </section>
@@ -80,6 +76,14 @@
 
       </div>
 
+      <label for="preview-profile-id" style="display:block;margin:12px 0 6px">
+        {{ 'login.profileIdLabel' | translate }}
+      </label>
+      <input id="preview-profile-id" #profileInput type="number" min="1" step="1"
+        [value]="profileId" (input)="profileId = profileInput.value"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid #aaa"
+        [placeholder]="'login.profileIdPlaceholder' | translate" />
+      @if (error) { <p role="alert" style="color:#ac3939">{{ error | translate }}</p> }
       <button type="button" class="login-button" (click)="redirect()">
         {{ (selectedRole === 'tutor'
           ? 'workspace.previewAsTutor'

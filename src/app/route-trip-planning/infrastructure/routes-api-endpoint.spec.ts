@@ -4,102 +4,57 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { Route } from '../domain/model/route.entity';
 import { RoutesApiEndpoint } from './routes-api-endpoint';
+import { ApiError } from '../../shared/infrastructure/api-error';
 
-describe('RoutesApiEndpoint', () => {
+describe('RoutesApiEndpoint (Spring Boot Long IDs)', () => {
   let endpoint: RoutesApiEndpoint;
-  let httpTesting: HttpTestingController;
-  const originalEnvironment = {
-    baseUrl: environment.routePlanningApiBaseUrl,
-    mode: environment.routePlanningApiMode,
-  };
+  let testing: HttpTestingController;
+  const base = `${environment.platformProviderApiBaseUrl}${environment.platformProviderRoutesEndpointPath}`;
+  const routeResource = (status: string) => ({
+    id: 15, driverProfileId: 2, name: 'Ruta Surco', code: 'R-SURCO', shift: 'MORNING', departureTime: '07:00', status,
+    vehicleId: 1, stopsCount: 1, stops: [{ id: 10, address: 'Av. Primavera 123', position: 1, studentIds: [5] }],
+    schedule: [{ dayOfWeek: 'MONDAY', departureTime: '07:00' }], scheduleConfirmed: true,
+  });
 
   beforeEach(() => {
-    environment.routePlanningApiBaseUrl = 'http://localhost:8080/api/v1';
-    environment.routePlanningApiMode = 'backend';
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    endpoint = new RoutesApiEndpoint(TestBed.inject(HttpClient));
+    testing = TestBed.inject(HttpTestingController);
+  });
+  afterEach(() => testing.verify());
 
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-
-    endpoint = new RoutesApiEndpoint(TestBed.inject(HttpClient), () => 'es-419');
-    httpTesting = TestBed.inject(HttpTestingController);
+  it('loads the routes of a driver', () => {
+    let count = 0;
+    endpoint.getByDriver(2).subscribe(routes => count = routes.length);
+    testing.expectOne(`${base}?driverProfileId=2`).flush([routeResource('CONFIGURABLE')]);
+    expect(count).toBe(1);
   });
 
-  afterEach(() => {
-    httpTesting.verify();
-    environment.routePlanningApiBaseUrl = originalEnvironment.baseUrl;
-    environment.routePlanningApiMode = originalEnvironment.mode;
-  });
-
-  it('sends a localized PATCH to publish a route', () => {
-    const id = 'f36da68a-4343-4717-97ab-00e821b76522';
-    let received: Route | undefined;
-
-    endpoint.publish(id).subscribe(route => (received = route));
-
-    const request = httpTesting.expectOne(
-      'http://localhost:8080/api/v1/routes/' + id + '/status',
-    );
+  it('publishes a route with PATCH /status', () => {
+    let result: Route | undefined;
+    endpoint.publish('15').subscribe(route => result = route);
+    const request = testing.expectOne(`${base}/15/status`);
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body).toEqual({ status: 'PUBLISHED' });
-    expect(request.request.headers.get('Accept-Language')).toBe('es-419');
-
-    request.flush({
-      id,
-      code: 'RUT-000001',
-      name: 'Morning Route',
-      shift: 'MORNING',
-      departureTime: '07:00',
-      status: 'PUBLISHED',
-      stops: [{ id: 'c87c45d4-a049-47a0-8a16-e34919c28b13', address: 'Main Street 10', position: 1 }],
-      schedule: [{ dayOfWeek: 'MONDAY', departureTime: '07:00' }],
-      scheduleConfirmed: true,
-    });
-
-    expect(received?.id).toBe(id);
-    expect(received?.status).toBe('PUBLISHED');
-  });
-  it('loads only eligible student candidates from Routes backend', () => {
-    let candidates: { id: string; fullName: string }[] = [];
-    endpoint.getEligibleStudents().subscribe(rows => (candidates = rows));
-
-    const request = httpTesting.expectOne(
-      'http://localhost:8080/api/v1/routes/eligible-students',
-    );
-    expect(request.request.method).toBe('GET');
-    expect(request.request.headers.get('Accept-Language')).toBe('es-419');
-    request.flush([{ id: 'student-1', fullName: 'Example Student' }]);
-
-    expect(candidates.length).toBe(1);
-    expect(candidates[0].id).toBe('student-1');
+    request.flush(routeResource('PUBLISHED'));
+    expect(result?.id).toBe('15');
+    expect(result?.status).toBe('PUBLISHED');
   });
 
-  it('sends selected student assignments as one REST request', () => {
-    const id = 'f36da68a-4343-4717-97ab-00e821b76522';
-    const stopId = 'c87c45d4-a049-47a0-8a16-e34919c28b13';
+  it('replaces assignments with numeric IDs and maps the returned route', () => {
     let result: Route | undefined;
-    endpoint.replaceAssignments(id, [{ stopId, studentId: 'student-1' }])
-      .subscribe(route => (result = route));
-
-    const request = httpTesting.expectOne(
-      'http://localhost:8080/api/v1/routes/' + id + '/assignments',
-    );
+    endpoint.replaceAssignments('15', [{ stopId: 10, studentId: 5 }]).subscribe(route => result = route);
+    const request = testing.expectOne(`${base}/15/assignments`);
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual([{ stopId, studentId: 'student-1' }]);
-    request.flush({
-      id,
-      name: 'Morning Route',
-      code: 'R-12345678',
-      status: 'CONFIGURABLE',
-      shift: 'MORNING',
-      vehicleId: 'vehicle-1',
-      stops: [{
-        id: stopId, position: 1, address: 'Av. Primavera 123', studentId: 'student-1',
-      }],
-      schedule: [{ dayOfWeek: 'MONDAY', departureTime: '07:00' }],
-      scheduleConfirmed: true,
-    });
-    expect(result?.stops[0].studentId).toBe('student-1');
+    expect(request.request.body).toEqual([{ stopId: 10, studentId: 5 }]);
+    request.flush(routeResource('CONFIGURABLE'));
+    expect(result?.stops[0].studentId).toBe('5');
   });
 
+  it('reports CORS/network failures as status 0', () => {
+    let failure: unknown;
+    endpoint.getById('15').subscribe({ error: error => failure = error });
+    testing.expectOne(`${base}/15`).error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    expect((failure as ApiError).status).toBe(0);
+  });
 });

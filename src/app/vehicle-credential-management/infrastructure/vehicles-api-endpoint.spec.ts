@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { VehiclesApiEndpoint } from './vehicles-api-endpoint';
+import { environment } from '../../../environments/environment';
 import { Vehicle } from '../domain/model/vehicle.entity';
 
 describe('Vehicles REST API', () => {
@@ -18,11 +19,13 @@ describe('Vehicles REST API', () => {
 
   afterEach(() => testing.verify());
 
-  it('loads the persisted vehicle catalog for the route selector', () => {
-    let plate = '';
-    endpoint.getAll().subscribe(vehicles => plate = vehicles[0].licensePlate);
+  const url = `${environment.platformProviderApiBaseUrl}${environment.platformProviderVehiclesEndpointPath}`;
 
-    const request = testing.expectOne('/api/v1/vehicles');
+  it('loads the vehicles of the driver for the route selector', () => {
+    let plate = '';
+    endpoint.getByDriver(2).subscribe(vehicles => plate = vehicles[0].licensePlate);
+
+    const request = testing.expectOne(`${url}?driverProfileId=2`);
     expect(request.request.method).toBe('GET');
     request.flush([{
       id: 1, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789',
@@ -37,16 +40,29 @@ describe('Vehicles REST API', () => {
       capacity: 15, year: 2023, status: 'ACTIVE',
     });
     let savedStatus = '';
-    endpoint.create(draft).subscribe(vehicle => savedStatus = vehicle.status);
+    endpoint.createForDriver(draft, 2).subscribe(vehicle => savedStatus = vehicle.status);
 
-    const request = testing.expectOne('/api/v1/vehicles');
+    const request = testing.expectOne(url);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body.licensePlate).toBe('XYZ-789');
+    expect(request.request.body).toEqual({
+      driverProfileId: 2, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789', capacity: 15, year: 2023,
+    });
     request.flush({
       id: 1, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789',
       capacity: 15, year: 2023, status: 'PENDING_VERIFICATION',
     });
 
     expect(savedStatus).toBe('PENDING_VERIFICATION');
+  });
+
+  it('updates only the fields accepted by UpdateVehicleRequest', () => {
+    const vehicle = new Vehicle({
+      id: 7, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789', capacity: 15, year: 2023, status: 'VERIFIED',
+    });
+    endpoint.update(vehicle, 7).subscribe();
+    const request = testing.expectOne(`${url}/7`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789', capacity: 15, year: 2023 });
+    request.flush({ id: 7, driverProfileId: 2, brand: 'Toyota', model: 'Hiace', licensePlate: 'XYZ-789', capacity: 15, year: 2023, status: 'VERIFIED' });
   });
 });

@@ -124,34 +124,26 @@
             }
             @if (studentsError()) {
               <div class="catalog-feedback warning" role="alert">
-                {{ studentsError() }}
+                {{ studentsError() | translate }}
+                @if (pendingError()) { ({{ pendingError()! | translate }}) }
                 <button mat-button type="button" (click)="loadStudentCandidates(true)">{{ 'routes.form.retry' | translate }}</button>
               </div>
             }
             @if (routeStatus !== 'PUBLISHED') {
-              @if (pendingLoading()) {
-                <p class="catalog-feedback" role="status">Consultando solicitudes del conductor...</p>
-              }
-              @if (pendingError()) {
-                <div class="catalog-feedback warning" role="alert">
-                  {{ pendingError() }}
-                  <button mat-button type="button" (click)="loadPendingEnrollments()">Reintentar</button>
-                </div>
-              }
-              @if (pendingNotice()) {
-                <p class="catalog-feedback" role="status">{{ pendingNotice() }}</p>
+              @if (pendingAccepted()) {
+                <p class="catalog-feedback" role="status">{{ 'routes.form.pendingAccepted' | translate }}</p>
               }
               @if (pendingEnrollments().length > 0) {
                 <div class="catalog-feedback">
-                  <strong>Solicitudes de transporte pendientes</strong>
-                  <p>Acepta primero al estudiante para poder asignarlo a una parada.</p>
+                  <strong>{{ 'routes.form.pendingTitle' | translate }}</strong>
+                  <p>{{ 'routes.form.pendingHint' | translate }}</p>
                   @for (enrollment of pendingEnrollments(); track enrollment.id) {
                     <div class="pending-enrollment-row">
                       <span>{{ pendingStudentName(enrollment.studentId) }}</span>
                       <button mat-stroked-button type="button"
                               [disabled]="pendingSavingId() !== null || saving"
                               (click)="acceptPendingEnrollment(enrollment.id)">
-                        {{ pendingSavingId() === enrollment.id ? 'Aceptando...' : 'Aceptar solicitud' }}
+                        {{ (pendingSavingId() === enrollment.id ? 'routes.form.accepting' : 'routes.form.acceptRequest') | translate }}
                       </button>
                     </div>
                   }
@@ -165,7 +157,7 @@
                 <a mat-stroked-button routerLink="/driver/students" target="_blank" rel="noopener">
                   {{ 'routes.form.reviewEnrollments' | translate }}
                 </a>
-                <button mat-button type="button" (click)="loadStudentCandidates(true); loadPendingEnrollments()">
+                <button mat-button type="button" (click)="loadStudentCandidates(true)">
                   {{ 'routes.form.refreshEligibleStudents' | translate }}
                 </button>
               </div>
@@ -339,7 +331,7 @@
           </section>
         }
         @if (store.error()) {
-          <div class="inline-validation" role="alert">{{ store.error() }}</div>
+          <div class="inline-validation" role="alert">{{ store.error()! | translate }}</div>
         }
       </div>
 

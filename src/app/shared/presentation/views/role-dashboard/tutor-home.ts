@@ -1,6 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { TutorJourney, TutorJourneysApi } from '../../../infrastructure/tutor-journeys-api';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -10,19 +8,14 @@ import { TranslatePipe } from '@ngx-translate/core';
   imports: [RouterLink, TranslatePipe],
   template: `
     <main class="dashboard">
-      <p class="eyebrow">RUMBO · {{ 'workspace.tutorRole' | translate }}</p>
+      <p class="eyebrow">Rumbo · {{ 'workspace.tutorRole' | translate }}</p>
       <h1>{{ 'workspace.tutorHome' | translate }}</h1>
       <p class="description">{{ 'workspace.tutorDescription' | translate }}</p>
 
       <section class="trip-panel">
         <div class="panel-label">{{ 'workspace.tutorDashboardTrip' | translate }}</div>
-        @if (journeys().length) {
-          <h2>{{ journeys()[0].routeName }}</h2>
-          <p>{{ journeys()[0].studentName }} · {{ journeyState(journeys()[0]) }}</p>
-        } @else {
-          <h2>Tus rutas escolares</h2>
-          <p>Consulta las rutas publicadas y las novedades de tus estudiantes.</p>
-        }
+        <h2>{{ 'workspace.tutorRoutesTitle' | translate }}</h2>
+        <p>{{ 'workspace.tutorRoutesDescription' | translate }}</p>
         <a class="primary-link" routerLink="/tutor/current-trip">{{ 'nav.trip' | translate }}</a>
       </section>
 
@@ -44,8 +37,8 @@ import { TranslatePipe } from '@ngx-translate/core';
     </main>
   `,
   styles: [`
-    .dashboard { max-width: 1000px; margin: 0 auto; padding: 36px 28px; color: #183c37; }
-    .eyebrow { color: #13836c; font-size: 12px; letter-spacing: .12em; font-weight: 700; }
+    .dashboard { box-sizing:border-box; width:100%; max-width:var(--rumbo-page-max-width); margin:0 auto; padding:var(--rumbo-page-padding);  color: #183c37; }
+    .eyebrow { color: #13836c; font-size: 12px; letter-spacing: .12em; font-weight: 700; text-transform: uppercase; margin: 0; }
     h1 { margin: 6px 0; font-size: 30px; } .description { color: #61736f; }
     .trip-panel { background: white; border: 1px solid #dfe9e5; border-radius: 14px; padding: 26px; margin: 26px 0; }
     .trip-panel h2 { margin: 9px 0; font-size: 19px; }
@@ -59,20 +52,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     a:focus-visible { outline: 2px solid #13836c; outline-offset: 3px; }
   `],
 })
-export class TutorHome implements OnInit {
-  private readonly api = inject(TutorJourneysApi);
-  readonly journeys = signal<TutorJourney[]>([]);
-  ngOnInit(): void {
-    void firstValueFrom(this.api.journeys())
-      .then(items => this.journeys.set(items))
-      .catch(() => this.journeys.set([]));
-  }
-  journeyState(journey: TutorJourney): string {
-    if (journey.studentStatus === 'ARRIVED') return 'Llegada confirmada';
-    if (journey.studentStatus === 'STOP_SERVED') return 'Parada atendida';
-    if (journey.studentStatus === 'IN_PROGRESS') return 'En recorrido';
-    if (journey.studentStatus === 'TRIP_COMPLETED') return 'Viaje finalizado';
-    if (journey.studentStatus === 'SCHEDULED') return 'Viaje programado';
-    return 'Ruta publicada';
-  }
-}
+/**
+ * Tutor landing page with shortcuts to the student routes, notifications and settings.
+ */
+export class TutorHome {}

@@ -15,6 +15,8 @@ export class Login {
   private readonly translate = inject(TranslateService);
 
   selectedRole: PreviewRole = 'tutor';
+  profileId = '';
+  error = '';
   language = this.translate.getCurrentLang() === 'es-419' ? 'ES' : 'EN';
 
   selectRole(role: PreviewRole): void {
@@ -23,7 +25,13 @@ export class Login {
 
   /** Preview only. RMO-49 requires verified credentials before production. */
   redirect(): void {
-    this.roleSession.enter(this.selectedRole);
+    const id = Number(this.profileId);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      this.error = 'login.profileIdError';
+      return;
+    }
+    this.error = '';
+    this.roleSession.enter(this.selectedRole, id);
     void this.router.navigateByUrl(this.selectedRole === 'tutor' ? '/tutor/home' : '/driver/home');
   }
 

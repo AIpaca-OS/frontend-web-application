@@ -1,5 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Component, effect, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -7,11 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
-import { Student, StudentStatus } from '../../../domain/model/student.entity';
-import { environment } from '../../../../../environments/environment';
-import { LocalProfilesApi } from '../../../infrastructure/local-profiles-api';
+import { Student } from '../../../domain/model/student.entity';
+import { RelationshipType } from '../../../domain/model/tutor-student-relationship.entity';
 
 /**
  * Form view used to create or update a student.
@@ -25,17 +24,14 @@ import { LocalProfilesApi } from '../../../infrastructure/local-profiles-api';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './student-form.html',
   styleUrl: './student-form.css',
 })
 export class StudentForm {
   readonly store = inject(ProfilesRelationshipStore);
-  readonly StudentStatus = StudentStatus;
-  readonly isLocalBackend = !environment.production;
-  readonly schoolOptions = signal<string[]>([]);
-  readonly schoolCatalogError = signal('');
-  private readonly profilesApi = inject(LocalProfilesApi);
+  readonly RelationshipType = RelationshipType;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -47,21 +43,13 @@ export class StudentForm {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     birthDate: ['', Validators.required],
-    schoolName: ['', Validators.required],
-    status: this.fb.nonNullable.control<StudentStatus>(StudentStatus.ACTIVE, Validators.required),
+    relationshipType: this.fb.nonNullable.control<RelationshipType>(RelationshipType.OTHER, Validators.required),
   });
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
     this.studentId = id ? Number(id) : null;
     this.isEdit = this.studentId !== null;
-
-    if (this.isLocalBackend) {
-      void firstValueFrom(this.profilesApi.schoolNames())
-        .then(names => this.schoolOptions.set(names))
-        .catch(() => this.schoolCatalogError.set(
-          'No se pudo cargar el catálogo de colegios. Comprueba la conexión con el backend.'));
-    }
 
     effect(() => {
       if (!this.isEdit || this.studentId === null || this.formInitialized) {
@@ -79,8 +67,6 @@ export class StudentForm {
         firstName: student.firstName,
         lastName: student.lastName,
         birthDate: student.birthDate,
-        schoolName: student.schoolName,
-        status: student.status,
       });
 
       this.formInitialized = true;
@@ -99,13 +85,11 @@ export class StudentForm {
       firstName: value.firstName,
       lastName: value.lastName,
       birthDate: value.birthDate,
-      schoolName: value.schoolName,
-      status: value.status,
     });
 
     const saved = this.isEdit
       ? await this.store.updateStudent(student)
-      : await this.store.addStudent(student);
+      : await this.store.addStudent(student, value.relationshipType);
     if (saved) await this.router.navigateByUrl('/tutor/students');
   }
 
