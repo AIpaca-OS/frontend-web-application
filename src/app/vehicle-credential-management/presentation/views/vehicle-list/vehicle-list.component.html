@@ -1,12 +1,12 @@
-﻿<div class="content-body">
+<div class="content-body">
   <!-- Cabecera de la sección alineada correctamente -->
   <div class="header-section">
     <div>
-      <h1 class="page-title">Vehicle & Credential Management</h1>
-      <p class="page-subtitle">Rumbo muestra y centraliza la información registrada de la flota vehicular.</p>
+      <h1 class="page-title">{{ 'vehicles.list.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'vehicles.list.subtitle' | translate }}</p>
     </div>
     <button mat-flat-button class="btn-primary-custom" (click)="navigateToNew()">
-      <mat-icon>add</mat-icon> New Vehicle
+      <mat-icon>add</mat-icon> {{ 'vehicles.list.new' | translate }}
     </button>
   </div>
 
@@ -17,7 +17,7 @@
     </div>
   }
   @if (store.error()) {
-    <mat-error class="error-banner">{{ store.error() }}</mat-error>
+    <mat-error class="error-banner">{{ store.error()! | translate }}</mat-error>
   }
 
   <!-- Grid de tarjetas de vehículos -->
@@ -28,35 +28,44 @@
           <div>
             <h3 class="card-title">{{ v.brand }} {{ v.model }}</h3>
           </div>
-          <span class="status-badge" [class.active]="v.status === 'ACTIVE'">
-            {{ v.status }}
+          <span class="status-badge" [class.active]="v.status === 'VERIFIED'">
+            {{ 'vehicles.status.' + v.status | translate }}
           </span>
         </div>
 
         <div class="vehicle-details-grid">
           <div class="detail-item">
-            <span class="detail-label">Plate</span>
+            <span class="detail-label">{{ 'vehicles.fields.id' | translate }}</span>
+            <span class="detail-value">{{ v.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">{{ 'vehicles.fields.licensePlate' | translate }}</span>
             <span class="detail-value plate-badge">{{ v.licensePlate }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Capacity</span>
-            <span class="detail-value">{{ v.capacity }} seats</span>
+            <span class="detail-label">{{ 'vehicles.fields.capacity' | translate }}</span>
+            <span class="detail-value">{{ 'vehicles.list.seats' | translate: { count: v.capacity } }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Year</span>
+            <span class="detail-label">{{ 'vehicles.fields.year' | translate }}</span>
             <span class="detail-value">{{ v.year }}</span>
           </div>
         </div>
 
         <div class="card-footer-actions">
           <button mat-stroked-button class="action-btn-sm" (click)="editVehicle(v.id)">
-            <mat-icon>edit</mat-icon> Editar
+            <mat-icon>edit</mat-icon> {{ 'common.edit' | translate }}
           </button>
           <button mat-stroked-button color="warn" class="action-btn-sm" (click)="deleteVehicle(v.id)">
-            <mat-icon>delete</mat-icon> Eliminar
+            <mat-icon>delete</mat-icon> {{ 'common.delete' | translate }}
           </button>
         </div>
       </mat-card>
+    }
+    @empty {
+      @if (!store.loading() && !store.error()) {
+        <p class="page-subtitle">{{ 'vehicles.list.empty' | translate }}</p>
+      }
     }
   </div>
 
@@ -66,9 +75,9 @@
       <mat-icon>info</mat-icon>
     </div>
     <div>
-      <p class="banner-title">Importante</p>
+      <p class="banner-title">{{ 'vehicles.list.noticeTitle' | translate }}</p>
       <p class="banner-desc">
-        Estos registros y capacidades son declarados por el prestador en este prototipo. Rumbo centraliza la gestión operativa sin simular una validación gubernamental externa.
+        {{ 'vehicles.list.noticeDescription' | translate }}
       </p>
     </div>
   </div>
@@ -78,17 +87,17 @@
 <ng-template #confirmDialog let-dialogRef="dialogRef">
   <div style="padding: 24px; border-radius: 16px; background-color: #ffffff;">
     <h2 mat-dialog-title style="margin-top: 0; color: #111827; font-weight: 700; font-size: 1.25rem;">
-      ¿Eliminar vehículo?
+      {{ 'vehicles.delete.title' | translate }}
     </h2>
     <div mat-dialog-content style="color: #4b5563; font-size: 0.95rem; margin-bottom: 20px;">
-      Esta acción eliminará el registro de la flota vehicular y no se puede deshacer. ¿Deseas continuar?
+      {{ 'vehicles.delete.message' | translate }}
     </div>
     <div mat-dialog-actions align="end" style="display: flex; justify-content: flex-end; gap: 12px; padding: 0;">
       <button mat-button (click)="dialogRef.close(false)" style="border-radius: 8px; color: #4b5563; font-weight: 600;">
-        Cancelar
+        {{ 'common.cancel' | translate }}
       </button>
       <button mat-flat-button color="warn" (click)="dialogRef.close(true)" style="border-radius: 8px; font-weight: 600;">
-        Eliminar
+        {{ 'common.delete' | translate }}
       </button>
     </div>
   </div>

@@ -1,45 +1,39 @@
 import { computed, DestroyRef, inject, Injectable, Signal, signal } from '@angular/core';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { retry } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 
 import { ProfilesRelationshipApi } from '../infrastructure/profiles-relationship-management-api';
+import { DemoRoleSession } from '../../identity-and-access-management/application/demo-role-session.service';
+import { toErrorMessageKey } from '../../shared/infrastructure/api-error';
 
 import { Student } from '../domain/model/student.entity';
 import { Tutor } from '../domain/model/tutor.entity';
 import { Driver } from '../domain/model/driver.entity';
-
-import { TutorStudentRelationship } from '../domain/model/tutor-student-relationship.entity';
+import { TutorStudentRelationship, RelationshipType } from '../domain/model/tutor-student-relationship.entity';
 import { DataDeletionRequest } from '../domain/model/data-deletion-request.entity';
+import { ServiceEnrollment } from '../domain/model/service-enrollment.entity';
 
 /**
- * Holds Profiles & Relationship Management application state
- * and coordinates profile, student, relationship, and
- * data deletion request operations.
+ * Holds Profiles & Relationship Management application state and coordinates profile, student,
+ * relationship, data-deletion and service-enrollment operations.
+ *
+ * @remarks
+ * `error` and `enrollmentsError` contain i18n keys that the views render with TranslatePipe.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class ProfilesRelationshipStore {
-  /**
-   * Infrastructure API used by the application layer.
-   */
   private readonly profilesRelationshipApi = inject(ProfilesRelationshipApi);
-
-  /**
-   * Destroy reference used to automatically unsubscribe
-   * from API observables when the store is destroyed.
-   */
+  private readonly session = inject(DemoRoleSession);
   private readonly destroyRef = inject(DestroyRef);
 
-  // =========================================================
   // Students
-  // =========================================================
 
   private readonly studentsSignal = signal<Student[]>([]);
 
   /**
-   * Readonly signal containing all students.
+   * Readonly signal containing the students of the acting tutor.
    */
   readonly students = this.studentsSignal.asReadonly();
 
@@ -48,14 +42,12 @@ export class ProfilesRelationshipStore {
    */
   readonly studentCount = computed(() => this.students().length);
 
-  // =========================================================
   // Profiles
-  // =========================================================
 
   private readonly profilesSignal = signal<(Tutor | Driver)[]>([]);
 
   /**
-   * Readonly signal containing all tutor and driver profiles.
+   * Readonly signal containing the loaded profiles.
    */
   readonly profiles = this.profilesSignal.asReadonly();
 
@@ -63,66 +55,74 @@ export class ProfilesRelationshipStore {
    * Computed collection containing only Tutor profiles.
    */
   readonly tutors = computed(() =>
-    this.profiles().filter((profile): profile is Tutor => profile instanceof Tutor),
-  );
+    this.profiles().filter((profile): profile is Tutor => profile instanceof Tutor));
 
   /**
    * Computed collection containing only Driver profiles.
    */
   readonly drivers = computed(() =>
-    this.profiles().filter((profile): profile is Driver => profile instanceof Driver),
-  );
+    this.profiles().filter((profile): profile is Driver => profile instanceof Driver));
 
-  /**
-   * Computed number of loaded profiles.
-   */
-  readonly profileCount = computed(() => this.profiles().length);
-
-  /**
-   * Computed number of Tutor profiles.
-   */
-  readonly tutorCount = computed(() => this.tutors().length);
-
-  /**
-   * Computed number of Driver profiles.
-   */
-  readonly driverCount = computed(() => this.drivers().length);
-
-  // =========================================================
-  // Tutor-Student Relationships
-  // =========================================================
+  // Tutor-student relationships
 
   private readonly relationshipsSignal = signal<TutorStudentRelationship[]>([]);
 
   /**
-   * Readonly signal containing all tutor-student relationships.
+   * Readonly signal containing the tutor-student relationships.
    */
   readonly relationships = this.relationshipsSignal.asReadonly();
 
-  /**
-   * Computed number of tutor-student relationships.
-   */
-  readonly relationshipCount = computed(() => this.relationships().length);
-
-  // =========================================================
-  // Data Deletion Requests
-  // =========================================================
+  // Data deletion requests
 
   private readonly deletionRequestsSignal = signal<DataDeletionRequest[]>([]);
 
   /**
-   * Readonly signal containing all student data deletion requests.
+   * Readonly signal containing the data-deletion requests of the acting tutor.
    */
   readonly deletionRequests = this.deletionRequestsSignal.asReadonly();
 
-  /**
-   * Computed number of deletion requests.
-   */
-  readonly deletionRequestCount = computed(() => this.deletionRequests().length);
+  // Service enrollments
 
-  // =========================================================
-  // Request State
-  // =========================================================
+  private readonly enrollmentsSignal = signal<ServiceEnrollment[]>([]);
+
+  /**
+   * Readonly signal containing the loaded service enrollments
+   * (the tutor's students' enrollments, or the enrollments addressed to the acting driver).
+   */
+  readonly enrollments = this.enrollmentsSignal.asReadonly();
+
+  private readonly driverStudentsSignal = signal<Student[]>([]);
+
+  /**
+   * Readonly signal containing the students with an enrollment addressed to the acting driver.
+   */
+  readonly driverStudents = this.driverStudentsSignal.asReadonly();
+
+  /**
+   * Students whose enrollment was accepted by the acting driver (candidates for route stops).
+   */
+  readonly acceptedDriverStudents = computed(() => {
+    const accepted = new Set(this.enrollments()
+      .filter(enrollment => enrollment.status === 'ACCEPTED')
+      .map(enrollment => enrollment.studentId));
+    return this.driverStudents().filter(student => accepted.has(student.id));
+  });
+
+  private readonly enrollmentsLoadingSignal = signal<boolean>(false);
+
+  /**
+   * Indicates whether an enrollment operation is in progress.
+   */
+  readonly enrollmentsLoading = this.enrollmentsLoadingSignal.asReadonly();
+
+  private readonly enrollmentsErrorSignal = signal<string | null>(null);
+
+  /**
+   * Readonly signal containing the latest enrollment error (i18n key).
+   */
+  readonly enrollmentsError = this.enrollmentsErrorSignal.asReadonly();
+
+  // Request state
 
   private readonly pendingRequestsSignal = signal<number>(0);
 
@@ -134,541 +134,389 @@ export class ProfilesRelationshipStore {
   private readonly errorSignal = signal<string | null>(null);
 
   /**
-   * Readonly signal containing the latest application error.
+   * Readonly signal containing the latest application error (i18n key).
    */
   readonly error = this.errorSignal.asReadonly();
 
   /**
-   * Creates an instance of ProfilesRelationshipStore
-   * and loads the initial bounded context data.
+   * Creates an instance of ProfilesRelationshipStore and loads the data of the acting role.
    */
   constructor() {
-    this.loadStudents();
     this.loadProfiles();
-    this.loadRelationships();
-    this.loadDeletionRequests();
+    if (this.session.role() === 'driver') {
+      this.loadDriverEnrollments();
+    } else {
+      this.loadStudents();
+      this.loadRelationships();
+      this.loadDeletionRequests();
+    }
   }
 
-  // =========================================================
-  // Student Selectors
-  // =========================================================
+  // Selectors
 
   /**
    * Selects a student by identifier.
-   *
    * @param id - Student identifier.
    * @returns Reactive selection for the requested student.
    */
   getStudentById = (id: number): Signal<Student | undefined> =>
-    computed(() => (id ? this.students().find((student) => student.id === id) : undefined));
-
-  // =========================================================
-  // Profile Selectors
-  // =========================================================
+    computed(() => (id ? this.students().find(student => student.id === id) : undefined));
 
   /**
    * Selects a profile by identifier.
-   *
    * @param id - Profile identifier.
    * @returns Reactive selection for the requested profile.
    */
   getProfileById = (id: number): Signal<Tutor | Driver | undefined> =>
-    computed(() => (id ? this.profiles().find((profile) => profile.id === id) : undefined));
-
-  /**
-   * Selects a tutor by identifier.
-   *
-   * @param id - Tutor identifier.
-   * @returns Reactive selection for the requested tutor.
-   */
-  getTutorById = (id: number): Signal<Tutor | undefined> =>
-    computed(() => this.tutors().find((tutor) => tutor.id === id));
-
-  /**
-   * Selects a driver by identifier.
-   *
-   * @param id - Driver identifier.
-   * @returns Reactive selection for the requested driver.
-   */
-  getDriverById = (id: number): Signal<Driver | undefined> =>
-    computed(() => this.drivers().find((driver) => driver.id === id));
-
-  // =========================================================
-  // Relationship Selectors
-  // =========================================================
-
-  /**
-   * Selects a tutor-student relationship by identifier.
-   *
-   * @param id - Relationship identifier.
-   * @returns Reactive selection for the requested relationship.
-   */
-  getRelationshipById = (id: number): Signal<TutorStudentRelationship | undefined> =>
-    computed(() => this.relationships().find((relationship) => relationship.id === id));
+    computed(() => (id ? this.profiles().find(profile => profile.id === id) : undefined));
 
   /**
    * Selects relationships associated with a student.
-   *
    * @param studentId - Student identifier.
    * @returns Reactive collection of matching relationships.
    */
   getRelationshipsByStudentId = (studentId: number): Signal<TutorStudentRelationship[]> =>
-    computed(() =>
-      this.relationships().filter((relationship) => relationship.studentId === studentId),
-    );
-
-  /**
-   * Selects relationships associated with a tutor.
-   *
-   * @param tutorId - Tutor identifier.
-   * @returns Reactive collection of matching relationships.
-   */
-  getRelationshipsByTutorId = (tutorId: number): Signal<TutorStudentRelationship[]> =>
-    computed(() => this.relationships().filter((relationship) => relationship.tutorId === tutorId));
-
-  // =========================================================
-  // Deletion Request Selectors
-  // =========================================================
-
-  /**
-   * Selects a deletion request by identifier.
-   *
-   * @param id - Deletion request identifier.
-   * @returns Reactive selection for the requested request.
-   */
-  getDeletionRequestById = (id: number): Signal<DataDeletionRequest | undefined> =>
-    computed(() => this.deletionRequests().find((request) => request.id === id));
+    computed(() => this.relationships().filter(relationship => relationship.studentId === studentId));
 
   /**
    * Selects deletion requests associated with a student.
-   *
    * @param studentId - Student identifier.
    * @returns Reactive collection of matching deletion requests.
    */
   getDeletionRequestsByStudentId = (studentId: number): Signal<DataDeletionRequest[]> =>
-    computed(() => this.deletionRequests().filter((request) => request.studentId === studentId));
-
-  // =========================================================
-  // Student CRUD
-  // =========================================================
+    computed(() => this.deletionRequests().filter(request => request.studentId === studentId));
 
   /**
-   * Adds a new student.
-   *
-   * @param student - Student to create.
+   * Selects the enrollments associated with a student.
+   * @param studentId - Student identifier.
+   * @returns Reactive collection of matching enrollments.
    */
-  addStudent = (student: Student): void => {
+  getEnrollmentsByStudentId = (studentId: number): Signal<ServiceEnrollment[]> =>
+    computed(() => this.enrollments().filter(enrollment => enrollment.studentId === studentId));
+
+  /**
+   * Selects a student summary visible to the acting driver.
+   * @param studentId - Student identifier.
+   * @returns Reactive selection for the requested student.
+   */
+  getDriverStudentById = (studentId: number): Signal<Student | undefined> =>
+    computed(() => this.driverStudents().find(student => student.id === studentId));
+
+  // Students
+
+  /**
+   * Registers a new student under the acting tutor.
+   * @param student - Student to create.
+   * @param relationshipType - Relationship between tutor and student.
+   * @returns True when the student was created.
+   */
+  addStudent = async (student: Student, relationshipType: RelationshipType = RelationshipType.OTHER): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createStudent(student)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdStudent) => {
-          this.studentsSignal.update((students) => [...students, createdStudent]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create student');
-        },
-      });
+    try {
+      // A POST must not be retried automatically: it may have been persisted already.
+      const created = await firstValueFrom(this.profilesRelationshipApi.createStudent(student, relationshipType));
+      this.studentsSignal.update(students => [...students, created]);
+      this.endRequest();
+      this.loadRelationships();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'errors.createStudent');
+      return false;
+    }
   };
 
   /**
    * Updates an existing student.
-   *
    * @param updatedStudent - Student to update.
+   * @returns True when the student was updated.
    */
-  updateStudent = (updatedStudent: Student): void => {
+  updateStudent = async (updatedStudent: Student): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .updateStudent(updatedStudent)
-      .pipe(retry(2))
-      .subscribe({
-        next: (student) => {
-          this.studentsSignal.update((students) =>
-            students.map((current) => (current.id === student.id ? student : current)),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to update student');
-        },
-      });
+    try {
+      const saved = await firstValueFrom(this.profilesRelationshipApi.updateStudent(updatedStudent));
+      this.studentsSignal.update(students => students.map(current => current.id === saved.id ? saved : current));
+      this.endRequest();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'errors.updateStudent');
+      return false;
+    }
   };
 
-  /**
-   * Deletes a student by identifier.
-   *
-   * @param id - Student identifier.
-   */
-  deleteStudent = (id: number): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .deleteStudent(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.studentsSignal.update((students) => students.filter((student) => student.id !== id));
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to delete student');
-        },
-      });
-  };
-
-  // =========================================================
-  // Profile CRUD
-  // =========================================================
+  // Profiles
 
   /**
-   * Adds a Tutor or Driver profile.
-   *
-   * @param profile - Profile to create.
-   */
-  addProfile = (profile: Tutor | Driver): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createProfile(profile)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdProfile) => {
-          this.profilesSignal.update((profiles) => [...profiles, createdProfile]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create profile');
-        },
-      });
-  };
-
-  /**
-   * Updates an existing Tutor or Driver profile.
-   *
+   * Updates the contact phone of a profile.
    * @param updatedProfile - Profile to update.
    */
   updateProfile = (updatedProfile: Tutor | Driver): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .updateProfile(updatedProfile)
-      .pipe(retry(2))
-      .subscribe({
-        next: (profile) => {
-          this.profilesSignal.update((profiles) =>
-            profiles.map((current) => (current.id === profile.id ? profile : current)),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to update profile');
-        },
-      });
+    this.profilesRelationshipApi.updateProfile(updatedProfile).subscribe({
+      next: profile => {
+        this.profilesSignal.update(profiles => profiles.map(current => current.id === profile.id ? profile : current));
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.updateProfile')
+    });
   };
 
-  /**
-   * Deletes a profile by identifier.
-   *
-   * @param id - Profile identifier.
-   */
-  deleteProfile = (id: number): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .deleteProfile(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.profilesSignal.update((profiles) => profiles.filter((profile) => profile.id !== id));
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to delete profile');
-        },
-      });
-  };
-
-  // =========================================================
-  // Tutor-Student Relationship CRUD
-  // =========================================================
+  // Tutor-student relationships
 
   /**
-   * Adds a new tutor-student relationship.
-   *
+   * Authorizes a tutor for a student.
    * @param relationship - Relationship to create.
+   * @returns True when the authorization was created.
    */
-  addRelationship = (relationship: TutorStudentRelationship): void => {
+  addRelationship = async (relationship: TutorStudentRelationship): Promise<boolean> => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createTutorStudentRelationship(relationship)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdRelationship) => {
-          this.relationshipsSignal.update((relationships) => [
-            ...relationships,
-            createdRelationship,
-          ]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create tutor-student relationship');
-        },
-      });
+    try {
+      const created = await firstValueFrom(this.profilesRelationshipApi.createTutorStudentRelationship(relationship));
+      this.relationshipsSignal.update(relationships => [...relationships, created]);
+      this.endRequest();
+      return true;
+    } catch (error) {
+      this.handleError(error, 'errors.authorizeTutor');
+      return false;
+    }
   };
 
   /**
-   * Updates an existing tutor-student relationship.
-   *
-   * @param updatedRelationship - Relationship to update.
+   * Revokes a tutor authorization.
+   * @param relationship - Relationship to revoke.
    */
-  updateRelationship = (updatedRelationship: TutorStudentRelationship): void => {
+  revokeRelationship = (relationship: TutorStudentRelationship): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .updateTutorStudentRelationship(updatedRelationship)
-      .pipe(retry(2))
-      .subscribe({
-        next: (relationship) => {
-          this.relationshipsSignal.update((relationships) =>
-            relationships.map((current) =>
-              current.id === relationship.id ? relationship : current,
-            ),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to update tutor-student relationship');
-        },
-      });
+    this.profilesRelationshipApi.revokeTutorStudentRelationship(relationship).subscribe({
+      next: revoked => {
+        this.relationshipsSignal.update(relationships =>
+          relationships.map(current => current.id === revoked.id ? revoked : current));
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.revokeTutor')
+    });
   };
 
-  /**
-   * Deletes a tutor-student relationship.
-   *
-   * @param id - Relationship identifier.
-   */
-  deleteRelationship = (id: number): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .deleteTutorStudentRelationship(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.relationshipsSignal.update((relationships) =>
-            relationships.filter((relationship) => relationship.id !== id),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to delete tutor-student relationship');
-        },
-      });
-  };
-
-  // =========================================================
-  // Data Deletion Request CRUD
-  // =========================================================
+  // Data deletion requests
 
   /**
-   * Adds a new student data deletion request.
-   *
+   * Requests the deletion of a student's personal data.
    * @param request - Deletion request to create.
    */
   addDataDeletionRequest = (request: DataDeletionRequest): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .createDataDeletionRequest(request)
-      .pipe(retry(2))
-      .subscribe({
-        next: (createdRequest) => {
-          this.deletionRequestsSignal.update((requests) => [...requests, createdRequest]);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to create data deletion request');
-        },
-      });
+    this.profilesRelationshipApi.createDataDeletionRequest(request).subscribe({
+      next: created => {
+        this.deletionRequestsSignal.update(requests => [...requests, created]);
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.requestDataDeletion')
+    });
   };
 
+  // Service enrollments (tutor side)
+
   /**
-   * Updates an existing student data deletion request.
-   *
-   * @param updatedRequest - Deletion request to update.
+   * Loads the enrollments of the given students, replacing the previous ones for those students.
+   * @param studentIds - Student identifiers.
    */
-  updateDataDeletionRequest = (updatedRequest: DataDeletionRequest): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .updateDataDeletionRequest(updatedRequest)
-      .pipe(retry(2))
+  loadStudentEnrollments = (studentIds: number[]): void => {
+    if (studentIds.length === 0) return;
+    this.enrollmentsLoadingSignal.set(true);
+    this.enrollmentsErrorSignal.set(null);
+    forkJoin(studentIds.map(id => this.profilesRelationshipApi.getStudentEnrollments(id)))
+      .pipe(map(batches => batches.flat()))
       .subscribe({
-        next: (request) => {
-          this.deletionRequestsSignal.update((requests) =>
-            requests.map((current) => (current.id === request.id ? request : current)),
-          );
-
-          this.endRequest();
+        next: enrollments => {
+          const ids = new Set(studentIds);
+          this.enrollmentsSignal.update(current => [
+            ...current.filter(enrollment => !ids.has(enrollment.studentId)), ...enrollments]);
+          this.enrollmentsLoadingSignal.set(false);
         },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to update data deletion request');
-        },
+        error: error => {
+          this.enrollmentsErrorSignal.set(this.formatError(error, 'errors.loadEnrollments'));
+          this.enrollmentsLoadingSignal.set(false);
+        }
       });
   };
 
   /**
-   * Deletes a student data deletion request.
-   *
-   * @param id - Deletion request identifier.
+   * Requests the transport service of a driver for a student.
+   * @param studentId - Student identifier.
+   * @param driverProfileId - Driver profile identifier.
+   * @returns True when the request was registered.
    */
-  deleteDataDeletionRequest = (id: number): void => {
-    this.beginRequest();
-
-    this.profilesRelationshipApi
-      .deleteDataDeletionRequest(id)
-      .pipe(retry(2))
-      .subscribe({
-        next: () => {
-          this.deletionRequestsSignal.update((requests) =>
-            requests.filter((request) => request.id !== id),
-          );
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to delete data deletion request');
-        },
-      });
+  requestEnrollment = async (studentId: number, driverProfileId: number): Promise<boolean> => {
+    this.enrollmentsLoadingSignal.set(true);
+    this.enrollmentsErrorSignal.set(null);
+    try {
+      const created = await firstValueFrom(this.profilesRelationshipApi.requestEnrollment(studentId, driverProfileId));
+      this.enrollmentsSignal.update(enrollments => [...enrollments, created]);
+      return true;
+    } catch (error) {
+      this.enrollmentsErrorSignal.set(this.formatError(error, 'errors.requestEnrollment'));
+      return false;
+    } finally {
+      this.enrollmentsLoadingSignal.set(false);
+    }
   };
 
-  // =========================================================
-  // Initial Data Loading
-  // =========================================================
+  /**
+   * Cancels a pending enrollment.
+   * @param id - Enrollment identifier.
+   */
+  cancelEnrollment = (id: number): void =>
+    this.applyEnrollmentTransition(this.profilesRelationshipApi.cancelEnrollment(id), 'errors.cancelEnrollment');
+
+  // Service enrollments (driver side)
 
   /**
-   * Loads all students from the API.
+   * Loads the enrollments addressed to the acting driver and the related student summaries.
+   */
+  loadDriverEnrollments = (): void => {
+    this.enrollmentsLoadingSignal.set(true);
+    this.enrollmentsErrorSignal.set(null);
+    forkJoin({
+      enrollments: this.profilesRelationshipApi.getDriverEnrollments(),
+      // A student-name lookup failure must not hide the enrollment requests.
+      students: this.profilesRelationshipApi.getDriverStudents().pipe(
+        map(students => students as Student[] | null),
+        catchError(() => of(null))),
+    }).subscribe({
+      next: ({ enrollments, students }) => {
+        this.enrollmentsSignal.set(enrollments);
+        this.driverStudentsSignal.set(students ?? []);
+        this.enrollmentsLoadingSignal.set(false);
+      },
+      error: error => {
+        this.enrollmentsErrorSignal.set(this.formatError(error, 'errors.loadEnrollments'));
+        this.enrollmentsLoadingSignal.set(false);
+      }
+    });
+  };
+
+  /**
+   * Accepts an enrollment addressed to the acting driver.
+   * @param id - Enrollment identifier.
+   * @returns True when the enrollment was accepted.
+   */
+  acceptEnrollment = async (id: number): Promise<boolean> => {
+    this.enrollmentsLoadingSignal.set(true);
+    this.enrollmentsErrorSignal.set(null);
+    try {
+      const accepted = await firstValueFrom(this.profilesRelationshipApi.acceptEnrollment(id));
+      this.replaceEnrollment(accepted);
+      this.enrollmentsLoadingSignal.set(false);
+      this.loadDriverEnrollments();
+      return true;
+    } catch (error) {
+      this.enrollmentsErrorSignal.set(this.formatError(error, 'errors.acceptEnrollment'));
+      this.enrollmentsLoadingSignal.set(false);
+      return false;
+    }
+  };
+
+  /**
+   * Ends an accepted enrollment.
+   * @param id - Enrollment identifier.
+   */
+  endEnrollment = (id: number): void =>
+    this.applyEnrollmentTransition(this.profilesRelationshipApi.endEnrollment(id), 'errors.endEnrollment');
+
+  // Initial data loading
+
+  /**
+   * Loads the students of the acting tutor.
    */
   private loadStudents = (): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .getStudents()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (students) => {
-          this.studentsSignal.set(students);
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to load students');
-        },
-      });
+    this.profilesRelationshipApi.getStudents().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: students => {
+        this.studentsSignal.set(students);
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.loadStudents')
+    });
   };
 
   /**
-   * Loads all tutor and driver profiles from the API.
+   * Loads the acting profile.
    */
   private loadProfiles = (): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .getProfiles()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (profiles) => {
-          this.profilesSignal.set(profiles);
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to load profiles');
-        },
-      });
+    this.profilesRelationshipApi.getProfiles().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: profiles => {
+        this.profilesSignal.set(profiles);
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.loadProfile')
+    });
   };
 
   /**
-   * Loads all tutor-student relationships from the API.
+   * Loads the tutor authorizations of the acting tutor's students.
    */
   private loadRelationships = (): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .getTutorStudentRelationships()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (relationships) => {
-          this.relationshipsSignal.set(relationships);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to load tutor-student relationships');
-        },
-      });
+    this.profilesRelationshipApi.getTutorStudentRelationships().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: relationships => {
+        this.relationshipsSignal.set(relationships);
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.loadRelationships')
+    });
   };
 
   /**
-   * Loads all student data deletion requests from the API.
+   * Loads the data-deletion requests of the acting tutor.
    */
   private loadDeletionRequests = (): void => {
     this.beginRequest();
-
-    this.profilesRelationshipApi
-      .getDataDeletionRequests()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (requests) => {
-          this.deletionRequestsSignal.set(requests);
-
-          this.endRequest();
-        },
-
-        error: (error) => {
-          this.handleError(error, 'Failed to load data deletion requests');
-        },
-      });
+    this.profilesRelationshipApi.getDataDeletionRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: requests => {
+        this.deletionRequestsSignal.set(requests);
+        this.endRequest();
+      },
+      error: error => this.handleError(error, 'errors.loadDeletionRequests')
+    });
   };
 
-  // =========================================================
-  // Request Helpers
-  // =========================================================
+  // Helpers
+
+  /**
+   * Applies an enrollment transition and stores the returned enrollment.
+   * @param request - Transition request.
+   * @param fallback - Error key used when the transition fails.
+   */
+  private applyEnrollmentTransition = (request: ReturnType<ProfilesRelationshipApi['cancelEnrollment']>, fallback: string): void => {
+    this.enrollmentsLoadingSignal.set(true);
+    this.enrollmentsErrorSignal.set(null);
+    request.subscribe({
+      next: enrollment => {
+        this.replaceEnrollment(enrollment);
+        this.enrollmentsLoadingSignal.set(false);
+      },
+      error: error => {
+        this.enrollmentsErrorSignal.set(this.formatError(error, fallback));
+        this.enrollmentsLoadingSignal.set(false);
+      }
+    });
+  };
+
+  /**
+   * Replaces (or adds) an enrollment in the state.
+   * @param enrollment - Enrollment returned by the API.
+   */
+  private replaceEnrollment = (enrollment: ServiceEnrollment): void => {
+    this.enrollmentsSignal.update(enrollments => enrollments.some(current => current.id === enrollment.id)
+      ? enrollments.map(current => current.id === enrollment.id ? enrollment : current)
+      : [...enrollments, enrollment]);
+  };
 
   /**
    * Marks the beginning of an API operation.
    */
   private beginRequest = (): void => {
-    this.pendingRequestsSignal.update((count) => count + 1);
-
+    this.pendingRequestsSignal.update(count => count + 1);
     this.errorSignal.set(null);
   };
 
@@ -676,35 +524,24 @@ export class ProfilesRelationshipStore {
    * Marks the completion of an API operation.
    */
   private endRequest = (): void => {
-    this.pendingRequestsSignal.update((count) => Math.max(0, count - 1));
+    this.pendingRequestsSignal.update(count => Math.max(0, count - 1));
   };
 
   /**
    * Handles an API error and restores the request state.
-   *
    * @param error - Source error.
-   * @param fallback - Default error message.
+   * @param fallback - Default error key.
    */
   private handleError = (error: unknown, fallback: string): void => {
     this.errorSignal.set(this.formatError(error, fallback));
-
     this.endRequest();
   };
 
   /**
-   * Normalizes unknown errors into a display-friendly message.
-   *
+   * Normalizes unknown errors into an i18n key.
    * @param error - Source error.
-   * @param fallback - Default message when details are unavailable.
-   * @returns Normalized error message.
+   * @param fallback - Key used when the error carries no HTTP information.
+   * @returns Translation key.
    */
-  private formatError = (error: unknown, fallback: string): string => {
-    if (error instanceof Error) {
-      return error.message.includes('Resource not found')
-        ? `${fallback}: Not found`
-        : error.message;
-    }
-
-    return fallback;
-  };
+  private formatError = (error: unknown, fallback: string): string => toErrorMessageKey(error, fallback);
 }

@@ -2,20 +2,14 @@
 
   <section class="subscription-panel">
 
-    <p class="eyebrow">
-      SUSCRIPCIONES
-    </p>
+    <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
 
     <h1>
-      {{ isEdit ? 'Gestionar mi suscripción' : 'Confirmar suscripción' }}
+      {{ (isEdit ? 'billing.form.editTitle' : 'billing.form.newTitle') | translate }}
     </h1>
 
     <p class="description">
-      {{
-        isEdit
-          ? 'Actualiza el plan o estado de tu suscripción.'
-          : 'Revisa el plan seleccionado antes de confirmar.'
-      }}
+      {{ (isEdit ? 'billing.form.editDescription' : 'billing.form.newDescription') | translate }}
     </p>
 
     <form
@@ -23,7 +17,7 @@
       (ngSubmit)="submit()">
 
       <mat-form-field appearance="outline">
-        <mat-label>Plan</mat-label>
+        <mat-label>{{ 'billing.form.plan' | translate }}</mat-label>
 
         <mat-select formControlName="planId">
 
@@ -43,9 +37,7 @@
         <div class="plan-summary">
 
           <div>
-            <span class="summary-label">
-              Plan seleccionado
-            </span>
+            <span class="summary-label">{{ 'billing.form.selectedPlan' | translate }}</span>
 
             <strong>
               {{ plan.name }}
@@ -63,16 +55,12 @@
       @if (isEdit) {
 
         <mat-form-field appearance="outline">
-          <mat-label>Estado de la suscripción</mat-label>
+          <mat-label>{{ 'billing.form.status' | translate }}</mat-label>
 
           <mat-select formControlName="status">
-            <mat-option value="ACTIVE">
-              Activa
-            </mat-option>
+            <mat-option value="ACTIVE">{{ 'billing.status.ACTIVE' | translate }}</mat-option>
 
-            <mat-option value="PAUSED">
-              Pausada
-            </mat-option>
+            <mat-option value="SUSPENDED">{{ 'billing.status.SUSPENDED' | translate }}</mat-option>
           </mat-select>
 
         </mat-form-field>
@@ -81,13 +69,15 @@
 
       <div class="information">
         <strong>
-          {{ isEdit ? 'Actualización de suscripción' : 'Nueva suscripción' }}
+          {{ (isEdit ? 'billing.form.updateInfo' : 'billing.form.newInfo') | translate }}
         </strong>
 
-        <p>
-          Los datos se registrarán en Rumbo al confirmar la operación.
-        </p>
+        <p>{{ 'billing.form.information' | translate }}</p>
       </div>
+
+      @if (store.error()) {
+        <p class="form-error" role="alert">{{ store.error()! | translate }}</p>
+      }
 
       <div class="actions">
 
@@ -96,20 +86,16 @@
           type="button"
           class="secondary-action"
           (click)="cancel()">
-          Volver
+          {{ 'common.back' | translate }}
         </button>
 
         <button
           mat-raised-button
           type="submit"
           class="primary-action"
-          [disabled]="form.invalid">
+          [disabled]="form.invalid || store.loading()">
 
-          {{
-            isEdit
-              ? 'Guardar cambios'
-              : 'Confirmar suscripción'
-          }}
+          {{ (isEdit ? 'common.saveChanges' : 'billing.form.confirm') | translate }}
 
         </button>
 

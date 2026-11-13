@@ -1,0 +1,97 @@
+<main class="login-container">
+
+  <!-- LEFT PANEL -->
+  <section class="brand-panel">
+
+    <header class="brand-header">
+      <div class="brand-logo">
+        <span class="logo-icon"></span>
+        <span>Rumbo</span>
+      </div>
+    </header>
+
+    <div class="decoration decoration-top">
+      <span class="circle circle-one"></span>
+      <span class="circle circle-two"></span>
+    </div>
+
+    <div class="brand-content">
+      <h1 [innerHTML]="'login.tagline' | translate"></h1>
+    </div>
+
+    <div class="decoration decoration-bottom">
+      <span class="bottom-ring"></span>
+    </div>
+
+    <footer class="brand-footer">
+      Copyright © 2026 Rumbo. {{ 'footer.rights' | translate }}
+    </footer>
+
+  </section>
+
+  <!-- RIGHT PANEL -->
+  <section class="form-panel">
+
+    <button
+      class="language-button"
+      type="button"
+      (click)="toggleLanguage()">
+
+      <span>◎</span>
+      {{ language }}
+    </button>
+
+    <div class="form-content">
+
+      <div class="welcome-text">
+        <span class="eyebrow">{{ 'workspace.previewWelcome' | translate }}</span>
+        <h2>{{ 'workspace.previewAccessTitle' | translate }}</h2>
+        <p>{{ 'workspace.previewAccessDescription' | translate }}</p>
+      </div>
+
+      <!-- ROLE SELECTOR -->
+      <div class="role-selector">
+
+        <button
+          type="button"
+          class="role-option"
+          [class.active]="selectedRole === 'tutor'"
+          [attr.aria-pressed]="selectedRole === 'tutor'"
+          (click)="selectRole('tutor')">
+
+          <span class="role-dot"></span>
+          {{ 'workspace.tutorRole' | translate }}
+        </button>
+
+        <button
+          type="button"
+          class="role-option"
+          [class.active]="selectedRole === 'driver'"
+          [attr.aria-pressed]="selectedRole === 'driver'"
+          (click)="selectRole('driver')">
+
+          <span class="role-dot"></span>
+          {{ 'workspace.driverRole' | translate }}
+        </button>
+
+      </div>
+
+      <label for="preview-profile-id" style="display:block;margin:12px 0 6px">
+        {{ 'login.profileIdLabel' | translate }}
+      </label>
+      <input id="preview-profile-id" #profileInput type="number" min="1" step="1"
+        [value]="profileId" (input)="profileId = profileInput.value"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid #aaa"
+        [placeholder]="'login.profileIdPlaceholder' | translate" />
+      @if (error) { <p role="alert" style="color:#ac3939">{{ error | translate }}</p> }
+      <button type="button" class="login-button" (click)="redirect()">
+        {{ (selectedRole === 'tutor'
+          ? 'workspace.previewAsTutor'
+          : 'workspace.previewAsDriver') | translate }}
+      </button>
+
+    </div>
+
+  </section>
+
+</main>

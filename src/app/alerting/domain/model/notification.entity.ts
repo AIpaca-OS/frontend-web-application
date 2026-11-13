@@ -11,6 +11,7 @@ export class Notification implements BaseEntity {
   #read: boolean;
   #routeId: number;
   #studentId: number | null;
+  #journeyEvent: string | null;
 
   constructor(notification: {
     id: number;
@@ -23,6 +24,7 @@ export class Notification implements BaseEntity {
     read: boolean;
     routeId: number;
     studentId: number | null;
+    journeyEvent?: string | null;
   }) {
     this.#id = notification.id;
     this.#type = notification.type;
@@ -34,6 +36,7 @@ export class Notification implements BaseEntity {
     this.#read = notification.read;
     this.#routeId = notification.routeId;
     this.#studentId = notification.studentId;
+    this.#journeyEvent = notification.journeyEvent ?? null;
   }
 
   markAsRead(): void {
@@ -118,5 +121,16 @@ export class Notification implements BaseEntity {
 
   set studentId(value: number | null) {
     this.#studentId = value;
+  }
+
+  /**
+   * Student journey fact that originated the notification (e.g. TRIP_STARTED), or null for general notices.
+   */
+  get journeyEvent(): string | null {
+    return this.#journeyEvent;
+  }
+
+  set journeyEvent(value: string | null) {
+    this.#journeyEvent = value;
   }
 }

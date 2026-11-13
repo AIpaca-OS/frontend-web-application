@@ -3,15 +3,11 @@
   <header class="page-header">
 
     <div>
-      <p class="eyebrow">
-        SUSCRIPCIONES
-      </p>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
 
-      <h1>Planes disponibles</h1>
+      <h1>{{ 'billing.plans.title' | translate }}</h1>
 
-      <p>
-        Elige el plan que mejor se adapte a tu servicio.
-      </p>
+      <p>{{ 'billing.plans.subtitle' | translate }}</p>
     </div>
 
     <button
@@ -19,37 +15,35 @@
       type="button"
       class="secondary-action"
       (click)="goToSubscriptions()">
-      Ver mi suscripción
+      {{ 'billing.plans.viewSubscription' | translate }}
     </button>
 
   </header>
 
-  @if (store.loading()) {
+  @if (store.plansLoading()) {
     <div class="loading">
       <mat-spinner></mat-spinner>
     </div>
   }
 
-  @if (store.error()) {
-    <div class="error">
-      {{ store.error() }}
+  @if (store.plansError()) {
+    <div class="error" role="alert">
+      {{ store.plansError()! | translate }}
+      <button mat-stroked-button type="button" (click)="reload()">{{ 'common.retry' | translate }}</button>
     </div>
   }
 
-  @if (!store.loading()) {
+  @if (!store.plansLoading() && !store.plansError()) {
 
     <section class="plans-grid">
 
-      @for (plan of store.plans(); track plan.id) {
+      @for (plan of availablePlans(); track plan.id) {
 
-        @if (plan.active) {
 
           <article class="plan-card">
 
             <div>
-              <span class="available">
-                Disponible
-              </span>
+              <span class="available">{{ 'billing.plans.available' | translate }}</span>
 
               <h2>
                 {{ plan.name }}
@@ -70,16 +64,15 @@
               type="button"
               class="primary-action"
               (click)="selectPlan(plan.id)">
-              Seleccionar plan
+              {{ 'billing.plans.select' | translate }}
             </button>
 
           </article>
 
-        }
 
       } @empty {
 
-        <p>No hay planes disponibles.</p>
+        <p>{{ 'billing.plans.empty' | translate }}</p>
 
       }
 

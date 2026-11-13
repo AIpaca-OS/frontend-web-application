@@ -1,10 +1,16 @@
 ﻿.content-body {
-  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--rumbo-page-max-width);
+  margin: 0 auto;
+  padding: var(--rumbo-page-padding);
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.content-body > * {
   max-width: 800px;
-  margin: 0 auto;
 }
 
 .page-title {

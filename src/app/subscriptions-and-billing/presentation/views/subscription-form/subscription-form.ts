@@ -6,18 +6,21 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe } from '@ngx-translate/core';
 
+import { DemoRoleSession } from '../../../../identity-and-access-management/application/demo-role-session.service';
 import { Subscription } from '../../../domain/model/subscription.entity';
 import { SubscriptionsAndBillingStore } from '../../../application/subscriptions-and-billing.store';
 
 @Component({
   selector: 'app-subscription-form',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatSelectModule, TranslatePipe],
   templateUrl: './subscription-form.html',
   styleUrl: './subscription-form.css',
 })
 export class SubscriptionForm {
   readonly store = inject(SubscriptionsAndBillingStore);
+  private readonly session = inject(DemoRoleSession);
 
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -80,7 +83,7 @@ export class SubscriptionForm {
     return this.store.plans().find((plan) => plan.id === planId);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -98,24 +101,22 @@ export class SubscriptionForm {
 
     const subscription = new Subscription({
       id: this.subscriptionId ?? 0,
-      driverId: currentSubscription?.driverId ?? '101',
+      driverId: currentSubscription?.driverId ?? String(this.session.profileId() ?? ''),
       planId: this.form.controls.planId.value,
       status: this.form.controls.status.value,
       startDate: currentSubscription?.startDate ?? new Date().toISOString().slice(0, 10),
-      paymentStatus: currentSubscription?.paymentStatus ?? 'PENDING',
+      paymentStatus: currentSubscription?.paymentStatus ?? 'NOT_APPLICABLE',
       paymentAmount: selectedPlan.referencePrice,
     });
 
-    if (this.isEdit) {
-      this.store.updateSubscription(subscription);
-    } else {
-      this.store.addSubscription(subscription);
-    }
-
-    this.router.navigate(['subscriptions-and-billing', 'subscriptions']).then();
+    // Edits use PATCH /plan or PATCH /status; new subscriptions use POST /subscriptions.
+    const saved = this.isEdit
+      ? await this.store.updateSubscription(subscription)
+      : await this.store.addSubscription(subscription);
+    if (saved) await this.router.navigateByUrl('/driver/plans/subscriptions');
   }
 
   cancel(): void {
-    this.router.navigate(['subscriptions-and-billing', 'plans']).then();
+    void this.router.navigateByUrl('/driver/plans');
   }
 }

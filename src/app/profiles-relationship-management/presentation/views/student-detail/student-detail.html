@@ -1,20 +1,24 @@
 <section class="page">
 
+  @if (store.error()) {
+    <p class="error" role="alert">{{ store.error()! | translate }}</p>
+  }
+
   @if (student(); as currentStudent) {
 
     <header class="page-header">
 
       <div>
         <span class="eyebrow">
-          Perfil del estudiante
+          {{ 'students.detail.eyebrow' | translate }}
         </span>
 
         <h1>
-          Vista de {{ currentStudent.fullName }}
+          {{ currentStudent.fullName }}
         </h1>
 
         <p>
-          Gestiona la información y autorizaciones del estudiante.
+          {{ 'students.detail.description' | translate }}
         </p>
       </div>
 
@@ -23,7 +27,7 @@
         type="button"
         (click)="editStudent()"
       >
-        Editar
+        {{ 'common.edit' | translate }}
       </button>
 
     </header>
@@ -32,7 +36,7 @@
 
       <article class="card">
 
-        <h2>Información básica</h2>
+        <h2>{{ 'students.detail.basicInfo' | translate }}</h2>
 
         <div class="row">
           <strong>
@@ -40,17 +44,7 @@
           </strong>
 
           <span>
-            Estudiante
-          </span>
-        </div>
-
-        <div class="row">
-          <strong>
-            {{ currentStudent.schoolName }}
-          </strong>
-
-          <span>
-            Colegio
+            {{ 'students.detail.student' | translate }}
           </span>
         </div>
 
@@ -60,17 +54,17 @@
           </strong>
 
           <span>
-            Fecha de nacimiento
+            {{ 'students.data.birthdate' | translate }}
           </span>
         </div>
 
         <div class="row">
           <strong>
-            {{ currentStudent.status }}
+            {{ 'students.status.' + currentStudent.status | translate }}
           </strong>
 
           <span>
-            Estado
+            {{ 'students.data.state' | translate }}
           </span>
         </div>
 
@@ -81,7 +75,7 @@
         <div class="card-header">
 
           <h2>
-            Tutores autorizados
+            {{ 'students.detail.authorizedTutors' | translate }}
           </h2>
 
           <button
@@ -89,7 +83,7 @@
             type="button"
             (click)="authorizeTutor()"
           >
-            Autorizar tutor
+            {{ 'students.authorize.title' | translate }}
           </button>
 
         </div>
@@ -108,7 +102,7 @@
               </strong>
 
               <p>
-                {{ relationship.relationshipType }}
+                {{ 'students.relationship.' + relationship.relationshipType | translate }}
               </p>
 
             </div>
@@ -116,9 +110,10 @@
             <button
               mat-button
               type="button"
+              [disabled]="store.loading()"
               (click)="revokeTutor(relationship)"
             >
-              Revocar
+              {{ 'students.detail.revoke' | translate }}
             </button>
 
           </div>
@@ -126,7 +121,7 @@
         } @empty {
 
           <p>
-            No existen tutores autorizados.
+            {{ 'students.detail.noTutors' | translate }}
           </p>
 
         }
@@ -135,25 +130,26 @@
 
     </div>
 
+    <app-student-enrollments [studentId]="studentId" />
+
     <article class="card privacy-card">
 
       <div>
 
         <h2>
-          Privacidad y manejo de datos
+          {{ 'students.detail.privacyTitle' | translate }}
         </h2>
 
         @if (activeDeletionRequest()) {
 
           <p>
-            Existe una solicitud de eliminación pendiente.
+            {{ 'students.detail.deletionPending' | translate }}
           </p>
 
         } @else {
 
           <p>
-            Puedes solicitar la eliminación
-            de los datos personales del estudiante.
+            {{ 'students.detail.deletionHint' | translate }}
           </p>
 
         }
@@ -163,14 +159,16 @@
       <button
         mat-flat-button
         type="button"
-        [disabled]="!!activeDeletionRequest()"
+        [disabled]="!!activeDeletionRequest() || store.loading()"
         (click)="requestDataDeletion()"
       >
-        Solicitar eliminación
+        {{ 'students.detail.requestDeletion' | translate }}
       </button>
 
     </article>
 
+  } @else if (!store.loading()) {
+    <p>{{ 'students.detail.notFound' | translate }}</p>
   }
 
 </section>

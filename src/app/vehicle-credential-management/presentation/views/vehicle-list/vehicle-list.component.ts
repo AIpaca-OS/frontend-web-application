@@ -1,4 +1,4 @@
-﻿import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { VehicleCredentialStore } from '../../../application/vehicle-credential.store';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-vehicle-list',
@@ -20,6 +21,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
     MatProgressSpinnerModule,
     MatIconModule,
     MatDialogModule,
+    TranslatePipe,
   ],
   templateUrl: './vehicle-list.component.html',
   styleUrl: './vehicle-list.component.css',
@@ -58,7 +60,7 @@ export class VehicleListComponent {
    */
 
   editVehicle(id: number): void {
-    this.router.navigate(['vehicles', id, 'edit']);
+    this.router.navigate(['/driver/vehicles', id, 'edit']);
   }
 
   deleteVehicle(id: number): void {
@@ -76,6 +78,6 @@ export class VehicleListComponent {
       });
   }
   navigateToNew(): void {
-    this.router.navigate(['vehicles', 'new']);
+    this.router.navigate(['/driver/vehicles/new']);
   }
 }

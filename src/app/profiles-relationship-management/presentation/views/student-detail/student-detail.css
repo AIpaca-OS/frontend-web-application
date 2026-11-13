@@ -1,5 +1,9 @@
 .page {
-  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--rumbo-page-max-width);
+  margin: 0 auto;
+  padding: var(--rumbo-page-padding);
 }
 
 .page-header {
@@ -78,4 +82,8 @@
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+.error {
+  color: #b42318;
 }

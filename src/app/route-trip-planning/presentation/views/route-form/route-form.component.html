@@ -1,63 +1,380 @@
-<section class="route-form-page">
-  <div class="form-card">
-    <div class="form-heading">
-      <button mat-icon-button aria-label="Volver a rutas" (click)="cancel()">
-        <mat-icon>arrow_back</mat-icon>
+<section class="route-editor">
+  <div class="editor-header">
+    <button mat-icon-button type="button" [attr.aria-label]="'routes.form.back' | translate" (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="editor-heading">
+      <p class="eyebrow">{{ 'routes.form.eyebrow' | translate }}</p>
+      <h1>{{ (isEdit ? 'routes.form.titleEdit' : 'routes.form.titleCreate') | translate }}</h1>
+      <p>{{ 'routes.form.description' | translate }}</p>
+    </div>
+    <span class="route-label">{{ (routeStatus === 'PUBLISHED' ? 'routes.form.publishedStatus' : 'routes.form.configStatus') | translate }}</span>
+  </div>
+
+  <nav class="wizard-navigation" [attr.aria-label]="'routes.form.wizardAria' | translate">
+    @for (title of stepTitles; track title; let i = $index) {
+      <button type="button" class="wizard-step" [class.selected]="activeStep === i"
+              [class.completed]="activeStep > i" [attr.aria-current]="activeStep === i ? 'step' : null"
+              (click)="goToStep(i)">
+        <span class="wizard-number">
+          @if (activeStep > i) { <mat-icon>check</mat-icon> } @else { {{ i + 1 }} }
+        </span>
+        <span>{{ title | translate }}</span>
       </button>
-      <div>
-        <p class="eyebrow">ROUTE & TRIP PLANNING</p>
-        <h1>{{ isEdit ? 'Editar ruta' : 'Nueva ruta' }}</h1>
-        <p>Completa los datos básicos que se mostrarán en la planificación del servicio.</p>
+    }
+  </nav>
+
+  <form [formGroup]="form" (ngSubmit)="submit(false)">
+    <div class="editor-grid">
+      <div class="editor-main">
+        @if (activeStep === 0) {
+          <section aria-labelledby="basic-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>directions_bus</mat-icon></span>
+              <div>
+                <span class="stage-overline">{{ 'routes.form.stepOrdinal' | translate: { number: 1 } }}</span>
+                <h2 id="basic-heading">{{ 'routes.form.generalTitle' | translate }}</h2>
+                <p>{{ 'routes.form.generalDescription' | translate }}</p>
+              </div>
+            </div>
+            <div class="field-layout">
+              <mat-form-field appearance="outline" class="span-two">
+                <mat-label>{{ 'routes.form.nameLabel' | translate }}</mat-label>
+                <input matInput formControlName="name" [placeholder]="'routes.form.namePlaceholder' | translate" />
+                @if (form.controls.name.touched && form.controls.name.invalid) {
+                  <mat-error>{{ 'routes.form.nameError' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-two">
+                <mat-label>{{ 'routes.form.vehicleLabel' | translate }}</mat-label>
+                <mat-select formControlName="vehicleId" [disabled]="vehicleStore.loading() || routeStatus === 'PUBLISHED'">
+                  <mat-option value="">{{ 'routes.form.vehicleUnassigned' | translate }}</mat-option>
+                  @for (vehicle of vehicleStore.vehicles(); track vehicle.id) {
+                    <mat-option [value]="'' + vehicle.id">
+                      {{ vehicle.licensePlate }} — {{ vehicle.brand }} {{ vehicle.model }}
+                      ({{ vehicle.capacity }} {{ 'routes.form.vehicleSeats' | translate }})
+                    </mat-option>
+                  }
+                  @if (form.controls.vehicleId.value && !vehicleIsAvailable(form.controls.vehicleId.value)) {
+                    <mat-option [value]="form.controls.vehicleId.value" disabled>
+                      {{ 'routes.form.vehicleNotFound' | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-hint>{{ (routeStatus === 'PUBLISHED'
+                  ? 'routes.form.publishedVehicleLocked' : 'routes.form.vehicleIdHint') | translate }}</mat-hint>
+              </mat-form-field>
+              @if (vehicleStore.loading()) {
+                <p class="span-two" role="status">{{ 'routes.form.vehicleLoading' | translate }}</p>
+              }
+              @if (vehicleStore.error()) {
+                <p class="span-two" role="alert">{{ 'routes.form.vehicleLoadError' | translate }}</p>
+              }
+              @if (!vehicleStore.loading() && !vehicleStore.error() && vehicleStore.vehicles().length === 0) {
+                <p class="span-two" role="status">{{ 'routes.form.vehicleEmpty' | translate }}</p>
+              }
+              <div class="inline-tip span-two">
+                <mat-icon>directions_bus</mat-icon>
+                <span>{{ 'routes.form.vehicleRegistryNotice' | translate }}</span>
+                <a routerLink="/driver/vehicles">{{ 'routes.form.openVehicles' | translate }}</a>
+              </div>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'routes.form.departureLabel' | translate }}</mat-label>
+                <input matInput type="time" formControlName="departureTime" />
+                @if (form.controls.departureTime.touched && form.controls.departureTime.invalid) {
+                  <mat-error>{{ 'routes.form.departureError' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'routes.form.shiftLabel' | translate }}</mat-label>
+                <mat-select formControlName="shift">
+                  <mat-option value="MORNING">{{ 'routes.form.morning' | translate }}</mat-option>
+                  <mat-option value="AFTERNOON">{{ 'routes.form.afternoon' | translate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="inline-tip">
+              <mat-icon>confirmation_number</mat-icon>
+              <span>{{ codePreview
+                ? ('routes.form.codeLabel' | translate: { code: codePreview })
+                : ('routes.form.codePending' | translate) }}</span>
+            </div>
+            @if (stepMessage) {
+              <div class="inline-validation" role="alert">{{ stepMessage }}</div>
+            }
+          </section>
+        }
+
+        @if (activeStep === 1) {
+          <section aria-labelledby="stops-heading" class="panel-stage">
+            <div class="stage-intro stage-intro-actions">
+              <span class="stage-icon"><mat-icon>alt_route</mat-icon></span>
+              <div>
+                <span class="stage-overline">{{ 'routes.form.stepOrdinal' | translate: { number: 2 } }}</span>
+                <h2 id="stops-heading">{{ 'routes.form.stopsTitle' | translate }}</h2>
+                <p>{{ 'routes.form.stopsDescription' | translate }}</p>
+              </div>
+              <button mat-stroked-button type="button" (click)="addStop()" [disabled]="saving">
+                <mat-icon>add</mat-icon> {{ 'routes.form.addStop' | translate }}
+              </button>
+            </div>
+            <p class="student-hint">{{ 'routes.form.studentHint' | translate }}</p>
+            @if (studentsLoading()) {
+              <p class="catalog-feedback" role="status">{{ 'routes.form.loadingStudents' | translate }}</p>
+            }
+            @if (studentsError()) {
+              <div class="catalog-feedback warning" role="alert">
+                {{ studentsError() | translate }}
+                @if (pendingError()) { ({{ pendingError()! | translate }}) }
+                <button mat-button type="button" (click)="loadStudentCandidates(true)">{{ 'routes.form.retry' | translate }}</button>
+              </div>
+            }
+            @if (routeStatus !== 'PUBLISHED') {
+              @if (pendingAccepted()) {
+                <p class="catalog-feedback" role="status">{{ 'routes.form.pendingAccepted' | translate }}</p>
+              }
+              @if (pendingEnrollments().length > 0) {
+                <div class="catalog-feedback">
+                  <strong>{{ 'routes.form.pendingTitle' | translate }}</strong>
+                  <p>{{ 'routes.form.pendingHint' | translate }}</p>
+                  @for (enrollment of pendingEnrollments(); track enrollment.id) {
+                    <div class="pending-enrollment-row">
+                      <span>{{ pendingStudentName(enrollment.studentId) }}</span>
+                      <button mat-stroked-button type="button"
+                              [disabled]="pendingSavingId() !== null || saving"
+                              (click)="acceptPendingEnrollment(enrollment.id)">
+                        {{ (pendingSavingId() === enrollment.id ? 'routes.form.accepting' : 'routes.form.acceptRequest') | translate }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            }
+            @if (studentsLoaded() && students().length === 0) {
+              <div class="catalog-feedback" role="status">
+                <p>{{ 'routes.form.noStudents' | translate }}</p>
+                <p>{{ 'routes.form.enrollmentNeeded' | translate }}</p>
+                <a mat-stroked-button routerLink="/driver/students" target="_blank" rel="noopener">
+                  {{ 'routes.form.reviewEnrollments' | translate }}
+                </a>
+                <button mat-button type="button" (click)="loadStudentCandidates(true)">
+                  {{ 'routes.form.refreshEligibleStudents' | translate }}
+                </button>
+              </div>
+            }
+            @if (studentsLoaded() && students().length > 0) {
+              <button mat-button type="button" (click)="loadStudentCandidates(true)"
+                      [disabled]="studentsLoading()">
+                {{ 'routes.form.refreshEligibleStudents' | translate }}
+              </button>
+            }
+            <div formArrayName="stops" class="stops-list">
+              @for (stop of stops.controls; track i; let i = $index) {
+                <div class="stop-row" [formGroupName]="i">
+                  <div class="stop-track"><span class="stop-dot">{{ i + 1 }}</span></div>
+                  <div class="stop-body">
+                    <div class="stop-title">
+                    <strong>{{ 'routes.form.stopLabel' | translate: { number: i + 1 } }}</strong>
+                      <div class="icon-buttons">
+                        <button mat-icon-button type="button" [attr.title]="'routes.form.moveUp' | translate: { number: i + 1 }"
+                                [attr.aria-label]="'routes.form.moveUp' | translate: { number: i + 1 }"
+                                [disabled]="i === 0 || saving" (click)="moveStop(i, -1)"><mat-icon>arrow_upward</mat-icon></button>
+                        <button mat-icon-button type="button" [attr.title]="'routes.form.moveDown' | translate: { number: i + 1 }"
+                                [attr.aria-label]="'routes.form.moveDown' | translate: { number: i + 1 }"
+                                [disabled]="i === stops.length - 1 || saving" (click)="moveStop(i, 1)"><mat-icon>arrow_downward</mat-icon></button>
+                        <button mat-icon-button type="button" [attr.title]="'routes.form.removeStop' | translate: { number: i + 1 }"
+                                [attr.aria-label]="'routes.form.removeStop' | translate: { number: i + 1 }"
+                                [disabled]="stops.length <= 1 || saving" (click)="removeStop(i)"><mat-icon>delete_outline</mat-icon></button>
+                      </div>
+                    </div>
+                    <mat-form-field appearance="outline" class="stop-address">
+                      <mat-label>{{ 'routes.form.addressLabel' | translate }}</mat-label>
+                      <input matInput formControlName="address" [placeholder]="'routes.form.addressPlaceholder' | translate" />
+                      @if (stop.controls.address.touched && stop.controls.address.invalid) {
+                        <mat-error>{{ 'routes.form.addressError' | translate }}</mat-error>
+                      }
+                    </mat-form-field>
+                    <div class="stop-student">
+                      <mat-icon>school</mat-icon>
+                      <mat-form-field appearance="outline" class="student-picker">
+                        <mat-label>{{ 'routes.form.studentAtStop' | translate }}</mat-label>
+                        <mat-select formControlName="studentId" (selectionChange)="changeStudent(i)"
+                                    [disabled]="saving || routeStatus === 'PUBLISHED' || !studentsLoaded()">
+                          <mat-option value="">{{ 'routes.form.unassigned' | translate }}</mat-option>
+                          @for (student of availableStudents(i); track student.id) {
+                            <mat-option [value]="student.id">{{ student.fullName }}</mat-option>
+                          }
+                          @if (stop.controls.studentId.value &&
+                               !studentIsAvailable(stop.controls.studentId.value)) {
+                            <mat-option [value]="stop.controls.studentId.value" disabled>{{ 'routes.form.unavailableAssignment' | translate }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <span class="stop-student-status">{{ (stop.controls.studentId.value
+                        ? 'routes.form.assigned' : 'routes.form.pending') | translate }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+            <button class="text-add-stop" type="button" (click)="addStop()" [disabled]="saving">
+              <mat-icon>add_circle_outline</mat-icon> {{ 'routes.form.addAnotherStop' | translate }}
+            </button>
+            @if (legacyRouteWithoutStops) {
+              <div class="inline-validation">{{ 'routes.form.legacyStops' | translate }}</div>
+            }
+            @if (assignmentMessage || stepMessage) {
+              <div class="inline-validation" role="alert">{{ assignmentMessage || stepMessage }}</div>
+            }
+          </section>
+        }
+
+        @if (activeStep === 2) {
+          <section aria-labelledby="schedule-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>event_repeat</mat-icon></span>
+              <div>
+                <span class="stage-overline">{{ 'routes.form.stepOrdinal' | translate: { number: 3 } }}</span>
+                <h2 id="schedule-heading">{{ 'routes.form.scheduleTitle' | translate }}</h2>
+                <p>{{ 'routes.form.scheduleDescription' | translate }}</p>
+              </div>
+            </div>
+            <div class="quick-actions">
+              <button mat-stroked-button type="button" (click)="applySchoolWeek()" [disabled]="saving">
+                <mat-icon>event_available</mat-icon> {{ 'routes.form.schoolWeek' | translate }}
+              </button>
+              <button mat-button type="button" (click)="clearServiceDays()" [disabled]="saving">
+                {{ 'routes.form.clearDays' | translate }}
+              </button>
+            </div>
+            <div class="service-days" formArrayName="serviceDays">
+              @for (day of serviceDays.controls; track day.controls.dayOfWeek.value; let i = $index) {
+                <div class="service-day" [formGroupName]="i" [class.selected]="day.controls.enabled.value">
+                  <mat-checkbox formControlName="enabled" [disabled]="saving">
+                    {{ weekdayLabels[day.controls.dayOfWeek.value] | translate }}
+                  </mat-checkbox>
+                  @if (day.controls.enabled.value) {
+                    <mat-form-field appearance="outline" class="day-time">
+                      <mat-label>{{ 'routes.form.departure' | translate }}</mat-label>
+                      <input matInput type="time" formControlName="departureTime" [readonly]="saving" />
+                    </mat-form-field>
+                    @if (day.hasError('departureTimeRequired') && (day.touched || scheduleMessage)) {
+                      <span class="day-error">{{ 'routes.form.timeRequired' | translate }}</span>
+                    }
+                  } @else {
+                    <span class="day-off">{{ 'routes.form.noService' | translate }}</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="schedule-foot">
+              <mat-icon>calendar_month</mat-icon>
+              {{ 'routes.form.selectedDays' | translate: { count: selectedDaysCount } }}
+            </div>
+            @if (scheduleMessage || stepMessage) {
+              <div class="inline-validation" role="alert">{{ scheduleMessage || stepMessage }}</div>
+            }
+          </section>
+        }
+
+        @if (activeStep === 3) {
+          <section aria-labelledby="review-heading" class="panel-stage">
+            <div class="stage-intro">
+              <span class="stage-icon"><mat-icon>fact_check</mat-icon></span>
+              <div>
+                <span class="stage-overline">{{ 'routes.form.stepOrdinal' | translate: { number: 4 } }}</span>
+                <h2 id="review-heading">{{ 'routes.form.reviewTitle' | translate }}</h2>
+                <p>{{ 'routes.form.reviewDescription' | translate }}</p>
+              </div>
+            </div>
+            <div class="review-block">
+              <div class="review-title">
+                <h3>{{ 'routes.form.routeAndStops' | translate }}</h3>
+                <button mat-button type="button" (click)="goToStep(0)">{{ 'routes.form.editData' | translate }}</button>
+              </div>
+              <strong>{{ form.controls.name.value || ('routes.form.unnamedRoute' | translate) }}</strong>
+              <p>{{ shiftLabel }} · {{ 'routes.form.usualDeparture' | translate }}: {{ form.controls.departureTime.value }}</p>
+              <div class="review-stops">
+                @for (stop of stops.controls; track i; let i = $index) {
+                  <div>
+                    <span class="review-number">{{ i + 1 }}</span> {{ stop.controls.address.value || ('routes.form.pendingAddress' | translate) }}
+                    <small class="review-student">{{ studentNameFor(i) }}</small>
+                  </div>
+                }
+              </div>
+              <button mat-button type="button" (click)="goToStep(1)">{{ 'routes.form.editStops' | translate }}</button>
+            </div>
+            <div class="review-block">
+              <div class="review-title">
+                <h3>{{ 'routes.form.weeklySchedule' | translate }}</h3>
+                <button mat-button type="button" (click)="goToStep(2)">{{ 'routes.form.editSchedule' | translate }}</button>
+              </div>
+              @if (selectedDaysCount === 0) {
+                <p>{{ 'routes.form.noDays' | translate }}</p>
+              } @else {
+                <div class="review-days">
+                  @for (day of serviceDays.controls; track day.controls.dayOfWeek.value) {
+                    @if (day.controls.enabled.value) {
+                      <span>{{ weekdayLabels[day.controls.dayOfWeek.value] | translate }} · {{ day.controls.departureTime.value }}</span>
+                    }
+                  }
+                </div>
+              }
+            </div>
+            <div class="review-note">
+              <mat-icon>info_outline</mat-icon>
+              {{ 'routes.form.saveUnpublished' | translate }}
+            </div>
+            @if (stepMessage) {
+              <div class="inline-validation" role="alert">{{ stepMessage }}</div>
+            }
+          </section>
+        }
+        @if (store.error()) {
+          <div class="inline-validation" role="alert">{{ store.error()! | translate }}</div>
+        }
       </div>
+
+      <aside class="route-overview" [attr.aria-label]="'routes.form.preview' | translate">
+        <div class="overview-header"><span class="overview-icon"><mat-icon>route</mat-icon></span><span>{{ 'routes.form.preview' | translate }}</span></div>
+        <h3>{{ form.controls.name.value.trim() || ('routes.form.titleCreate' | translate) }}</h3>
+        <p class="overview-shift"><mat-icon>wb_sunny</mat-icon>{{ shiftLabel }} · {{ form.controls.departureTime.value }}</p>
+        <div class="overview-divider"></div>
+        <div class="overview-detail"><mat-icon>pin_drop</mat-icon><span>{{ stops.length }} {{ (stops.length === 1
+          ? 'routes.form.countOneStop' : 'routes.form.countManyStops') | translate }}</span></div>
+        <div class="overview-detail"><mat-icon>calendar_today</mat-icon><span>{{ selectedDaysCount }} {{ (selectedDaysCount === 1
+          ? 'routes.form.countOneDay' : 'routes.form.countManyDays') | translate }}</span></div>
+        <div class="overview-detail"><mat-icon>groups</mat-icon><span>{{ assignedCount }} {{ (assignedCount === 1
+          ? 'routes.form.countOneStudent' : 'routes.form.countManyStudents') | translate }}</span></div>
+        <div class="overview-divider"></div>
+        <p class="overview-caption">{{ 'routes.form.firstStopLabel' | translate }}</p>
+        <p class="overview-stop">{{ previewFirstStop }}</p>
+        <div class="overview-foot"><mat-icon>edit_note</mat-icon> {{ (routeStatus === 'PUBLISHED'
+          ? 'routes.form.publishedStatus' : 'routes.form.routeConfig') | translate }}</div>
+      </aside>
     </div>
 
-    @if (store.error()) {
-      <div class="error-box">{{ store.error() }}</div>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Código</mat-label>
-          <input matInput formControlName="code" placeholder="RUT-001" />
-          @if (form.controls.code.touched && form.controls.code.hasError('required')) {
-            <mat-error>El código es obligatorio.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Nombre de la ruta</mat-label>
-          <input matInput formControlName="name" placeholder="Ruta de la mañana" />
-          @if (form.controls.name.touched && form.controls.name.hasError('required')) {
-            <mat-error>El nombre es obligatorio.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Hora de salida</mat-label>
-          <input matInput type="time" formControlName="departureTime" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Cantidad de paradas</mat-label>
-          <input matInput type="number" min="1" formControlName="stopsCount" />
-          @if (form.controls.stopsCount.touched && form.controls.stopsCount.invalid) {
-            <mat-error>Debe existir al menos una parada.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Estado</mat-label>
-          <input matInput formControlName="status" placeholder="ACTIVE" />
-        </mat-form-field>
+    <footer class="wizard-footer">
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving">{{ 'routes.form.cancel' | translate }}</button>
+      <div class="wizard-footer-right">
+        @if (activeStep > 0) {
+          <button mat-stroked-button type="button" (click)="goToStep(activeStep - 1)" [disabled]="saving">
+            <mat-icon>arrow_back</mat-icon> {{ 'routes.form.previous' | translate }}
+          </button>
+        }
+        @if (activeStep < 3) {
+          <button mat-flat-button class="primary-action" type="button" (click)="goToStep(activeStep + 1)" [disabled]="saving">
+            {{ 'routes.form.next' | translate }} <mat-icon>arrow_forward</mat-icon>
+          </button>
+        } @else {
+          <button mat-stroked-button type="button" (click)="submit(false)" [disabled]="saving">
+            {{ (saving ? 'routes.form.saving' : (isEdit ? 'routes.form.saveChanges' : 'routes.form.saveDraft')) | translate }}
+          </button>
+          <button mat-flat-button class="primary-action" type="button" (click)="submit(true)" [disabled]="saving">
+            <mat-icon>event_available</mat-icon> {{ 'routes.form.confirmSchedule' | translate }}
+          </button>
+        }
       </div>
-
-      <div class="form-actions">
-        <button mat-button type="button" (click)="cancel()">Cancelar</button>
-        <button mat-flat-button class="primary-action" type="submit" [disabled]="form.invalid">
-          {{ isEdit ? 'Guardar cambios' : 'Crear ruta' }}
-        </button>
-      </div>
-    </form>
-  </div>
+    </footer>
+  </form>
 </section>

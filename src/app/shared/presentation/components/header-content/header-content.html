@@ -2,18 +2,20 @@
   <h2 class="header-title"></h2>
   <div class="header-actions">
     <app-language-switcher />
-    <div class="icon-notification">
-      <mat-icon>auto_awesome</mat-icon>
-      <span class="dot-red"></span>
-    </div>
-
-    <div class="user-profile-top">
-      <div class="avatar-xs">CE</div>
+    <a class="icon-notification"
+       [routerLink]="role() === 'tutor' ? '/tutor/notifications' : '/driver/notifications'"
+       [attr.aria-label]="'nav.notifications' | translate">
+      <mat-icon>notifications_none</mat-icon>
+    </a>
+    <a class="user-profile-top"
+       [routerLink]="role() === 'tutor' ? '/tutor/configuration' : '/driver/configuration'"
+       [attr.aria-label]="'nav.configuration' | translate">
+      <div class="avatar-xs">{{ role() === 'tutor' ? 'T' : 'C' }}</div>
       <div class="profile-info-top">
-        <p class="profile-name">Carlos Estrada</p>
-        <p class="profile-sub">Conductor</p>
+        <p class="profile-name">{{ (role() === 'tutor' ? 'workspace.tutorAccount' : 'workspace.driverAccount') | translate }}</p>
+        <p class="profile-sub">{{ (role() === 'tutor' ? 'workspace.tutorRole' : 'workspace.driverRole') | translate }}</p>
       </div>
       <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
-    </div>
+    </a>
   </div>
 </header>

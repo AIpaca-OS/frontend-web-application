@@ -25,6 +25,9 @@ import {
   DataDeletionRequest,
   DeletionRequestStatus
 } from '../../../domain/model/data-deletion-request.entity';
+import { StudentEnrollmentsComponent } from '../student-enrollments/student-enrollments';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { DemoRoleSession } from '../../../../identity-and-access-management/application/demo-role-session.service';
 
 /**
  * Displays a student's profile, authorized tutors,
@@ -35,7 +38,9 @@ import {
   standalone: true,
   imports: [
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    StudentEnrollmentsComponent,
+    TranslatePipe
   ],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.css'
@@ -50,6 +55,12 @@ export class StudentDetail {
 
   private readonly router =
     inject(Router);
+
+  private readonly translate =
+    inject(TranslateService);
+
+  private readonly session =
+    inject(DemoRoleSession);
 
   readonly studentId =
     Number(
@@ -91,17 +102,19 @@ export class StudentDetail {
 
   getTutorName(tutorId: number): string {
 
-    return this.store
+    const profile = this.store
       .tutors()
-      .find(tutor => tutor.id === tutorId)
-      ?.fullName ?? 'Tutor no disponible';
+      .find(tutor => tutor.id === tutorId);
+
+    return profile?.fullName
+      ?? this.translate.instant('students.detail.tutorReference', { id: tutorId });
   }
 
   editStudent(): void {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'edit'
       ])
@@ -112,7 +125,7 @@ export class StudentDetail {
 
     this.router
       .navigate([
-        '/students',
+        '/tutor/students',
         this.studentId,
         'tutors',
         'new'
@@ -124,39 +137,17 @@ export class StudentDetail {
     relationship: TutorStudentRelationship
   ): void {
 
-    const updated =
-      new TutorStudentRelationship({
-        id: relationship.id,
-        tutorId: relationship.tutorId,
-        studentId: relationship.studentId,
-        relationshipType:
-        relationship.relationshipType,
-
-        authorizationStatus:
-        AuthorizationStatus.REVOKED,
-
-        authorizedAt:
-        relationship.authorizedAt,
-
-        revokedAt:
-          new Date().toISOString()
-      });
-
-    this.store.updateRelationship(updated);
+    this.store.revokeRelationship(relationship);
   }
 
   /**
-   * Temporary TB1 implementation.
-   *
-   * Once IAM exposes the authenticated tutor,
-   * its identifier should be used instead.
+   * Requests the deletion of the student's personal data on behalf of the acting tutor.
    */
   requestDataDeletion(): void {
 
-    const requester =
-      this.authorizedRelationships()[0];
+    const requesterId = this.session.profileId();
 
-    if (!requester) {
+    if (!requesterId) {
       return;
     }
 
@@ -164,8 +155,7 @@ export class StudentDetail {
       new DataDeletionRequest({
         id: 0,
         studentId: this.studentId,
-        requestedByTutorId:
-        requester.tutorId
+        requestedByTutorId: requesterId
       });
 
     this.store

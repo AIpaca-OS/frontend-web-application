@@ -6,9 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
-import { Student, StudentStatus } from '../../../domain/model/student.entity';
+import { Student } from '../../../domain/model/student.entity';
+import { RelationshipType } from '../../../domain/model/tutor-student-relationship.entity';
 
 /**
  * Form view used to create or update a student.
@@ -22,13 +24,14 @@ import { Student, StudentStatus } from '../../../domain/model/student.entity';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './student-form.html',
   styleUrl: './student-form.css',
 })
 export class StudentForm {
   readonly store = inject(ProfilesRelationshipStore);
-  readonly StudentStatus = StudentStatus;
+  readonly RelationshipType = RelationshipType;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -40,8 +43,7 @@ export class StudentForm {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     birthDate: ['', Validators.required],
-    schoolName: ['', Validators.required],
-    status: this.fb.nonNullable.control<StudentStatus>(StudentStatus.ACTIVE, Validators.required),
+    relationshipType: this.fb.nonNullable.control<RelationshipType>(RelationshipType.OTHER, Validators.required),
   });
 
   constructor() {
@@ -65,15 +67,13 @@ export class StudentForm {
         firstName: student.firstName,
         lastName: student.lastName,
         birthDate: student.birthDate,
-        schoolName: student.schoolName,
-        status: student.status,
       });
 
       this.formInitialized = true;
     });
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
@@ -85,20 +85,15 @@ export class StudentForm {
       firstName: value.firstName,
       lastName: value.lastName,
       birthDate: value.birthDate,
-      schoolName: value.schoolName,
-      status: value.status,
     });
 
-    if (this.isEdit) {
-      this.store.updateStudent(student);
-    } else {
-      this.store.addStudent(student);
-    }
-
-    this.router.navigate(['/students']).then();
+    const saved = this.isEdit
+      ? await this.store.updateStudent(student)
+      : await this.store.addStudent(student, value.relationshipType);
+    if (saved) await this.router.navigateByUrl('/tutor/students');
   }
 
   cancel(): void {
-    this.router.navigate(['/students']).then();
+    this.router.navigate(['/tutor/students']).then();
   }
 }

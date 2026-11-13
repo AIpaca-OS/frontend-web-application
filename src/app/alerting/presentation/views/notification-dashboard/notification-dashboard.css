@@ -275,9 +275,13 @@
   color: #9ca3af;
 }
 
-/* Cuerpo de la página */
+/* Cuerpo de la página: mismo margen que el resto de vistas */
 .content-body {
-  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--rumbo-page-max-width);
+  margin: 0 auto;
+  padding: var(--rumbo-page-padding);
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -562,3 +566,8 @@
   height: 32px !important;
   line-height: 30px !important;
 }
+
+
+.notification-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notification-feedback { margin: 14px 4px; padding: 15px; color: #4e6761; background: #f2f7f4; border-radius: 10px; font-size: 13px; }
+.notification-error { background: #fff3f0; color: #8c3434; }

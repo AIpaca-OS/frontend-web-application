@@ -4,6 +4,7 @@ import {catchError, map} from 'rxjs/operators';
 import {BaseEntity} from './base-entity';
 import {BaseResource, BaseResponse} from './base-response';
 import {BaseAssembler} from './base-assembler';
+import {ApiError} from './api-error';
 
 /**
  * Provides generic CRUD operations for a single REST endpoint.
@@ -32,7 +33,6 @@ export abstract class BaseApiEndpoint<
   getAll(): Observable<TEntity[]> {
     return this.http.get<TResponse | TResource[]>(this.endpointUrl).pipe(
       map(response => {
-        console.log(response);
         if (Array.isArray(response)) {
           return response.map(resource => this.assembler.toEntityFromResource(resource));
         }
@@ -95,19 +95,10 @@ export abstract class BaseApiEndpoint<
   /**
    * Builds a reusable HTTP error handler for endpoint operations.
    * @param operation - Name of the operation to include in the error context.
-   * @returns Function that maps an HTTP error into a failed observable.
+   * @returns Function that maps an HTTP error into a failed observable that preserves status and Problem Detail.
    */
   protected handleError(operation: string) {
-    return (error: HttpErrorResponse): Observable<never> => {
-      let errorMessage = operation;
-      if (error.status === 404) {
-        errorMessage = `${operation}: Resource not found`;
-      } else if (error.error instanceof ErrorEvent) {
-        errorMessage = `${operation}: ${error.error.message}`;
-      } else {
-        errorMessage = `${operation}: ${error.statusText || 'Unexpected error'}`;
-      }
-      return throwError(() => new Error(errorMessage));
-    };
+    return (error: HttpErrorResponse): Observable<never> =>
+      throwError(() => error instanceof HttpErrorResponse ? ApiError.fromHttpError(operation, error) : error);
   }
 }
