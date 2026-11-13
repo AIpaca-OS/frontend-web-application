@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 
@@ -14,12 +16,12 @@ import {
 } from '../../../domain/model/tutor-student-relationship.entity';
 
 /**
- * Form used to authorize a tutor for a student.
+ * Form used to authorize another tutor for a student (POST /students/{id}/tutors).
  */
 @Component({
   selector: 'app-relationship-form',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatInputModule, TranslatePipe],
   templateUrl: './relationship-form.html',
   styleUrl: './relationship-form.css',
 })
@@ -31,7 +33,8 @@ export class RelationshipForm {
   private readonly router = inject(Router);
   readonly studentId = Number(this.route.snapshot.paramMap.get('id'));
   readonly form = this.fb.nonNullable.group({
-    tutorId: [0, Validators.required],
+    // The API has no tutor directory: the tutor is identified by its profile ID.
+    tutorId: [0, [Validators.required, Validators.min(1)]],
 
     relationshipType: this.fb.nonNullable.control<RelationshipType>(
       RelationshipType.OTHER,

@@ -1,8 +1,10 @@
 import {HttpErrorResponse} from '@angular/common/http';
 import {Observable, throwError} from 'rxjs';
+import {ApiError} from './api-error';
 
 /**
- * Provides reusable HTTP error translation for infrastructure services.
+ * Provides reusable HTTP error translation for infrastructure services
+ * that cannot extend {@link BaseApiEndpoint}.
  */
 export abstract class ErrorHandlingEnabledBaseType {
   /**
@@ -11,15 +13,6 @@ export abstract class ErrorHandlingEnabledBaseType {
    * @returns Function that transforms an {@link HttpErrorResponse} into a failed observable.
    */
   protected handleError = (operation: string) =>
-    (error: HttpErrorResponse): Observable<never> => {
-    let errorMessage = operation;
-    if (error.status === 404) {
-      errorMessage = `${operation}: Resource not found`;
-    } else if (error.error instanceof ErrorEvent) {
-      errorMessage = `${operation}: ${error.error.message}`;
-    } else {
-      errorMessage = `${operation}: ${error.status || 'Unexpected error'}`;
-    }
-    return throwError(() => new Error(errorMessage));
-  };
+    (error: HttpErrorResponse): Observable<never> =>
+      throwError(() => error instanceof HttpErrorResponse ? ApiError.fromHttpError(operation, error) : error);
 }

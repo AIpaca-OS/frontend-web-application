@@ -1,5 +1,5 @@
 :host { display: block; }
-.routes-page { min-height: calc(100vh - 76px); background: #faf9f6; padding: 35px 28px 60px; color: #15322e; }
+.routes-page { box-sizing:border-box; width:100%; max-width:var(--rumbo-page-max-width); margin:0 auto; padding:var(--rumbo-page-padding);  background: #faf9f6; color: #15322e; }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .eyebrow { margin: 0 0 4px; color: #299d7d; font-size: 11px; font-weight: 800; letter-spacing: .09em; }
 h1 { margin: 0; font-size: clamp(24px, 2.7vw, 32px); letter-spacing: -.04em; }

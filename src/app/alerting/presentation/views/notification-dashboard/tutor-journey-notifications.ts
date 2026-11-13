@@ -1,54 +1,69 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { TutorJourneyNotice, TutorJourneysApi } from '../../../../shared/infrastructure/tutor-journeys-api';
+import { TranslatePipe } from '@ngx-translate/core';
+import { AlertingStore } from '../../../application/alerting-store';
+import { Notification } from '../../../domain/model/notification.entity';
 
+/** Journey facts published by the backend (NotificationResponse.journeyEvent). */
+const JOURNEY_EVENTS = [
+  'ROUTE_PUBLISHED', 'TRIP_PLANNED', 'TRIP_STARTED', 'STOP_SERVED',
+  'ABSENT', 'STUDENT_ARRIVED', 'TRIP_CANCELLED', 'TRIP_COMPLETED',
+];
+
+/**
+ * Notifications addressed to the tutor (GET /notifications?recipientProfileId).
+ */
 @Component({
   selector: 'app-tutor-journey-notifications',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe, DatePipe],
   template: `
     <main class="journey-notifications">
       <header class="heading">
         <div>
-          <p class="eyebrow">RUMBO · COMUNICACIÓN ESCOLAR</p>
-          <h1>Notificaciones de mis estudiantes</h1>
-          <p>Publicación de rutas, inicio de recorridos, paradas, llegadas, retrasos e incidencias.</p>
+          <p class="eyebrow">{{ 'notifications.tutor.eyebrow' | translate }}</p>
+          <h1>{{ 'notifications.tutor.title' | translate }}</h1>
+          <p>{{ 'notifications.tutor.subtitle' | translate }}</p>
         </div>
-        <button type="button" (click)="reload()" [disabled]="loading()">Actualizar avisos</button>
+        <button type="button" (click)="reload()" [disabled]="store.loading()">
+          {{ 'notifications.tutor.refresh' | translate }}
+        </button>
       </header>
-      @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
-      @if (loading()) { <p role="status">Consultando avisos...</p> }
-      @if (!loading() && !notifications().length && !error()) {
+      @if (store.error()) { <p role="alert" class="error">{{ store.error()! | translate }}</p> }
+      @if (store.loading()) { <p role="status">{{ 'notifications.tutor.loading' | translate }}</p> }
+      @if (!store.loading() && !store.notifications().length && !store.error()) {
         <section class="empty">
-          <h2>Sin notificaciones por ahora</h2>
-          <p>Cuando el conductor publique una ruta o informe el avance del recorrido, aparecerán aquí los avisos vinculados a tus estudiantes.</p>
-          <a routerLink="/tutor/current-trip">Consultar rutas escolares</a>
+          <h2>{{ 'notifications.tutor.emptyTitle' | translate }}</h2>
+          <p>{{ 'notifications.tutor.emptyDescription' | translate }}</p>
+          <a routerLink="/tutor/current-trip">{{ 'notifications.tutor.viewRoutes' | translate }}</a>
         </section>
       }
-      @for (notification of notifications(); track notification.id) {
+      @for (notification of store.notifications(); track notification.id) {
         <article class="notice" [class.unread]="!notification.read">
           <div>
-            <span class="kind">{{ typeLabel(notification.kind) }}</span>
+            <span class="kind">{{ kindLabel(notification) | translate }}</span>
             <h2>{{ notification.title }}</h2>
             <p>{{ notification.message }}</p>
-            <small>{{ notification.createdAt.slice(0,16).replace('T',' ') }}</small>
+            <small>{{ notification.createdAt | date: 'short' }}</small>
           </div>
           @if (!notification.read) {
-            <button type="button" [disabled]="saving()" (click)="markRead(notification.id)">
-              Marcar como leída
+            <button type="button" [disabled]="store.loading()" (click)="markRead(notification)">
+              {{ 'notifications.markRead' | translate }}
             </button>
           }
         </article>
       }
-      <a routerLink="/tutor/current-trip">Ver la ruta de mis estudiantes</a>
+      <a routerLink="/tutor/current-trip">{{ 'notifications.tutor.viewStudentRoute' | translate }}</a>
     </main>
   `,
   styles: [`
-    .journey-notifications{max-width:1020px;margin:auto;padding:32px 24px;color:#183f35;display:grid;gap:16px;}
+    .journey-notifications{box-sizing:border-box;width:100%;max-width:var(--rumbo-page-max-width);margin:0 auto;
+      padding:var(--rumbo-page-padding);color:#183f35;display:grid;gap:16px;}
     .heading{display:flex;justify-content:space-between;align-items:start;gap:20px;flex-wrap:wrap;}
     .eyebrow,.kind{color:#18866d;font-weight:750;font-size:12px;}
-    h1{font-size:28px;} h2{font-size:18px;margin:7px 0;}p{font-size:13px;color:#536d63;line-height:1.5;}
+    .eyebrow{margin:0;letter-spacing:.08em;text-transform:uppercase;}
+    h1{font-size:28px;margin:8px 0;} h2{font-size:18px;margin:7px 0;}p{font-size:13px;color:#536d63;line-height:1.5;}
     .empty,.notice{padding:20px;background:#fff;border:1px solid #deeae3;border-radius:14px;}
     .notice{display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap;}
     .unread{border-left:4px solid #188b70;}small{color:#6f8379;}
@@ -57,43 +72,27 @@ import { TutorJourneyNotice, TutorJourneysApi } from '../../../../shared/infrast
     .error{color:#aa302d;}
   `],
 })
-export class TutorJourneyNotifications implements OnInit {
-  private readonly api = inject(TutorJourneysApi);
-  readonly notifications = signal<TutorJourneyNotice[]>([]);
-  readonly loading = signal(false);
-  readonly saving = signal(false);
-  readonly error = signal('');
-  ngOnInit(): void { void this.reload(); }
+export class TutorJourneyNotifications {
+  readonly store = inject(AlertingStore);
 
-  typeLabel(kind: string): string {
-    const labels: Record<string,string> = {
-      ROUTE_PUBLISHED:'Nueva ruta', TRIP_PLANNED:'Viaje programado',
-      TRIP_STARTED:'Inicio de ruta', STOP_SERVED:'Parada atendida',
-      STUDENT_ARRIVED:'Llegada', TRIP_COMPLETED:'Fin de viaje',
-      TRIP_CANCELLED:'Cancelación', ABSENT:'Ausencia',
-      DELAY:'Retraso', INCIDENT:'Incidencia',
-    };
-    return labels[kind] || 'Aviso';
-  }
-  async reload(): Promise<void> {
-    if (this.loading()) return;
-    this.loading.set(true); this.error.set('');
-    try { this.notifications.set(await firstValueFrom(this.api.notifications())); }
-    catch (e) {
-      const response=e as {status?:number;error?:{detail?:string}};
-      this.error.set(response.status===0?'No hay conexión con Spring Boot.':
-        response.error?.detail || 'No se pudieron consultar los avisos del estudiante.');
+  /**
+   * Builds the i18n key that labels the notification.
+   * @param notification - Notification to label.
+   * @returns Translation key for the journey fact or the notification type.
+   */
+  kindLabel(notification: Notification): string {
+    if (notification.journeyEvent && JOURNEY_EVENTS.includes(notification.journeyEvent)) {
+      return `notifications.journeyEvents.${notification.journeyEvent}`;
     }
-    finally { this.loading.set(false); }
+    return `notifications.types.${notification.type || 'info'}`;
   }
-  async markRead(id:number): Promise<void> {
-    if (this.saving()) return;
-    this.saving.set(true);
-    try {
-      const value=await firstValueFrom(this.api.markAsRead(id));
-      this.notifications.update(rows => rows.map(n => n.id===id ? value : n));
-    } catch {
-      this.error.set('No se pudo marcar el aviso como leído.');
-    } finally { this.saving.set(false); }
-  }
+
+  /** Reloads the tutor notifications. */
+  reload(): void { this.store.refreshNotifications(); }
+
+  /**
+   * Marks a notification as read.
+   * @param notification - Notification to update.
+   */
+  markRead(notification: Notification): void { this.store.markNotificationAsRead(notification); }
 }

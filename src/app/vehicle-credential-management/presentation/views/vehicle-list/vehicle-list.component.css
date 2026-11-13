@@ -1,6 +1,10 @@
 ﻿/* Contenedor general para respetar los márgenes de 32px de la plataforma */
 .content-body {
-  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--rumbo-page-max-width);
+  margin: 0 auto;
+  padding: var(--rumbo-page-padding);
   display: flex;
   flex-direction: column;
   gap: 24px;

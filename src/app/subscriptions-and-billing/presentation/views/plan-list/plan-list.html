@@ -3,26 +3,20 @@
   <header class="page-header">
 
     <div>
-      <p class="eyebrow">
-        SUSCRIPCIONES
-      </p>
+      <p class="eyebrow">{{ 'billing.eyebrow' | translate }}</p>
 
-      <h1>Planes disponibles</h1>
+      <h1>{{ 'billing.plans.title' | translate }}</h1>
 
-      <p>
-        Elige el plan que mejor se adapte a tu servicio.
-      </p>
+      <p>{{ 'billing.plans.subtitle' | translate }}</p>
     </div>
 
-    @if (canManageSubscriptions) {
-      <button
-        mat-stroked-button
-        type="button"
-        class="secondary-action"
-        (click)="goToSubscriptions()">
-        Ver mi suscripción
-      </button>
-    }
+    <button
+      mat-stroked-button
+      type="button"
+      class="secondary-action"
+      (click)="goToSubscriptions()">
+      {{ 'billing.plans.viewSubscription' | translate }}
+    </button>
 
   </header>
 
@@ -34,8 +28,8 @@
 
   @if (store.plansError()) {
     <div class="error" role="alert">
-      No se pudieron cargar los planes. Comprueba la conexión con el backend.
-      <button mat-stroked-button type="button" (click)="reload()">Reintentar</button>
+      {{ store.plansError()! | translate }}
+      <button mat-stroked-button type="button" (click)="reload()">{{ 'common.retry' | translate }}</button>
     </div>
   }
 
@@ -49,9 +43,7 @@
           <article class="plan-card">
 
             <div>
-              <span class="available">
-                Disponible
-              </span>
+              <span class="available">{{ 'billing.plans.available' | translate }}</span>
 
               <h2>
                 {{ plan.name }}
@@ -67,22 +59,20 @@
 
             </div>
 
-            @if (canManageSubscriptions) {
-              <button
-                mat-raised-button
-                type="button"
-                class="primary-action"
-                (click)="selectPlan(plan.id)">
-                Seleccionar plan
-              </button>
-            }
+            <button
+              mat-raised-button
+              type="button"
+              class="primary-action"
+              (click)="selectPlan(plan.id)">
+              {{ 'billing.plans.select' | translate }}
+            </button>
 
           </article>
 
 
       } @empty {
 
-        <p>Actualmente no hay planes activos. Revisa el catálogo en Swagger o carga los planes locales de prueba.</p>
+        <p>{{ 'billing.plans.empty' | translate }}</p>
 
       }
 

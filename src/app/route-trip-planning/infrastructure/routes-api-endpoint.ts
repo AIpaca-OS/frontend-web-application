@@ -1,177 +1,141 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, catchError } from 'rxjs';
+import { ErrorHandlingEnabledBaseType } from '../../shared/infrastructure/error-handling-enabled-base-type';
 import { Route } from '../domain/model/route.entity';
 import { RouteSchedule } from '../domain/model/route-schedule.entity';
 import { RouteAssembler } from './route-assembler';
-import { RouteResource, RoutesResponse } from './routes-response';
+import { AssignStudentResource, RouteAssignmentResource, RouteResource } from './routes-response';
 import { environment } from '../../../environments/environment';
 
-export interface RouteAssignmentResource {
-  id: string;
-  stopId: string;
-  studentId: string;
-}
-
-export interface EligibleStudentResource {
-  id: string;
-  fullName: string;
-}
-
-export interface AssignmentInputResource {
-  studentId: string;
-  stopId: string;
-}
-
-export class RoutesApiEndpoint {
-  private readonly endpointUrl =
-    environment.routePlanningApiBaseUrl + environment.routePlanningRoutesEndpointPath;
+/**
+ * Endpoint client for the Routes resource.
+ *
+ * @remarks
+ * It cannot extend BaseApiEndpoint because the Route entity uses string identifiers.
+ * Supported operations (Swagger): GET /routes?driverProfileId, GET/PUT/DELETE /routes/{id}, POST /routes,
+ * PUT /routes/{id}/schedule, PATCH /routes/{id}/status, GET/PUT/POST /routes/{id}/assignments.
+ * GET /routes/eligible-students answers 503, so candidates come from the driver's service enrollments.
+ */
+export class RoutesApiEndpoint extends ErrorHandlingEnabledBaseType {
+  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderRoutesEndpointPath}`;
   private readonly assembler = new RouteAssembler();
-  private readonly backendMode = environment.routePlanningApiMode === 'backend';
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly currentLanguage: () => string,
-  ) {}
+  /**
+   * Creates an instance of RoutesApiEndpoint.
+   * @param http - The HttpClient to be used for making API requests.
+   */
+  constructor(private readonly http: HttpClient) {
+    super();
+  }
 
-  getAll(): Observable<Route[]> {
-    return this.http.get<RoutesResponse | RouteResource[]>(this.endpointUrl, this.requestOptions()).pipe(
-      map(response => {
-        const resources = Array.isArray(response) ? response : response.routes ?? [];
-        return resources.map(resource => this.assembler.toEntityFromResource(resource));
-      }),
-      catchError(this.handleError('Unable to load routes')),
+  /**
+   * Fetches the routes of a driver.
+   * @param driverProfileId - Driver profile identifier.
+   * @returns Stream with the mapped routes.
+   */
+  getByDriver(driverProfileId: number): Observable<Route[]> {
+    return this.http.get<RouteResource[]>(this.endpointUrl, { params: { driverProfileId } }).pipe(
+      map(resources => resources.map(resource => this.assembler.toEntityFromResource(resource))),
+      catchError(this.handleError('Failed to fetch routes'))
     );
   }
 
+  /**
+   * Fetches a route by identifier.
+   * @param id - Route identifier.
+   * @returns Stream with the mapped route.
+   */
   getById(id: string): Observable<Route> {
-    return this.http.get<RouteResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id), this.requestOptions(),
-    ).pipe(
+    return this.http.get<RouteResource>(`${this.endpointUrl}/${encodeURIComponent(id)}`).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to load route')),
+      catchError(this.handleError('Failed to fetch route'))
     );
   }
 
-  create(entity: Route): Observable<Route> {
-    const payload = this.backendMode ? this.toBackendPayload(entity) : this.toMockPayload(entity);
-    return this.http.post<RouteResource>(this.endpointUrl, payload, this.requestOptions()).pipe(
+  /**
+   * Creates a route for a driver.
+   * @param entity - Route to create.
+   * @param driverProfileId - Owner driver profile.
+   * @returns Stream with the created route.
+   */
+  create(entity: Route, driverProfileId: number): Observable<Route> {
+    return this.http.post<RouteResource>(this.endpointUrl, this.assembler.toCreateResourceFromEntity(entity, driverProfileId)).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to create route')),
+      catchError(this.handleError('Failed to create route'))
     );
   }
 
+  /**
+   * Updates a route.
+   * @param entity - Route state to persist.
+   * @param id - Route identifier.
+   * @returns Stream with the updated route.
+   */
   update(entity: Route, id: string): Observable<Route> {
-    const payload = this.backendMode ? this.toBackendPayload(entity) : this.assembler.toResourceFromEntity(entity);
-    return this.http.put<RouteResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id), payload, this.requestOptions(),
-    ).pipe(
+    return this.http.put<RouteResource>(`${this.endpointUrl}/${encodeURIComponent(id)}`, this.assembler.toUpdateResourceFromEntity(entity)).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to update route')),
+      catchError(this.handleError('Failed to update route'))
     );
   }
 
+  /**
+   * Configures the weekly schedule of a route.
+   * @param id - Route identifier.
+   * @param schedule - Service days and departure times.
+   * @param confirm - Whether the schedule is confirmed.
+   * @returns Stream with the updated route.
+   */
   updateSchedule(id: string, schedule: RouteSchedule[], confirm: boolean): Observable<Route> {
-    return this.http.put<RouteResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id) + '/schedule',
-      { schedule, confirm },
-      this.requestOptions(),
-    ).pipe(
+    return this.http.put<RouteResource>(`${this.endpointUrl}/${id}/schedule`, { schedule, confirm }).pipe(
       map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to update route schedule')),
+      catchError(this.handleError('Failed to update route schedule'))
     );
   }
 
-  getEligibleStudents(): Observable<EligibleStudentResource[]> {
-    return this.http.get<EligibleStudentResource[]>(
-      this.endpointUrl + '/eligible-students', this.requestOptions(),
-    ).pipe(catchError(this.handleError('Unable to load eligible students')));
-  }
-
-  replaceAssignments(id: string, assignments: AssignmentInputResource[]): Observable<Route> {
-    return this.http.put<RouteResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments',
-      assignments, this.requestOptions(),
-    ).pipe(
-      map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to save route assignments')),
-    );
-  }
-
+  /**
+   * Fetches the student-to-stop assignments of a route.
+   * @param id - Route identifier.
+   * @returns Stream with the assignments.
+   */
   getAssignments(id: string): Observable<RouteAssignmentResource[]> {
-    return this.http.get<RouteAssignmentResource[]>(
-      this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments', this.requestOptions(),
-    ).pipe(catchError(this.handleError('Unable to load route assignments')));
-  }
-
-  assignStudent(id: string, studentId: string, stopId: string): Observable<RouteAssignmentResource> {
-    return this.http.post<RouteAssignmentResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id) + '/assignments',
-      { studentId, stopId },
-      this.requestOptions(),
-    ).pipe(catchError(this.handleError('Unable to assign student')));
-  }
-
-  publish(id: string): Observable<Route> {
-    return this.http.patch<RouteResource>(
-      this.endpointUrl + '/' + encodeURIComponent(id) + '/status',
-      { status: 'PUBLISHED' },
-      this.requestOptions(),
-    ).pipe(
-      map(resource => this.assembler.toEntityFromResource(resource)),
-      catchError(this.handleError('Unable to publish route')),
+    return this.http.get<RouteAssignmentResource[]>(`${this.endpointUrl}/${id}/assignments`).pipe(
+      catchError(this.handleError('Failed to fetch route assignments'))
     );
   }
 
+  /**
+   * Replaces every student-to-stop assignment of a route (the API answers with the updated route).
+   * @param id - Route identifier.
+   * @param assignments - New assignments.
+   * @returns Stream with the updated route.
+   */
+  replaceAssignments(id: string, assignments: AssignStudentResource[]): Observable<Route> {
+    return this.http.put<RouteResource>(`${this.endpointUrl}/${id}/assignments`, assignments).pipe(
+      map(resource => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to save route assignments'))
+    );
+  }
+
+  /**
+   * Publishes a route (PATCH /routes/{id}/status).
+   * @param id - Route identifier.
+   * @returns Stream with the published route.
+   */
+  publish(id: string): Observable<Route> {
+    return this.http.patch<RouteResource>(`${this.endpointUrl}/${id}/status`, { status: 'PUBLISHED' }).pipe(
+      map(resource => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to publish route'))
+    );
+  }
+
+  /**
+   * Deletes a route.
+   * @param id - Route identifier.
+   * @returns Completion stream.
+   */
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(
-      this.endpointUrl + '/' + encodeURIComponent(id), this.requestOptions(),
-    ).pipe(catchError(this.handleError('Unable to delete route')));
-  }
-
-  private toBackendPayload(entity: Route): object {
-    return {
-      name: entity.name,
-      shift: entity.shift,
-      departureTime: entity.departureTime,
-      vehicleId: entity.vehicleId,
-      stops: entity.stops.map(stop => ({
-        id: stop.id,
-        address: stop.address,
-        studentId: stop.studentId ?? null,
-      })),
-      schedule: entity.schedule,
-      scheduleConfirmed: entity.scheduleConfirmed,
-    };
-  }
-
-  private toMockPayload(entity: Route): object {
-    const resource = this.assembler.toResourceFromEntity(entity);
-    return {
-      name: resource.name,
-      code: resource.code,
-      departureTime: resource.departureTime,
-      status: resource.status,
-      stopsCount: resource.stopsCount,
-      shift: resource.shift,
-      stops: resource.stops,
-      schedule: resource.schedule,
-      scheduleConfirmed: resource.scheduleConfirmed,
-    };
-  }
-
-  private requestOptions(): { headers: HttpHeaders } {
-    const language = this.currentLanguage() === 'es-419' ? 'es-419' : 'en';
-    return { headers: new HttpHeaders({ 'Accept-Language': language }) };
-  }
-
-  private handleError(operation: string) {
-    return (error: HttpErrorResponse): Observable<never> => {
-      const detail = error.error && typeof error.error.detail === 'string'
-        ? error.error.detail
-        : null;
-      const message = detail ?? operation + ' (HTTP ' + (error.status || 'unknown') + ')';
-      return throwError(() => new Error(message));
-    };
+    return this.http.delete<void>(`${this.endpointUrl}/${id}`).pipe(
+      catchError(this.handleError('Failed to delete route'))
+    );
   }
 }

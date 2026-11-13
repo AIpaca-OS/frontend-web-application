@@ -6,7 +6,6 @@ export type PreviewRole = 'driver' | 'tutor';
 
 const ROLE_KEY = 'rumbo.preview.role';
 const PROFILE_KEY = 'rumbo.preview.profileId';
-const DEFAULT_PREVIEW_PROFILE_ID: Record<PreviewRole, number> = { driver: 2, tutor: 1 };
 
 /**
  * Visual navigation only until RMO-49/RMO-53 implement real login and JWT.
@@ -20,50 +19,30 @@ export class DemoRoleSession {
   private readonly profileIdSignal = signal<number | null>(this.readProfileId());
   readonly profileId = this.profileIdSignal.asReadonly();
 
+  private readProfileId(): number | null {
+    if (!this.browser) return null;
+    const id = Number(sessionStorage.getItem(PROFILE_KEY));
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+  }
+
   private readRole(): PreviewRole | null {
     if (!this.browser) return null;
     const stored = sessionStorage.getItem(ROLE_KEY);
     return stored === 'driver' || stored === 'tutor' ? stored : null;
   }
 
-  private readProfileId(): number | null {
-    if (!this.browser) return null;
-    const value = Number(sessionStorage.getItem(PROFILE_KEY));
-    if (Number.isSafeInteger(value) && value > 0) return value;
-    const role = this.readRole();
-    return role ? DEFAULT_PREVIEW_PROFILE_ID[role] : null;
-  }
-
-  /**
-   * Preview identity for fictional Sprint 3 / AV2 data ONLY.
-   * These IDs are NOT proof of identity and must never authorize a backend request.
-   */
-  enter(role: PreviewRole, profileId: number = DEFAULT_PREVIEW_PROFILE_ID[role]): void {
-    if (!Number.isSafeInteger(profileId) || profileId < 1) {
-      throw new Error('El identificador del perfil de demostración es inválido.');
-    }
-    this.roleSignal.set(role);
+  enter(role: PreviewRole, profileId: number): void {
+    if (!Number.isSafeInteger(profileId) || profileId <= 0) throw new Error('login.profileIdError');
     this.profileIdSignal.set(profileId);
-    if (this.browser) {
-      sessionStorage.setItem(ROLE_KEY, role);
-      sessionStorage.setItem(PROFILE_KEY, String(profileId));
-    }
-  }
-
-  requireProfileId(role: PreviewRole): number {
-    if (this.roleSignal() !== role || this.profileIdSignal() == null) {
-      throw new Error('Selecciona primero el perfil de demostración correspondiente.');
-    }
-    return this.profileIdSignal()!;
+    if (this.browser) sessionStorage.setItem(PROFILE_KEY, String(profileId));
+    this.roleSignal.set(role);
+    if (this.browser) sessionStorage.setItem(ROLE_KEY, role);
   }
 
   leave(): void {
     this.roleSignal.set(null);
     this.profileIdSignal.set(null);
-    if (this.browser) {
-      sessionStorage.removeItem(ROLE_KEY);
-      sessionStorage.removeItem(PROFILE_KEY);
-    }
+    if (this.browser) { sessionStorage.removeItem(ROLE_KEY); sessionStorage.removeItem(PROFILE_KEY); }
   }
 }
 
@@ -71,5 +50,5 @@ export class DemoRoleSession {
 export const previewRoleGuard = (requiredRole: PreviewRole): CanActivateFn => () => {
   const session = inject(DemoRoleSession);
   const router = inject(Router);
-  return session.role() === requiredRole ? true : router.createUrlTree(['/login']);
+  return session.role() === requiredRole && session.profileId() !== null ? true : router.createUrlTree(['/login']);
 };

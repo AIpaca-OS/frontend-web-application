@@ -1,61 +1,65 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RouteTripStore } from '../../../../route-trip-planning/application/route-trip.store';
 import { AlertingStore } from '../../../application/alerting-store';
-import { DemoNoticeKind, DriverDemoNoticesApi } from '../../../infrastructure/driver-demo-notices-api';
+import { Notification } from '../../../domain/model/notification.entity';
 
+/** Kind of route notice a driver can publish. */
+type RouteNoticeKind = 'DELAY' | 'INCIDENT';
+
+/**
+ * Lets a driver publish a route notice through POST /notifications.
+ */
 @Component({
   selector: 'app-driver-demo-notices',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     <section class="demo-composer">
-      <h4>Informar retraso o incidencia</h4>
-      <p class="hint">
-        Describe la situación de la ruta. Los tutores de los estudiantes asignados
-        recibirán el aviso. Evita incluir datos personales en el mensaje.
-      </p>
+      <h4>{{ 'notifications.composer.title' | translate }}</h4>
+      <p class="hint">{{ 'notifications.composer.hint' | translate }}</p>
 
       @if (publishedRoutes().length === 0) {
-        <p role="status">Primero necesitas una ruta publicada y autorizada para emitir avisos de esa ruta.</p>
+        <p role="status">{{ 'notifications.composer.noPublishedRoutes' | translate }}</p>
       } @else {
         <div class="fields">
           <label>
-            Ruta publicada
+            {{ 'notifications.composer.route' | translate }}
             <select [value]="routeId()" (change)="selectRoute($event)">
-              <option value="">Selecciona una ruta</option>
+              <option value="">{{ 'notifications.composer.selectRoute' | translate }}</option>
               @for (route of publishedRoutes(); track route.id) {
                 <option [value]="route.id">{{ route.code }} — {{ route.name }}</option>
               }
             </select>
           </label>
           <label>
-            Tipo de aviso
+            {{ 'notifications.composer.kind' | translate }}
             <select [value]="kind()" (change)="selectKind($event)">
-              <option value="DELAY">Retraso</option>
-              <option value="INCIDENT">Incidencia</option>
+              <option value="DELAY">{{ 'notifications.composer.delay' | translate }}</option>
+              <option value="INCIDENT">{{ 'notifications.composer.incident' | translate }}</option>
             </select>
           </label>
           <label class="message">
-            Descripción breve, sin datos personales
+            {{ 'notifications.composer.message' | translate }}
             <textarea rows="3" maxlength="240" [value]="message()" (input)="setMessage($event)"
-              placeholder="Ej.: Demora de diez minutos por tráfico"></textarea>
+              [placeholder]="'notifications.composer.placeholder' | translate"></textarea>
           </label>
         </div>
         <button type="button" (click)="send()" [disabled]="sending() || !routeId() || message().trim().length < 4">
-          {{ sending() ? 'Enviando...' : 'Enviar aviso' }}
+          {{ (sending() ? 'notifications.composer.sending' : 'notifications.composer.send') | translate }}
         </button>
       }
 
       @if (error()) {
-        <p role="alert" class="error">{{ error() }}</p>
+        <p role="alert" class="error">{{ error()! | translate }}</p>
       }
       @if (success()) {
-        <p role="status" class="success">{{ success() }}</p>
+        <p role="status" class="success">{{ 'notifications.composer.success' | translate }}</p>
       }
     </section>
   `,
   styles: [`
-    .demo-composer { margin: 0 0 18px; padding: 18px 22px; background: #fff;
+    .demo-composer { margin: 0; padding: 18px 22px; background: #fff;
       border: 1px solid #dce9e3; border-radius: 12px; }
     h4 { margin: 0 0 8px; color: #123f37; }
     .hint { color: #627b73; font-size: 12px; margin-bottom: 13px; }
@@ -72,35 +76,47 @@ import { DemoNoticeKind, DriverDemoNoticesApi } from '../../../infrastructure/dr
 })
 export class DriverDemoNotices {
   private readonly routesStore = inject(RouteTripStore);
-  private readonly alerts = inject(DriverDemoNoticesApi);
   private readonly notificationStore = inject(AlertingStore);
+  private readonly translate = inject(TranslateService);
   readonly publishedRoutes = computed(() =>
     this.routesStore.routes().filter(route => route.status.toUpperCase() === 'PUBLISHED'));
   readonly routeId = signal('');
-  readonly kind = signal<DemoNoticeKind>('DELAY');
+  readonly kind = signal<RouteNoticeKind>('DELAY');
   readonly message = signal('');
   readonly sending = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly success = signal<string | null>(null);
+  readonly error = this.notificationStore.error;
+  readonly success = signal(false);
 
   selectRoute(event: Event): void { this.routeId.set((event.target as HTMLSelectElement).value); }
-  selectKind(event: Event): void { this.kind.set((event.target as HTMLSelectElement).value as DemoNoticeKind); }
+  selectKind(event: Event): void { this.kind.set((event.target as HTMLSelectElement).value as RouteNoticeKind); }
   setMessage(event: Event): void { this.message.set((event.target as HTMLTextAreaElement).value); }
 
+  /**
+   * Publishes the notice for the selected route and refreshes the notification list.
+   */
   async send(): Promise<void> {
     if (!this.routeId() || this.message().trim().length < 4 || this.sending()) return;
     this.sending.set(true);
-    this.error.set(null);
-    this.success.set(null);
-    try {
-      await firstValueFrom(this.alerts.send(this.routeId(), this.kind(), this.message().trim()));
-      this.success.set('Aviso registrado. Estará disponible en Notificaciones al actualizar.');
+    this.success.set(false);
+    const delay = this.kind() === 'DELAY';
+    const notice = new Notification({
+      id: 0,
+      type: delay ? 'warning' : 'important',
+      priority: 'regular',
+      title: this.translate.instant(delay ? 'notifications.composer.delayTitle' : 'notifications.composer.incidentTitle'),
+      message: this.message().trim(),
+      createdAt: new Date().toISOString(),
+      readAt: '',
+      read: false,
+      routeId: Number(this.routeId()),
+      studentId: null,
+    });
+    const saved = await this.notificationStore.addNotification(notice);
+    if (saved) {
+      this.success.set(true);
       this.message.set('');
       this.notificationStore.refreshNotifications();
-    } catch {
-      this.error.set('No se pudo enviar. Comprueba que el backend esté ejecutándose y la ruta esté publicada.');
-    } finally {
-      this.sending.set(false);
     }
+    this.sending.set(false);
   }
 }

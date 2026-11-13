@@ -1,6 +1,5 @@
 import { Component, inject, Signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { environment } from '../../../../../environments/environment';
 import { DriverDemoNotices } from './driver-demo-notices';
 import { TutorJourneyNotifications } from './tutor-journey-notifications';
 import { CommonModule } from '@angular/common';
@@ -10,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AlertingStore } from '../../../application/alerting-store';
 import { Notification } from '../../../domain/model/notification.entity';
 
@@ -25,6 +25,7 @@ import { Notification } from '../../../domain/model/notification.entity';
     MatSlideToggleModule,
     DriverDemoNotices,
     TutorJourneyNotifications,
+    TranslatePipe,
   ],
   templateUrl: './notification-dashboard.html',
   styleUrl: './notification-dashboard.css',
@@ -32,8 +33,10 @@ import { Notification } from '../../../domain/model/notification.entity';
 export class NotificationDashboard {
   readonly alertingStore = inject(AlertingStore);
   private readonly router = inject(Router);
-  readonly showDriverDemo = () => !environment.production && this.router.url.startsWith('/driver/');
-  readonly showTutorJourneys = () => !environment.production && this.router.url.startsWith('/tutor/');
+  /** Drivers can publish route notices from this screen. */
+  readonly showDriverDemo = () => this.router.url.startsWith('/driver/');
+  /** Tutors see the student-journey timeline instead of the operational dashboard. */
+  readonly showTutorJourneys = () => this.router.url.startsWith('/tutor/');
   protected readonly notifications: Signal<Notification[]> = this.alertingStore.notifications;
 
   refreshNotifications(): void {

@@ -74,7 +74,7 @@
             </button>
             @if (isPublished(route)) {
               <button mat-stroked-button type="button" (click)="manageTrips(route.id)">
-                <mat-icon>directions_bus</mat-icon> Gestionar viajes
+                <mat-icon>directions_bus</mat-icon> {{ 'routes.list.manageTrips' | translate }}
               </button>
             }
             @if (!isPublished(route)) {
@@ -96,7 +96,7 @@
   }
 
   @if (store.error()) {
-    <div class="error-box" role="alert">{{ store.error() }}</div>
+    <div class="error-box" role="alert">{{ store.error()! | translate }}</div>
   }
 
 </section>

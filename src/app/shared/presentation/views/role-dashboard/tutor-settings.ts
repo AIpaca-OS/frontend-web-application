@@ -10,7 +10,7 @@ import { DemoRoleSession } from '../../../../identity-and-access-management/appl
   imports: [RouterLink, TranslatePipe, LanguageSwitcher],
   template: `
     <main class="settings">
-      <p class="eyebrow">RUMBO · {{ 'workspace.tutorRole' | translate }}</p>
+      <p class="eyebrow">Rumbo · {{ 'workspace.tutorRole' | translate }}</p>
       <h1>{{ 'workspace.tutorSettingsTitle' | translate }}</h1>
       <p class="description">{{ 'workspace.tutorSettingsDescription' | translate }}</p>
 

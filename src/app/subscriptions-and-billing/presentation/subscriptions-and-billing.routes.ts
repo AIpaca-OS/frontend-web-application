@@ -10,8 +10,7 @@ const subscriptionForm = () =>
 
 export const subscriptionsAndBillingRoutes: Routes = [
   {
-    path: '',
-    pathMatch: 'full',
+    path: 'plans',
     loadComponent: planList,
   },
   {
@@ -27,8 +26,8 @@ export const subscriptionsAndBillingRoutes: Routes = [
     loadComponent: subscriptionForm,
   },
   {
-    path: 'plans',
+    path: '',
+    redirectTo: 'plans',
     pathMatch: 'full',
-    redirectTo: '/driver/plans',
   },
 ];

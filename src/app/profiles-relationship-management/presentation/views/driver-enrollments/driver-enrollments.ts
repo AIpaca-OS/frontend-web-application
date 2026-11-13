@@ -1,74 +1,69 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { TranslatePipe } from '@ngx-translate/core';
-import {
-  EnrolledStudent, ServiceEnrollment, ServiceEnrollmentsApi,
-} from '../../../infrastructure/service-enrollments-api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ProfilesRelationshipStore } from '../../../application/profiles-relationship-management-store';
 
+/**
+ * Service requests addressed to the acting driver and the students already enrolled.
+ */
 @Component({
   selector: 'app-driver-enrollments',
   standalone: true,
   imports: [RouterLink, TranslatePipe],
   template: `
     <main class="driver-enrollments">
-      <p class="eyebrow">RUMBO · {{ 'profiles.enrollments.driverTitle' | translate }}</p>
+      <p class="eyebrow">Rumbo · {{ 'profiles.enrollments.driverTitle' | translate }}</p>
       <h1>{{ 'profiles.enrollments.driverTitle' | translate }}</h1>
       <p>{{ 'profiles.enrollments.driverDescription' | translate }}</p>
-      @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
-      @if (message()) { <p role="status" class="message">{{ message() }}</p> }
+      @if (store.enrollmentsError()) { <p role="alert" class="error">{{ store.enrollmentsError()! | translate }}</p> }
+      @if (accepted()) { <p role="status" class="message">{{ 'profiles.enrollments.acceptedMessage' | translate }}</p> }
       <div class="actions">
-        <button type="button" [disabled]="loading() || saving()" (click)="reload()">
+        <button type="button" [disabled]="store.enrollmentsLoading()" (click)="reload()">
           {{ 'profiles.enrollments.refresh' | translate }}
         </button>
         <a routerLink="/driver/routes/new">{{ 'profiles.enrollments.createRoute' | translate }}</a>
       </div>
       <section class="panel">
         <h2>{{ 'profiles.enrollments.pendingTitle' | translate }}</h2>
-        @if (loading()) { <p role="status">{{ 'profiles.enrollments.loading' | translate }}</p> }
-        @for (enrollment of enrollments(); track enrollment.id) {
-          @if (enrollment.status === 'PENDING') {
-            <div class="entry">
-              <div>
-                <strong>{{ studentLabel(enrollment.studentId) }}</strong>
-                <p>{{ 'profiles.enrollments.pendingHint' | translate }}</p>
-              </div>
-              <button type="button" class="primary" [disabled]="saving()" (click)="accept(enrollment.id)">
-                {{ 'profiles.enrollments.accept' | translate }}
-              </button>
+        @if (store.enrollmentsLoading()) { <p role="status">{{ 'profiles.enrollments.loading' | translate }}</p> }
+        @for (enrollment of pending(); track enrollment.id) {
+          <div class="entry">
+            <div>
+              <strong>{{ studentLabel(enrollment.studentId) }}</strong>
+              <p>{{ 'profiles.enrollments.pendingHint' | translate }}</p>
             </div>
-          }
+            <button type="button" class="primary" [disabled]="store.enrollmentsLoading()" (click)="accept(enrollment.id)">
+              {{ 'profiles.enrollments.accept' | translate }}
+            </button>
+          </div>
         }
-        @if (!loading() && !pendingCount()) {
-          <p>No hay solicitudes pendientes. El tutor debe registrar al estudiante
-             y pulsar «Solicitar transporte» para enviarte la solicitud.</p>
+        @if (!store.enrollmentsLoading() && !pending().length) {
+          <p>{{ 'profiles.enrollments.noPendingHint' | translate }}</p>
         }
       </section>
       <section class="panel">
         <h2>{{ 'profiles.enrollments.acceptedTitle' | translate }}</h2>
-        @for (enrollment of enrollments(); track enrollment.id) {
-          @if (enrollment.status === 'ACCEPTED') {
-            <div class="entry">
-              <div>
-                <strong>{{ studentLabel(enrollment.studentId) }}</strong>
-                <p>{{ 'profiles.enrollments.status' | translate }}: {{ enrollment.status }}</p>
-              </div>
-              <button type="button" [disabled]="saving()" (click)="end(enrollment.id)">
-                {{ 'profiles.enrollments.end' | translate }}
-              </button>
+        @for (enrollment of acceptedEnrollments(); track enrollment.id) {
+          <div class="entry">
+            <div>
+              <strong>{{ studentLabel(enrollment.studentId) }}</strong>
+              <p>{{ 'profiles.enrollments.status' | translate }}: {{ 'profiles.enrollments.statuses.' + enrollment.status | translate }}</p>
             </div>
-          }
+            <button type="button" [disabled]="store.enrollmentsLoading()" (click)="end(enrollment.id)">
+              {{ 'profiles.enrollments.end' | translate }}
+            </button>
+          </div>
         }
-        @if (!loading() && !acceptedCount()) {
+        @if (!store.enrollmentsLoading() && !acceptedEnrollments().length) {
           <p>{{ 'profiles.enrollments.noAccepted' | translate }}</p>
         }
       </section>
     </main>
   `,
   styles: [`
-    .driver-enrollments { max-width:1040px; margin:auto; padding:32px 24px;
+    .driver-enrollments { box-sizing:border-box;width:100%;max-width:var(--rumbo-page-max-width);margin:0 auto;padding:var(--rumbo-page-padding);
       display:grid; gap:18px; color:#173d34; }
-    .eyebrow { color:#17816b; font-size:12px; font-weight:700; letter-spacing:.09em; margin:0; }
+    .eyebrow { color:#17816b; font-size:12px; font-weight:700; letter-spacing:.09em; margin:0; text-transform:uppercase; }
     h1 { font-size:29px; margin:0; } h2 { font-size:19px; margin:0 0 12px; }
     p { font-size:13px; color:#58756a; margin:4px 0; }
     .panel { padding:22px; border:1px solid #dde9e3; border-radius:14px; background:#fff; }
@@ -85,81 +80,44 @@ import {
   `],
 })
 export class DriverEnrollmentsComponent implements OnInit {
-  private readonly api = inject(ServiceEnrollmentsApi);
-  readonly enrollments = signal<ServiceEnrollment[]>([]);
-  readonly students = signal<EnrolledStudent[]>([]);
-  readonly loading = signal(false);
-  readonly saving = signal(false);
-  readonly error = signal('');
-  readonly message = signal('');
+  readonly store = inject(ProfilesRelationshipStore);
+  private readonly translate = inject(TranslateService);
+  readonly accepted = signal(false);
+  readonly pending = computed(() => this.store.enrollments().filter(enrollment => enrollment.status === 'PENDING'));
+  readonly acceptedEnrollments = computed(() => this.store.enrollments().filter(enrollment => enrollment.status === 'ACCEPTED'));
 
-  private errorDescription(error: unknown): string {
-    const response = error as { status?: number; error?: { detail?: string; message?: string } };
-    const detail = response.error?.detail ?? response.error?.message;
-    if (response.status === 0) return 'No se puede conectar al servidor. Comprueba que Spring Boot esté ejecutándose en el puerto 8080.';
-    if (response.status === 401 || response.status === 403)
-      return 'No se pudo validar el acceso del conductor. Vuelve a ingresar como conductor y comprueba que el backend local esté habilitado.';
-    if (response.status === 404) return 'El endpoint de afiliaciones no está disponible. Actualiza y reinicia el backend.';
-    return detail || 'No se pudieron consultar las solicitudes. Comprueba la API de afiliaciones.';
-  }
-  ngOnInit(): void { void this.reload(); }
+  ngOnInit(): void { this.reload(); }
 
-  pendingCount(): number {
-    return this.enrollments().filter(e => e.status === 'PENDING').length;
-  }
-  acceptedCount(): number {
-    return this.enrollments().filter(e => e.status === 'ACCEPTED').length;
-  }
+  /**
+   * Builds the label of a student (name when the summary is available).
+   * @param id - Student identifier.
+   * @returns Student label.
+   */
   studentLabel(id: number): string {
-    const student = this.students().find(s => s.id === id);
-    return student ? student.firstName + ' ' + student.lastName
-      : 'Estudiante #' + id;
+    const student = this.store.driverStudents().find(current => current.id === id);
+    return student ? student.fullName : this.translate.instant('profiles.enrollments.studentReference', { id });
   }
-  async reload(): Promise<void> {
-    if (this.loading()) return;
-    this.loading.set(true);
-    this.error.set('');
-    try {
-      const enrollments = await firstValueFrom(this.api.forDriver());
-      this.enrollments.set(enrollments);
-      // A student-name lookup must not hide the enrollment requests.
-      try {
-        this.students.set(await firstValueFrom(this.api.driverStudents()));
-      } catch {
-        this.students.set([]);
-        this.error.set('Las solicitudes se cargaron, pero no fue posible consultar los nombres de los estudiantes.');
-      }
-    } catch (e) {
-      this.error.set(this.errorDescription(e));
-    } finally {
-      this.loading.set(false);
-    }
+
+  /** Reloads the enrollments addressed to the driver. */
+  reload(): void {
+    this.accepted.set(false);
+    this.store.loadDriverEnrollments();
   }
+
+  /**
+   * Accepts a pending request.
+   * @param id - Enrollment identifier.
+   */
   async accept(id: number): Promise<void> {
-    if (this.saving()) return;
-    this.saving.set(true);
-    this.error.set('');
-    try {
-      await firstValueFrom(this.api.accept(id));
-      this.message.set('Afiliación aceptada. Ahora puedes asignar al estudiante a una ruta.');
-      await this.reload();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo aceptar la solicitud');
-    } finally {
-      this.saving.set(false);
-    }
+    this.accepted.set(await this.store.acceptEnrollment(id));
   }
-  async end(id: number): Promise<void> {
-    if (this.saving()) return;
-    this.saving.set(true);
-    this.error.set('');
-    try {
-      await firstValueFrom(this.api.end(id));
-      await this.reload();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo finalizar la afiliación');
-    } finally {
-      this.saving.set(false);
-    }
+
+  /**
+   * Ends an accepted enrollment.
+   * @param id - Enrollment identifier.
+   */
+  end(id: number): void {
+    this.accepted.set(false);
+    this.store.endEnrollment(id);
   }
 }
